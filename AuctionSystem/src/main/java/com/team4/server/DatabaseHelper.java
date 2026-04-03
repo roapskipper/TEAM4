@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DatabaseHelper {
-    private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
+    private static final String URL = "jdbc:mysql://localhost:3306/auction";
     private static final String USER = "root";
-    private static final String PASSWORD = "123456";
+    private static final String PASSWORD = "15042007";
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
@@ -28,42 +28,40 @@ public class DatabaseHelper {
         }
     }
 
-    public void insertItem(String name, String description, double startingPrice, int sellerId) {
-        String query = "INSERT INTO items (name, description, starting_price, seller_id) VALUES (?, ?, ?, ?)";
+    public void insertCategory(String name) {
+        String query = "INSERT INTO categories (name) VALUES (?)";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, name);
-            pstmt.setString(2, description);
-            pstmt.setDouble(3, startingPrice);
-            pstmt.setInt(4, sellerId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public void insertAuction(int itemId, int currentBidId, String startTime, String endTime) {
-        String query = "INSERT INTO auctions (item_id, current_bid_id, start_time, end_time) VALUES (?, ?, ?, ?)";
+    public void insertItem(String name, int categoryId, double startPrice, String endTime, int sellerId, String status) {
+        String query = "INSERT INTO items (name, category_id, start_price, end_time, seller_id, status) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, categoryId);
+            pstmt.setDouble(3, startPrice);
+            pstmt.setString(4, endTime);
+            pstmt.setInt(5, sellerId);
+            pstmt.setString(6, status);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertBid(int itemId, int bidderId, double bidAmount) {
+        String query = "INSERT INTO bids (item_id, bidder_id, bid_amount) VALUES (?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, itemId);
-            pstmt.setInt(2, currentBidId);
-            pstmt.setString(3, startTime);
-            pstmt.setString(4, endTime);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void insertBidTransaction(int userId, int auctionId, double bidAmount, String bidTime) {
-        String query = "INSERT INTO bid_transactions (user_id, auction_id, bid_amount, bid_time) VALUES (?, ?, ?, ?)";
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, userId);
-            pstmt.setInt(2, auctionId);
+            pstmt.setInt(2, bidderId);
             pstmt.setDouble(3, bidAmount);
-            pstmt.setString(4, bidTime);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -72,8 +70,9 @@ public class DatabaseHelper {
 
     public ResultSet getAllUsers() {
         String query = "SELECT * FROM users";
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try {
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(query);
             return pstmt.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
