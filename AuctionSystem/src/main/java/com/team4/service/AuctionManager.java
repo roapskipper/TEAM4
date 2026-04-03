@@ -71,4 +71,12 @@ public class AuctionManager {
             obs.updateNewBid(auction, transaction);
         }
     }
+
+    public List<Auction> getActiveAuctions() {
+        return activeAuctions;
+    }
+
+    public void removeObserver(BidObserver observer) {
+        observers.remove(observer);
+    }
 }

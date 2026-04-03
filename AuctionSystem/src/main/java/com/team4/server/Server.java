@@ -1,11 +1,17 @@
 package com.team4.server;
 
+import com.team4.model.Auction;
+import com.team4.observer.BidObserver;
+import com.team4.model.BidTransaction;
+import com.team4.service.AuctionManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,6 +30,7 @@ public class Server {
 
                 ClientHandler handler = new ClientHandler(socket);
                 clientHandlers.add(handler);
+                AuctionManager.getInstance().registerObserver(handler);
                 new Thread(handler).start();
             }
         } catch (IOException e) {
@@ -31,21 +38,14 @@ public class Server {
         }
     }
 
-    public static void broadcast(String message, ClientHandler excludeUser) {
-        for (ClientHandler handler : clientHandlers) {
-            if (handler != excludeUser) {
-                handler.sendMessage(message);
-            }
-        }
-    }
-
     public static void removeClient(ClientHandler handler) {
         clientHandlers.remove(handler);
+        AuctionManager.getInstance().removeObserver(handler);
         System.out.println("Mot client da ngat ket noi. So luong hien tai: " + clientHandlers.size());
     }
 }
 
-class ClientHandler implements Runnable {
+class ClientHandler implements Runnable, BidObserver {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
@@ -54,6 +54,12 @@ class ClientHandler implements Runnable {
     public ClientHandler(Socket socket) {
         this.socket = socket;
         this.dbHelper = new DatabaseHelper();
+    }
+
+    @Override
+    public void updateNewBid(Auction auction, BidTransaction transaction) {
+        String message = "BID_UPDATE," + auction.getItemId() + "," + transaction.getBidderId() + "," + transaction.getBidAmount();
+        sendMessage(message);
     }
 
     @Override
@@ -69,17 +75,30 @@ class ClientHandler implements Runnable {
                 String[] parts = message.split(",");
                 if (parts.length > 0) {
                     String command = parts[0];
-                    try {
-                        if (command.equals("BID") && parts.length == 4) {
-                            int itemId = Integer.parseInt(parts[1]);
-                            int bidderId = Integer.parseInt(parts[2]);
-                            double amount = Double.parseDouble(parts[3]);
+                    if (command.equals("BID") && parts.length == 4) {
+                        int itemId = Integer.parseInt(parts[1]);
+                        int bidderId = Integer.parseInt(parts[2]);
+                        double amount = Double.parseDouble(parts[3]);
 
-                            dbHelper.insertBid(itemId, bidderId, amount);
-                            Server.broadcast("BID_UPDATE," + itemId + "," + bidderId + "," + amount, this);
+                        Auction auction = null;
+                        List<Auction> auctions = AuctionManager.getInstance().getActiveAuctions();
+                        for (int i = 0; i < auctions.size(); i++) {
+                            if (auctions.get(i).getItemId().equals(String.valueOf(itemId))) {
+                                auction = auctions.get(i);
+                                break;
+                            }
                         }
-                    } catch (Exception e) {
-                        System.out.println("Loi xu ly database: " + e.getMessage());
+
+                        if (auction != null) {
+                            boolean success = AuctionManager.getInstance().placeBid(auction, String.valueOf(bidderId), amount);
+                            if (success) {
+                                dbHelper.insertBid(itemId, bidderId, amount);
+                            } else {
+                                sendMessage("BID_FAILED," + itemId + ",Gia qua thap hoac phien da ket thuc");
+                            }
+                        } else {
+                            sendMessage("BID_FAILED," + itemId + ",Khong tim thay phien dau gia");
+                        }
                     }
                 }
             }
