@@ -1,20 +1,11 @@
-package com.team4;
 
-import com.team4.db.DatabaseManager;
+public static void main(String[] args) {
+    // 1. Tạo đối tượng mới
+    com.team4.model.User trung = new com.team4.model.User();
+    trung.setUsername("trung_dep_trai");
+    trung.setFullName("Lê Trung");
 
-public class Main {
-    public static void main(String[] args) {
-        System.out.println("---- KIEM TRA HE THONG ----");
-        try {
-            // Goi Singleton cua Hai Anh
-            DatabaseManager db = DatabaseManager.getInstance();
-            if (db.testConnection()) {
-                System.out.println("[SUCCESS] Database da ket noi thanh cong!");
-            } else {
-                System.out.println("[FAIL] Vui long kiem tra mat khau tai file .properties");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    // 2. In ra để kiểm tra UUID tự tạo
+    System.out.println("ID của User là: " + trung.getId());
+    System.out.println("Thông tin chi tiết: " + trung.toString());
 }

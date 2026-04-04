@@ -6,7 +6,7 @@ public class Admin extends User implements Serializable {
     private int accessLevel; // Cấp độ truy cập (Ví dụ: 1 - Mod, 2 - Super Admin)
     private String adminCode; // Mã định danh riêng của quản trị viên
 
-    public Admin(String id, String username, String password, int accessLevel, String adminCode) {
+    public Admin(String id, String username, String password, int accessLevel, String adminCode, ) {
         super(id, username, password, "ADMIN");
         this.accessLevel = accessLevel;
         this.adminCode = adminCode;
