@@ -67,5 +67,35 @@ public class Electronics extends Item implements Serializable {
         System.out.println("--------------------------------------\n");
     }
 
-    // Các Getter/Setter bạn tự thêm để phục vụ logic sau này nhé...
+    public String getBrand() {
+        return brand;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public int getWarrantyMonths() {
+        return warrantyMonths;
+    }
+
+    public boolean isFullyFunctional() {
+        return isFullyFunctional;
+    }
+
+    public String getTechnicalSpec() {
+        return technicalSpec;
+    }
 }
