@@ -2,35 +2,68 @@ package com.team4.model;
 
 import java.io.Serializable;
 
+/**
+ * Lớp Admin - Quản trị viên hệ thống.
+ * Kế thừa từ User (Thể hiện tính Inheritance và Abstraction)
+ */
 public class Admin extends User implements Serializable {
-    private int accessLevel; // Cấp độ truy cập (Ví dụ: 1 - Mod, 2 - Super Admin)
-    private String adminCode; // Mã định danh riêng của quản trị viên
+    private int accessLevel;  // 1: Moderator, 2: Super Admin
+    private String adminCode; // Mã định danh bảo mật riêng
 
-    public Admin(String id, String username, String password, int accessLevel, String adminCode, ) {
-        super(id, username, password, "ADMIN");
+    /**
+     * CONSTRUCTOR 1: Dùng khi tạo một Admin mới
+     * Tự động gán role "ADMIN" và sinh UUID.
+     */
+    public Admin(String username, String password, int accessLevel, String adminCode) {
+        super(username, password, "ADMIN");
         this.accessLevel = accessLevel;
         this.adminCode = adminCode;
     }
 
-    public int getAccessLevel() { return accessLevel; }
-    public void setAccessLevel(int accessLevel) { this.accessLevel = accessLevel; }
+    /**
+     * CONSTRUCTOR 2: Dùng khi DAO nạp dữ liệu từ MySQL lên
+     */
+    public Admin(String id, String username, String password, String fullName,
+                 String email, double balance, int accessLevel, String adminCode) {
+        super(id, username, password, fullName, email, "ADMIN", balance);
+        this.accessLevel = accessLevel;
+        this.adminCode = adminCode;
+    }
 
-    public String getAdminCode() { return adminCode; }
+    // --- CÁC PHƯƠNG THỨC NGHIỆP VỤ CỦA ADMIN ---
 
-    // Các phương thức nghiệp vụ của Admin (Chỉ mô phỏng bằng in ra màn hình)
     public void banUser(User user) {
-        System.out.println("Admin " + username + " đã khóa tài khoản: " + user.getUsername());
+        if (user != null) {
+            System.out.println("[ADMIN ACTION] Quản trị viên " + username +
+                    " đã khóa tài khoản: " + user.getUsername() + " (ID: " + user.getId() + ")");
+        }
     }
 
+    // Ghi chú: Đảm bảo lớp Item đã có phương thức getName()
     public void removeInvalidItem(Item item) {
-        System.out.println("Admin " + username + " đã xóa sản phẩm vi phạm: " + item.getName());
+        if (item != null) {
+            System.out.println("[ADMIN ACTION] Quản trị viên " + username +
+                    " đã xóa sản phẩm vi phạm: " + item.getName());
+        }
     }
+
+    // --- TRIỂN KHAI ĐA HÌNH (POLYMORPHISM) ---
 
     @Override
     public void displayRolePermissions() {
-        System.out.println("--- [QUYỀN HẠN ADMIN] ---");
-        System.out.println("Quản trị viên: " + username + " | Cấp độ: " + accessLevel);
-        System.out.println("- Quyền hệ thống: Quản lý người dùng, Kiểm duyệt sản phẩm.");
-        System.out.println("- Quyền dữ liệu: Xem toàn bộ lịch sử đấu giá và giao dịch.");
+        System.out.println("\n========== [ QUYỀN HẠN QUẢN TRỊ ] ==========");
+        System.out.println("Admin      : " + username);
+        System.out.println("ID Hệ thống: " + getId());
+        System.out.println("Cấp độ     : " + (accessLevel == 2 ? "Super Admin" : "Moderator"));
+        System.out.println("Mã bảo mật : " + adminCode);
+        System.out.println("Quyền hạn  : Khóa tài khoản, Xóa sản phẩm, Xem báo cáo.");
+        System.out.println("==============================================\n");
     }
+
+    // --- GETTERS & SETTERS ---
+
+    public int getAccessLevel() { return accessLevel; }
+    public void setAccessLevel(int accessLevel) { this.accessLevel = accessLevel; }
+    public String getAdminCode() { return adminCode; }
+    public void setAdminCode(String adminCode) { this.adminCode = adminCode; }
 }
