@@ -2,24 +2,32 @@ package com.team4.service;
 
 import com.team4.model.Auction;
 import com.team4.model.BidTransaction;
+import com.team4.model.User;
 import com.team4.observer.BidObserver;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
+/**
+ * AuctionManager - Lớp dịch vụ quản lý Logic Đấu giá.
+ * Áp dụng Singleton Pattern: Chỉ có 1 người điều phối duy nhất.
+ */
 public class AuctionManager {
-    // Áp dụng Singleton Pattern để chỉ có 1 Manager duy nhất quản lý đấu giá
     private static AuctionManager instance;
 
-    private List<Auction> activeAuctions;
-    private List<BidObserver> observers; // Danh sách những người đang "hóng" giá thay đổi
+    // Quản lý danh sách các phiên (Trong thực tế sẽ dùng DAO để lấy từ DB)
+    private List<Auction> auctions;
+    private List<BidObserver> observers;
 
     private AuctionManager() {
-        activeAuctions = new ArrayList<>();
+        auctions = new ArrayList<>();
         observers = new ArrayList<>();
     }
 
+    /**
+     * Singleton - Thread-safe (Đảm bảo an toàn đa luồng)
+     */
     public static synchronized AuctionManager getInstance() {
         if (instance == null) {
             instance = new AuctionManager();
@@ -27,48 +35,78 @@ public class AuctionManager {
         return instance;
     }
 
-    // 1. Logic thêm phiên đấu giá mới
-    public void addAuction(Auction auction) {
-        activeAuctions.add(auction);
-    }
+    // --- QUẢN LÝ PHIÊN ---
 
-    // 2. Logic cho Client đăng ký nhận thông báo (Observer Pattern)
-    public void registerObserver(BidObserver observer) {
-        if (!observers.contains(observer)) {
-            observers.add(observer);
+    public void createAuction(Auction auction) {
+        if (auction != null) {
+            auctions.add(auction);
+            System.out.println("[Manager] Tạo thành công phiên: " + auction.getId());
         }
     }
 
-    // 3. Logic xử lý khi có người đặt giá
-    public boolean placeBid(Auction auction, String bidderId, double bidAmount) {
-        // Kiểm tra xem giá đặt có lớn hơn giá hiện tại không và phiên còn hiệu lực không
-        if (bidAmount > auction.getCurrentPrice() && !auction.isExpired() && auction.getStatus().equals("ACTIVE")) {
-
-            // Cập nhật giá và người dẫn đầu mới
-            auction.setCurrentPrice(bidAmount);
-            auction.setCurrentHighestBidderId(bidderId);
-
-            // Tạo lịch sử giao dịch
-            BidTransaction newTransaction = new BidTransaction(
-                    UUID.randomUUID().toString(),
-                    auction.getId(),
-                    bidderId,
-                    bidAmount
-            );
-
-            // Thông báo (Broadcast) cho tất cả những người đang xem
-            notifyObservers(auction, newTransaction);
-            System.out.println("[AuctionManager] Bidder " + bidderId + " đã đặt giá thành công: " + bidAmount);
-            return true;
-        }
-        System.out.println("[AuctionManager] Đặt giá thất bại! Giá quá thấp hoặc phiên đã kết thúc.");
-        return false;
+    public List<Auction> getActiveAuctions() {
+        return auctions.stream()
+                .filter(a -> "ACTIVE".equals(a.getStatus()))
+                .collect(Collectors.toList());
     }
 
-    // 4. Bắn thông báo cho các Observers
+    // --- LOGIC ĐẤU GIÁ (TRÁI TIM HỆ THỐNG) ---
+
+    /**
+     * Xử lý Đặt Giá (Sử dụng synchronized để ngăn chặn 2 người cùng đặt 1 giá đồng thời)
+     */
+    public synchronized boolean placeBid(User bidder, Auction auction, double amount) {
+        System.out.println("\n[PROCESS] Xử lý lượt trả giá từ: " + bidder.getUsername());
+
+        // 1. Kiểm tra Quyền (Phải là BIDDER mới được đặt giá)
+        if (!"BIDDER".equalsIgnoreCase(bidder.getRole())) {
+            System.out.println("[REJECT] Lỗi: Chỉ người mua (Bidder) mới được đặt giá.");
+            return false;
+        }
+
+        // 2. Kiểm tra Số dư (Phải có đủ tiền trong ví)
+        if (bidder.getBalance() < amount) {
+            System.out.println("[REJECT] Lỗi: Số dư không đủ! (Cần $" + amount + ", Có $" + bidder.getBalance() + ")");
+            return false;
+        }
+
+        // 3. Kiểm tra Tính hợp lệ của phiên (Sử dụng logic từ lớp Auction)
+        if (!auction.canBid()) {
+            System.out.println("[REJECT] Lỗi: Phiên đấu giá này đã đóng hoặc chưa bắt đầu.");
+            return false;
+        }
+
+        // 4. Kiểm tra Giá thầu mới so với Giá hiện tại
+        if (amount <= auction.getCurrentPrice()) {
+            System.out.println("[REJECT] Lỗi: Giá $" + amount + " phải cao hơn giá hiện tại $" + auction.getCurrentPrice());
+            return false;
+        }
+
+        // --- CẬP NHẬT TRẠNG THÁI (GIAO DỊCH THÀNH CÔNG) ---
+
+        // Cập nhật giá và người giữ kỷ lục
+        auction.setCurrentPrice(amount);
+        auction.setCurrentHighestBidderId(bidder.getId());
+
+        // Tạo bản ghi lịch sử giao dịch (Sử dụng Constructor UUID tự động)
+        BidTransaction transaction = new BidTransaction(auction.getId(), bidder.getId(), amount);
+
+        // Phát tín hiệu thông báo cho toàn bộ hệ thống (Observer Pattern)
+        notifyObservers(auction, transaction);
+
+        System.out.println("[SUCCESS] Chấp nhận giá thầu! Người dẫn đầu: " + bidder.getUsername());
+        return true;
+    }
+
+    // --- QUẢN LÝ OBSERVERS ---
+
+    public void addObserver(BidObserver observer) {
+        if (!observers.contains(observer)) observers.add(observer);
+    }
+
     private void notifyObservers(Auction auction, BidTransaction transaction) {
-        for (BidObserver obs : observers) {
-            obs.updateNewBid(auction, transaction);
+        for (BidObserver observer : observers) {
+            observer.updateNewBid(auction, transaction);
         }
     }
 }

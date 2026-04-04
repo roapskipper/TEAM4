@@ -3,12 +3,18 @@ package com.team4.factory;
 import com.team4.model.Art;
 import com.team4.model.Item;
 
+/**
+ * ArtFactory - Nhà máy sản xuất các vật phẩm Nghệ thuật.
+ * Thể hiện tính Abstraction và Design Pattern: Factory Method.
+ */
 public class ArtFactory implements ItemFactory {
-    private String id;
+    // Thuộc tính cơ bản của Item
     private String name;
     private double startingPrice;
     private String desc;
+    private String ownerId; // Liên kết với Seller
 
+    // Thuộc tính riêng của Art
     private String artist;
     private int creationYear;
     private String medium;
@@ -17,14 +23,17 @@ public class ArtFactory implements ItemFactory {
     private boolean isOriginal;
     private String exhibitionHistory;
 
-    public ArtFactory(String id, String name, double startingPrice, String desc,
+    /**
+     * CONSTRUCTOR: Nhận đầy đủ thông số để chuẩn bị tạo vật phẩm.
+     * Lưu ý: Không truyền ID ở đây, vì ID sẽ do UUID tự sinh trong Art.
+     */
+    public ArtFactory(String name, double startingPrice, String desc, String ownerId,
                       String artist, int creationYear, String medium, String dimensions,
                       String style, boolean isOriginal, String exhibitionHistory) {
-        this.id = id;
         this.name = name;
         this.startingPrice = startingPrice;
         this.desc = desc;
-
+        this.ownerId = ownerId;
         this.artist = artist;
         this.creationYear = creationYear;
         this.medium = medium;
@@ -34,9 +43,24 @@ public class ArtFactory implements ItemFactory {
         this.exhibitionHistory = exhibitionHistory;
     }
 
+    /**
+     * THỰC THI FACTORY METHOD: Tạo ra đối tượng Art thực tế.
+     */
     @Override
     public Item createItem() {
-        return new Art(id, name, startingPrice, desc, artist, creationYear,
-                medium, dimensions, style, isOriginal, exhibitionHistory);
+        // Sử dụng Constructor 1 của Art (Tự sinh UUID, gán category ART)
+        return new Art(
+                name,
+                startingPrice,
+                desc,
+                ownerId,
+                artist,
+                creationYear,
+                medium,
+                dimensions,
+                style,
+                isOriginal,
+                exhibitionHistory
+        );
     }
 }

@@ -1,62 +1,86 @@
 package com.team4;
 
+import com.team4.factory.*;
 import com.team4.model.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.team4.service.AuctionManager;
+import java.time.LocalDateTime;
 
 /**
- * Lớp kiểm thử hệ thống người dùng TEAM4
+ * LỚP KIỂM THỬ HỆ THỐNG TEAM4 - Đợt cuối trước khi lên Database
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println("====================================================");
-        System.out.println("        DỰ ÁN ĐẤU GIÁ TRỰC TUYẾN - TEAM 4         ");
-        System.out.println("     KIỂM THỬ ĐA HÌNH & QUẢN LÝ NGƯỜI DÙNG         ");
-        System.out.println("====================================================\n");
+        System.out.println("==========================================================");
+        System.out.println("      HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN - TEAM 4 - PHASE 2     ");
+        System.out.println("   (Testing: Factory, Singleton, Observer, Polymorphism)  ");
+        System.out.println("==========================================================\n");
 
-        // 1. Tạo danh sách Người dùng (Tính Polymorphism - Đa hình)
-        // Một List kiểu User có thể chứa cả Admin, Seller và Bidder
-        List<User> listNguoiDung = new ArrayList<>();
+        // 1. KHỞI TẠO HỆ THỐNG QUẢN LÝ (SINGLETON)
+        AuctionManager manager = AuctionManager.getInstance();
 
-        // 2. Khởi tạo các vai trò cụ thể
-        // Constructor tự động sinh UUID cho từng đối tượng
-        Admin quanTriVien = new Admin("trung_admin", "admin_pass", 2, "ROOT-G4-99");
+        // 2. TẠO CÁC VAI TRÒ NGƯỜI DÙNG (INHERITANCE & UUID)
+        Seller shopLuxury = new Seller("trung_luxury", "pass123", "Trung Luxury Center");
+        Bidder bidderAn = new Bidder("an_dai_gia", "pass456", 50000.0, "123 Cầu Giấy", "0911");
+        Bidder bidderBinh = new Bidder("binh_ngheo", "pass789", 500.0, "456 Giải Phóng", "0922");
+        Admin adminHeThong = new Admin("admin_chu", "root123", 2, "G4-ROOT");
 
-        Seller nguoiBan = new Seller("trung_pottery", "seller_pass", "Gốm Sứ Bát Tràng");
-        nguoiBan.setFullName("Lê Trung (Chủ Shop)");
+        System.out.println("--- [Users Created] ---");
+        System.out.println(shopLuxury.toString());
+        System.out.println(bidderAn.toString());
+        System.out.println(bidderBinh.toString() + "\n");
 
-        Bidder nguoiMua = new Bidder("trung_bidder", "buyer_pass", 2500.0,
-                "123 Cầu Giấy, Hà Nội", "0988776655");
-        nguoiMua.setFullName("Nguyễn Văn A (Khách hàng)");
+        // 3. SẢN XUẤT HÀNG HÓA BẰNG NHÀ MÁY (FACTORY PATTERN)
+        // Ta tạo một chiếc siêu xe Mercedes qua VehicleFactory
+        ItemFactory xeFactory = new VehicleFactory(
+                "Mercedes-Maybach S680", 25000.0, "Xe VIP nguyên bản 100%", shopLuxury.getId(),
+                "Mercedes", "S680", 2024, 50, "Petrol", "Đen", "30H-999.99", true, "Auto"
+        );
+        Item sieuXe = xeFactory.createItem(); // Đa hình: trả về Item nhưng linh hồn là Vehicle
 
-        // 3. Đưa tất cả vào danh sách chung (Tính Kế thừa - Inheritance)
-        listNguoiDung.add(quanTriVien);
-        listNguoiDung.add(nguoiBan);
-        listNguoiDung.add(nguoiMua);
+        // Ta tạo một cái túi hiệu qua FashionFactory
+        ItemFactory tuiFactory = new FashionFactory(
+                "Túi Hermès Kelly", 8000.0, "Hàng hiếm bản kỷ niệm", shopLuxury.getId(),
+                "Hermès", "32", "Da Cá Sấu", "Vàng Chanh", "Nữ", "Like New", true
+        );
+        Item chiecTui = tuiFactory.createItem();
 
-        // 4. Chạy vòng lặp kiểm tra Đa hình (Polymorphism)
-        // Mỗi đối tượng sẽ tự gọi phương thức displayRolePermissions của riêng nó
-        for (User u : listNguoiDung) {
-            u.displayRolePermissions();
-            // In ID để kiểm tra cơ chế UUID (Inheritance từ Entity)
-            System.out.println("   [DEBUG ID]: " + u.getId());
-        }
+        System.out.println("--- [Inventory Produced by Factories] ---");
+        sieuXe.showInfo();
+        chiecTui.showInfo();
 
-        // 5. Kiểm thử Logic riêng lẻ (Business Logic)
-        System.out.println("\n--- [ KIỂM TRA LOGIC NGHIỆP VỤ ] ---");
+        // 4. THIẾT LẬP PHIÊN ĐẤU GIÁ (AUCTION SETUP)
+        // Tạo phiên đấu giá cho xe hơi kết thúc sau 2 giờ nữa
+        Auction xeAuction = new Auction(sieuXe.getId(), shopLuxury.getId(),
+                sieuXe.getStartingPrice(), LocalDateTime.now().plusHours(2));
+        manager.createAuction(xeAuction);
 
-        // Thử nạp thêm tiền cho Bidder (Sử dụng encapsulation)
-        nguoiMua.addBalance(500.50);
+        System.out.println("\n--- [STARTING BUSINESS LOGIC TESTS] ---");
 
-        // Thử Admin thực hiện quyền khóa User
-        quanTriVien.banUser(nguoiBan);
+        // THỬ NGHIỆM 1: ĐẶT GIÁ THẤP HƠN GIÁ HIỆN TẠI
+        System.out.println(">> TEST 1: Người dùng An đặt giá $20.000 (Thấp hơn giá khởi điểm $25.000)");
+        manager.placeBid(bidderAn, xeAuction, 20000.0);
 
-        // Thử thêm mặt hàng cho Seller
-        nguoiBan.addNewItem("ITEM-99-POT-001");
-        System.out.println("Số lượng hàng trong kho Seller: " + nguoiBan.getListedItemIds().size());
+        // THỬ NGHIỆM 2: NGƯỜI DÙNG KHÔNG ĐỦ TIỀN (VÍ CÓ $500 MÀ ĐẶT $26.000)
+        System.out.println("\n>> TEST 2: Người dùng Bình đặt giá $26.000 (Vượt quá số dư ví $500)");
+        manager.placeBid(bidderBinh, xeAuction, 26000.0);
 
-        System.out.println("\n====================================================");
-        System.out.println("            TESTING COMPLETED SUCCESSFULLY!         ");
-        System.out.println("====================================================");
+        // THỬ NGHIỆM 3: ADMIN KHÔNG ĐƯỢC PHÉP ĐẶT GIÁ (QUYỀN HẠN ROLE)
+        System.out.println("\n>> TEST 3: Admin đặt giá thử (Sai vai trò - Role)");
+        manager.placeBid(adminHeThong, xeAuction, 30000.0);
+
+        // THỬ NGHIỆM 4: ĐẶT GIÁ THÀNH CÔNG
+        System.out.println("\n>> TEST 4: Người dùng An đặt giá $30.000 (Thành công)");
+        manager.placeBid(bidderAn, xeAuction, 30000.0);
+
+        // THỬ NGHIỆM 5: ĐẶT GIÁ KHI PHIÊN ĐÃ HẾT HẠN (SIMULATION)
+        System.out.println("\n>> TEST 5: Thử đặt giá cho một phiên đã bị khóa (CANCELLED)");
+        xeAuction.setStatus("CANCELLED");
+        manager.placeBid(bidderAn, xeAuction, 35000.0);
+
+        // 5. HIỂN THỊ KẾT QUẢ CUỐI CÙNG
+        System.out.println("\n==========================================================");
+        System.out.println("          HỆ THỐNG KẾT THÚC KIỂM THỬ THÀNH CÔNG           ");
+        System.out.println("        TÌNH TRẠNG PHIÊN CUỐI CÙNG: " + xeAuction.toString());
+        System.out.println("==========================================================");
     }
 }
