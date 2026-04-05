@@ -56,7 +56,7 @@ public class DatabaseManager {
             props.load(input);
 
             // Nạp Driver (Không bắt đầu từ JDBC 4.0 nhưng viết vào để đảm bảo tương thích mọi môi trường)
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            //Class.forName("com.mysql.cj.jdbc.Driver");
 
             String url = props.getProperty("db.url");
             String user = props.getProperty("db.user"); // Lưu ý: Đồng bộ tên field với file .properties
@@ -67,7 +67,7 @@ public class DatabaseManager {
 
             System.out.println("[DB-INFO] Kết nối MySQL đã được thiết lập thành công.");
 
-        } catch (ClassNotFoundException | SQLException | IOException e) {
+        } catch (SQLException | IOException e) { // Bỏ ClassNotFoundException đi nhé
             System.err.println("[DB-ERROR] Khởi tạo kết nối thất bại: " + e.getMessage());
             throw new RuntimeException("Lỗi nghiêm trọng khi nạp Database: " + e.getMessage(), e);
         }
