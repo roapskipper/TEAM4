@@ -35,7 +35,7 @@ public class AuctionManager {
 
     private ScheduledExecutorService endAuctionScheduler;
 
-    private AuctionManager() {
+/*    private AuctionManager() {
         this.activeAuctions = new ArrayList<>();
         this.observers = new ArrayList<>();
         this.auctionDAO = new AuctionDAOImpl();
@@ -45,6 +45,16 @@ public class AuctionManager {
         loadActiveAuctionsFromDB();
         startAuctionEndMonitor(); // Bật Robot kiểm tra thời gian (Mỗi 5s)
     }
+*/
+private AuctionManager() {
+    this.activeAuctions = new ArrayList<>();
+    this.observers = new ArrayList<>();
+    this.auctionDAO = new AuctionDAOImpl();
+    this.userDAO = new UserDAOImpl();
+    this.itemDAO = new ItemDAOImpl();
+    // loadActiveAuctionsFromDB();  // ← TẠMBÌNH LUẬN ĐI
+    startAuctionEndMonitor();
+}
 
     public static synchronized AuctionManager getInstance() {
         if (instance == null) {
