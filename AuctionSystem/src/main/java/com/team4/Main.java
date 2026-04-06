@@ -1,62 +1,86 @@
 package com.team4;
 
-import com.team4.dao.impl.*;
+import com.team4.factory.*;
 import com.team4.model.*;
 import com.team4.service.AuctionManager;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
+/**
+ * LỚP KIỂM THỬ HỆ THỐNG TEAM4 - Đợt cuối trước khi lên Database
+ */
 public class Main {
     public static void main(String[] args) {
         System.out.println("==========================================================");
-        System.out.println("      HỆ THỐNG ĐẤU GIÁ TEAM 4 - BẢN TỔNG HỢP FINAL       ");
+        System.out.println("      HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN - TEAM 4 - PHASE 2     ");
+        System.out.println("   (Testing: Factory, Singleton, Observer, Polymorphism)  ");
         System.out.println("==========================================================\n");
 
-        // 1. Khởi tạo
-        UserDAOImpl userDAO = new UserDAOImpl();
-        ItemDAOImpl itemDAO = new ItemDAOImpl();
-        AuctionDAOImpl auctionDAO = new AuctionDAOImpl();
-        BidTransactionDAOImpl bidDAO = new BidTransactionDAOImpl();
+        // 1. KHỞI TẠO HỆ THỐNG QUẢN LÝ (SINGLETON)
         AuctionManager manager = AuctionManager.getInstance();
 
-        // 2. Tạo người dùng (Tự sinh UUID)
-        Seller sellerTrung = new Seller("trung_owner", "pass123", "Trung Auto Shop");
-        Bidder bidderAn = new Bidder("an_dai_gia", "an_pass", 500000.0, "Hà Nội", "0911222333");
+        // 2. TẠO CÁC VAI TRÒ NGƯỜI DÙNG (INHERITANCE & UUID)
+        Seller shopLuxury = new Seller("trung_luxury", "pass123", "Trung Luxury Center");
+        Bidder bidderAn = new Bidder("an_dai_gia", "pass456", 50000.0, "123 Cầu Giấy", "0911");
+        Bidder bidderBinh = new Bidder("binh_ngheo", "pass789", 500.0, "456 Giải Phóng", "0922");
+        Admin adminHeThong = new Admin("admin_chu", "root123", 2, "G4-ROOT");
 
-        userDAO.save(sellerTrung);
-        userDAO.save(bidderAn);
+        System.out.println("--- [Users Created] ---");
+        System.out.println(shopLuxury.toString());
+        System.out.println(bidderAn.toString());
+        System.out.println(bidderBinh.toString() + "\n");
 
-        // 3. Tạo vật phẩm qua Factory
-        Item sieuXe = new com.team4.model.Vehicle(
-                "Ferrari Purosangue", 400000.0, "Siêu phẩm SUV 2024", sellerTrung.getId(),
-                "Ferrari", "Purosangue", 2024, 0, "V12", "Đỏ Rosso", "30H-888.88", true, "Auto"
+        // 3. SẢN XUẤT HÀNG HÓA BẰNG NHÀ MÁY (FACTORY PATTERN)
+        // Ta tạo một chiếc siêu xe Mercedes qua VehicleFactory
+        ItemFactory xeFactory = new VehicleFactory(
+                "Mercedes-Maybach S680", 25000.0, "Xe VIP nguyên bản 100%", shopLuxury.getId(),
+                "Mercedes", "S680", 2024, 50, "Petrol", "Đen", "30H-999.99", true, "Auto"
         );
-        itemDAO.save(sieuXe);
+        Item sieuXe = xeFactory.createItem(); // Đa hình: trả về Item nhưng linh hồn là Vehicle
 
-        // 4. Mở phiên đấu giá
-        Auction auctionXe = new Auction(sieuXe.getId(), sellerTrung.getId(), 400000.0, LocalDateTime.now().plusHours(1));
-        auctionDAO.save(auctionXe);
+        // Ta tạo một cái túi hiệu qua FashionFactory
+        ItemFactory tuiFactory = new FashionFactory(
+                "Túi Hermès Kelly", 8000.0, "Hàng hiếm bản kỷ niệm", shopLuxury.getId(),
+                "Hermès", "32", "Da Cá Sấu", "Vàng Chanh", "Nữ", "Like New", true
+        );
+        Item chiecTui = tuiFactory.createItem();
 
-        // 5. Thực hiện Đặt giá (Business Logic)
-        System.out.print("[BID] An Đại Gia trả giá $450.000: ");
-        if(manager.placeBid(bidderAn, auctionXe, 450000.0)) {
-            auctionDAO.update(auctionXe); // Cập nhật DB
-            bidDAO.save(new BidTransaction(auctionXe.getId(), bidderAn.getId(), 450000.0));
-        }
+        System.out.println("--- [Inventory Produced by Factories] ---");
+        sieuXe.showInfo();
+        chiecTui.showInfo();
 
-        // 6. Kiểm tra kết quả vĩnh viễn trong MySQL
-        System.out.println("\n[XÁC MINH] Truy vấn ngược từ MySQL...");
-        Optional<Auction> fromDb = auctionDAO.findById(auctionXe.getId());
-        fromDb.ifPresent(dbAuc -> {
-            System.out.println("--- THÔNG TIN CHỐT TRONG DATABASE ---");
-            System.out.println("Vật phẩm đấu giá: Ferrari");
-            System.out.println("Giá hiện tại: $" + dbAuc.getCurrentPrice());
-            System.out.println("Người dẫn đầu: " + dbAuc.getCurrentHighestBidderId());
-        });
+        // 4. THIẾT LẬP PHIÊN ĐẤU GIÁ (AUCTION SETUP)
+        // Tạo phiên đấu giá cho xe hơi kết thúc sau 2 giờ nữa
+        Auction xeAuction = new Auction(sieuXe.getId(), shopLuxury.getId(),
+                sieuXe.getStartingPrice(), LocalDateTime.now().plusHours(2));
+        manager.createAuction(xeAuction);
 
+        System.out.println("\n--- [STARTING BUSINESS LOGIC TESTS] ---");
+
+        // THỬ NGHIỆM 1: ĐẶT GIÁ THẤP HƠN GIÁ HIỆN TẠI
+        System.out.println(">> TEST 1: Người dùng An đặt giá $20.000 (Thấp hơn giá khởi điểm $25.000)");
+        manager.placeBid(bidderAn, xeAuction, 20000.0);
+
+        // THỬ NGHIỆM 2: NGƯỜI DÙNG KHÔNG ĐỦ TIỀN (VÍ CÓ $500 MÀ ĐẶT $26.000)
+        System.out.println("\n>> TEST 2: Người dùng Bình đặt giá $26.000 (Vượt quá số dư ví $500)");
+        manager.placeBid(bidderBinh, xeAuction, 26000.0);
+
+        // THỬ NGHIỆM 3: ADMIN KHÔNG ĐƯỢC PHÉP ĐẶT GIÁ (QUYỀN HẠN ROLE)
+        System.out.println("\n>> TEST 3: Admin đặt giá thử (Sai vai trò - Role)");
+        manager.placeBid(adminHeThong, xeAuction, 30000.0);
+
+        // THỬ NGHIỆM 4: ĐẶT GIÁ THÀNH CÔNG
+        System.out.println("\n>> TEST 4: Người dùng An đặt giá $30.000 (Thành công)");
+        manager.placeBid(bidderAn, xeAuction, 30000.0);
+
+        // THỬ NGHIỆM 5: ĐẶT GIÁ KHI PHIÊN ĐÃ HẾT HẠN (SIMULATION)
+        System.out.println("\n>> TEST 5: Thử đặt giá cho một phiên đã bị khóa (CANCELLED)");
+        xeAuction.setStatus("CANCELLED");
+        manager.placeBid(bidderAn, xeAuction, 35000.0);
+
+        // 5. HIỂN THỊ KẾT QUẢ CUỐI CÙNG
         System.out.println("\n==========================================================");
-        System.out.println("      HỆ THỐNG VẬN HÀNH HOÀN HẢO! CHÚC MỪNG TEAM 4.       ");
+        System.out.println("          HỆ THỐNG KẾT THÚC KIỂM THỬ THÀNH CÔNG           ");
+        System.out.println("        TÌNH TRẠNG PHIÊN CUỐI CÙNG: " + xeAuction.toString());
         System.out.println("==========================================================");
-    } // Đóng hàm main ở cuối cùng này nhé Trung!
+    }
 }

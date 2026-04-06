@@ -10,6 +10,12 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE,
     role VARCHAR(20) DEFAULT 'USER', -- ADMIN, USER
     balance DECIMAL(15, 2) DEFAULT 0.0, -- Tiền trong ví để đấu giá
+    store_name VARCHAR(100), -- For Seller
+    rating DECIMAL(3,2) DEFAULT 5.0, -- For Seller
+    shipping_address VARCHAR(255), -- For BidderS
+    phone_number VARCHAR(20), -- For Bidder
+    access_level INT, -- For Admin
+    admin_code VARCHAR(50), -- For Admin
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
