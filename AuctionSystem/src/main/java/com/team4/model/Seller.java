@@ -18,8 +18,6 @@ public class Seller extends User implements Serializable {
      * Tự động gán role "SELLER", rating 5.0 và khởi tạo danh sách trống.
      */
     public Seller(String username, String password, String storeName) {
-        // Gọi constructor của User(String username, String password, String role)
-        // Nó sẽ tự gọi tiếp Entity để tạo UUID mới.
         super(username, password, "SELLER");
         this.storeName = storeName;
         this.rating = 5.0;
@@ -39,7 +37,7 @@ public class Seller extends User implements Serializable {
         this.listedItemIds = new ArrayList<>();
     }
 
-    // --- LOGIC NGHIỆP VỤ (BUSINESS LOGIC) ---
+    // --- LOGIC NGHIỆP VỤ ---
 
     public void addNewItem(String itemId) {
         if (itemId != null && !listedItemIds.contains(itemId)) {
@@ -61,8 +59,8 @@ public class Seller extends User implements Serializable {
     public void displayRolePermissions() {
         System.out.println("\n========== [ QUYỀN HẠN NGƯỜI BÁN ] ==========");
         System.out.println("Tên shop    : " + storeName);
-        System.out.println("Chủ sở hữu  : " + username); // Biến protected từ lớp cha User
-        System.out.println("ID Hệ thống : " + getId());   // Lấy từ lớp ông nội Entity
+        System.out.println("Chủ sở hữu  : " + username);
+        System.out.println("ID Hệ thống : " + getId());
         System.out.println("Điểm uy tín : " + rating + " / 5.0");
         System.out.println("Quyền hạn   : Đăng hàng, Cập nhật giá, Quản lý kho.");
         System.out.println("Số mặt hàng : " + listedItemIds.size());

@@ -39,7 +39,6 @@ public class Admin extends User implements Serializable {
         }
     }
 
-    // Ghi chú: Đảm bảo lớp Item đã có phương thức getName()
     public void removeInvalidItem(Item item) {
         if (item != null) {
             System.out.println("[ADMIN ACTION] Quản trị viên " + username +

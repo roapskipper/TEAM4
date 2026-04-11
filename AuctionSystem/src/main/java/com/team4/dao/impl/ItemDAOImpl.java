@@ -170,7 +170,7 @@ public class ItemDAOImpl implements BaseDAO<Item> {
             case "ELECTRONICS" -> new Electronics(id, name, start, current, desc, owner, "BrandDB",
                     "ModelDB", rs.getString("serial_number"), "ColorDB", "ConditionDB", rs.getInt("warranty_months"), true, rs.getString("tech_spec"));
             case "COLLECTIBLE" -> new Collectible(id, name, start, current, desc, owner,
-                    rs.getInt("creation_year"), rs.getString("rarity_level"), "GradeDB", rs.getBoolean("has_certificate"), rs.getString("origin"), "SpecialDB");
+                    rs.getInt("creation_year"), rs.getString("rarity_level"), "GradeDB", rs.getString("SpecificDB"), rs.getBoolean("has_certificate"), rs.getString("origin"), "SpecialDB");
             default -> throw new IllegalStateException("Unknown category: " + cat);
         };
     }

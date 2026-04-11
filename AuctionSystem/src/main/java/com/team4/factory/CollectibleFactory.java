@@ -18,6 +18,7 @@ public class CollectibleFactory implements ItemFactory {
     private int yearOfOrigin;
     private String rarityLevel;   // Hiếm, Rất hiếm, Duy nhất
     private String conditionGrade;// Thang điểm bảo quản (ví dụ: 9.5/10)
+    private String categorySpecific;
     private boolean hasCertificate; // Chứng nhận đồ cổ thật
     private String origin;        // Xuất xứ (Quốc gia/Vương triều)
     private String specialFeatures;
@@ -27,7 +28,7 @@ public class CollectibleFactory implements ItemFactory {
      * Lưu ý: Không cần truyền ID, hệ thống UUID sẽ lo liệu.
      */
     public CollectibleFactory(String name, double startingPrice, String desc, String ownerId,
-                              int yearOfOrigin, String rarityLevel, String conditionGrade,
+                              int yearOfOrigin, String rarityLevel, String conditionGrade, String categorySpecific,
                               boolean hasCertificate, String origin, String specialFeatures) {
         this.name = name;
         this.startingPrice = startingPrice;
@@ -36,6 +37,7 @@ public class CollectibleFactory implements ItemFactory {
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
+        this.categorySpecific = categorySpecific;
         this.hasCertificate = hasCertificate;
         this.origin = origin;
         this.specialFeatures = specialFeatures;
@@ -55,6 +57,7 @@ public class CollectibleFactory implements ItemFactory {
                 yearOfOrigin,
                 rarityLevel,
                 conditionGrade,
+                categorySpecific,
                 hasCertificate,
                 origin,
                 specialFeatures

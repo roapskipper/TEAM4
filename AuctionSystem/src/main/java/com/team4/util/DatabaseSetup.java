@@ -4,57 +4,157 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 public class DatabaseSetup {
     public static void initDatabase() {
+        DbConfig config = loadConfig();
+        String adminUrl = buildAdminUrl(config.url);
+
         try {
-            // Load MySQL Driver
             Class.forName("com.mysql.cj.jdbc.Driver");
-            
-            // Connect without database to create it
-            String url = "jdbc:mysql://localhost:3306/?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true";
-            try (Connection conn = DriverManager.getConnection(url, "root", "123456");
-                 Statement stmt = conn.createStatement()) {
-                
-                // Read schema.sql
-                String schema = readSchemaSQL();
-                
-                // Split by semicolon and execute each statement
-                String[] statements = schema.split(";");
-                for (String sql : statements) {
-                    sql = sql.trim();
-                    if (!sql.isEmpty()) {
-                        stmt.execute(sql);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("MySQL JDBC driver not found", e);
+        }
+
+        try (Connection adminConn = DriverManager.getConnection(adminUrl, config.user, config.password);
+             Statement adminStmt = adminConn.createStatement()) {
+            adminStmt.execute("CREATE DATABASE IF NOT EXISTS auction_system");
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot create/check database auction_system", e);
+        }
+
+        String schema = readSchemaSQL();
+        List<String> statements = splitStatements(schema);
+
+        try (Connection conn = DriverManager.getConnection(config.urlWithParams(), config.user, config.password);
+             Statement stmt = conn.createStatement()) {
+            for (String sql : statements) {
+                try {
+                    stmt.execute(sql);
+                } catch (SQLException e) {
+                    if (!isIgnorableSchemaError(e)) {
+                        throw e;
                     }
                 }
-                
-                System.out.println("✅ [DATABASE SETUP] Cơ sở dữ liệu và bảng đã được tạo thành công!");
             }
-        } catch (ClassNotFoundException e) {
-            System.err.println("❌ Không tìm thấy MySQL Driver");
-            e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("❌ Lỗi khi tạo database: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Cannot apply schema.sql", e);
         }
     }
-    
-    private static String readSchemaSQL() throws IOException {
+
+    private static DbConfig loadConfig() {
+        Properties props = new Properties();
+        try (InputStream is = DatabaseSetup.class.getClassLoader().getResourceAsStream("database.properties")) {
+            if (is == null) {
+                throw new IOException("Missing database.properties in classpath");
+            }
+            props.load(is);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot load database.properties", e);
+        }
+
+        String url = trim(props.getProperty("db.url"));
+        String user = trim(props.getProperty("db.user"));
+        String password = props.getProperty("db.password");
+        if (password == null) {
+            password = "";
+        } else {
+            password = password.trim();
+        }
+
+        if (url == null || url.isEmpty()) {
+            throw new IllegalArgumentException("db.url is empty");
+        }
+        if (user == null || user.isEmpty()) {
+            throw new IllegalArgumentException("db.user is empty");
+        }
+
+        return new DbConfig(url, user, password);
+    }
+
+    private static String readSchemaSQL() {
         StringBuilder sb = new StringBuilder();
-        try (InputStream is = DatabaseSetup.class.getClassLoader().getResourceAsStream("schema.sql");
-             BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Skip comments and empty lines
-                if (!line.trim().startsWith("--") && !line.trim().isEmpty()) {
-                    sb.append(line).append("\n");
+        try (InputStream is = DatabaseSetup.class.getClassLoader().getResourceAsStream("schema.sql")) {
+            if (is == null) {
+                throw new IOException("Missing schema.sql in classpath");
+            }
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String trimmed = line.trim();
+                    if (!trimmed.startsWith("--") && !trimmed.isEmpty()) {
+                        sb.append(line).append('\n');
+                    }
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot read schema.sql", e);
         }
         return sb.toString();
     }
-}
 
+    private static List<String> splitStatements(String schema) {
+        String[] pieces = schema.split(";");
+        List<String> statements = new ArrayList<>();
+        for (String piece : pieces) {
+            String sql = piece.trim();
+            if (!sql.isEmpty()) {
+                statements.add(sql);
+            }
+        }
+        return statements;
+    }
+
+    private static String buildAdminUrl(String dbUrl) {
+        String baseUrl = dbUrl;
+        String query = "";
+
+        int queryIdx = dbUrl.indexOf('?');
+        if (queryIdx >= 0) {
+            baseUrl = dbUrl.substring(0, queryIdx);
+            query = dbUrl.substring(queryIdx);
+        }
+
+        int slashIdx = baseUrl.lastIndexOf('/');
+        if (slashIdx < 0) {
+            throw new IllegalArgumentException("Invalid db.url: " + dbUrl);
+        }
+
+        String adminBase = baseUrl.substring(0, slashIdx + 1);
+        if (query.isEmpty()) {
+            query = "?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true";
+        }
+        return adminBase + query;
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private static boolean isIgnorableSchemaError(SQLException e) {
+        String msg = e.getMessage();
+        if (msg == null) {
+            return false;
+        }
+        return msg.contains("Duplicate column name")
+                || msg.contains("Duplicate key name")
+                || msg.contains("already exists");
+    }
+
+    private record DbConfig(String url, String user, String password) {
+        String urlWithParams() {
+            if (url.contains("?")) {
+                return url;
+            }
+            return url + "?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true";
+        }
+    }
+}

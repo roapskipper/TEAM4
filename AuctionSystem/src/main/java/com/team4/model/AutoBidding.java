@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * Lớp AutoBidding - Lệnh đấu giá tự động.
- * Kế thừa từ Entity để sử dụng hệ thống UUID chuẩn TEAM4.
+ * Kế thừa từ Entity để sử dụng hệ thống UUID.
  */
 public class AutoBidding extends Entity implements Serializable {
     private static final long serialVersionUID = 1L;

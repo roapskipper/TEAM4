@@ -18,7 +18,6 @@ public class Bidder extends User implements Serializable {
      */
     public Bidder(String username, String password, double initialBalance,
                   String shippingAddress, String phoneNumber) {
-        // Gọi User(...) -> Entity(...) để tạo UUID và gán role "BIDDER"
         super(username, password, "BIDDER");
         this.balance = initialBalance; // Dùng biến protected từ lớp cha User
         this.shippingAddress = shippingAddress;
@@ -27,7 +26,7 @@ public class Bidder extends User implements Serializable {
     }
 
     /**
-     * CONSTRUCTOR 2: Dùng khi lấy dữ liệu từ MySQL (Dành cho DAO)
+     * CONSTRUCTOR 2: Dùng khi lấy dữ liệu từ MySQL
      */
     public Bidder(String id, String username, String password, String fullName,
                   String email, double balance, String shippingAddress, String phoneNumber) {
@@ -37,7 +36,7 @@ public class Bidder extends User implements Serializable {
         this.biddedItemIds = new ArrayList<>();
     }
 
-    // --- LOGIC NGHIỆP VỤ (BUSINESS LOGIC) ---
+    // --- LOGIC NGHIỆP VỤ ---
 
     public void addBiddedItem(String itemId) {
         if (itemId != null && !biddedItemIds.contains(itemId)) {

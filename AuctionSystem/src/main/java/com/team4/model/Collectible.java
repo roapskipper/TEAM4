@@ -13,35 +13,29 @@ public class Collectible extends Item implements Serializable {
     private int yearOfOrigin;
     private String rarityLevel;   // Hiếm, Rất hiếm, Duy nhất
     private String conditionGrade;// Điểm bảo quản (VD: 9/10)
-    private String categorySpecific; // Phân loại nhỏ (Tiền cổ, Tem, Đồng hồ...)
+    private String categorySpecific; // Thuộc tính đặc thù (ví dụ: Loại tem, Loại tiền cổ)
     private boolean hasCertificate;
     private String origin;
     private String specialFeatures;
 
-    /**
-     * CONSTRUCTOR 1: Khớp với CollectibleFactory (Giải quyết lỗi đỏ trên IDE)
-     */
     public Collectible(String name, double startingPrice, String desc, String ownerId,
-                       int yearOfOrigin, String rarityLevel, String conditionGrade,
+                       int yearOfOrigin, String rarityLevel, String conditionGrade, String categorySpecific,
                        boolean hasCertificate, String origin, String specialFeatures) {
 
         // Gọi super() lên Item để tự sinh UUID và gán category tổng là "COLLECTIBLE"
         super(name, startingPrice, desc, "COLLECTIBLE", ownerId);
-
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
+        this.categorySpecific = categorySpecific;
         this.hasCertificate = hasCertificate;
         this.origin = origin;
         this.specialFeatures = specialFeatures;
     }
 
-    /**
-     * CONSTRUCTOR 2: Dùng cho Database mapping (Dành cho chặng sau)
-     */
     public Collectible(String id, String name, double startingPrice, double currentPrice,
                        String desc, String ownerId, int yearOfOrigin, String rarityLevel,
-                       String conditionGrade, boolean hasCertificate, String origin,
+                       String conditionGrade,String categorySpecific, boolean hasCertificate, String origin,
                        String specialFeatures) {
 
         super(id, name, startingPrice, currentPrice, desc, "COLLECTIBLE", ownerId);

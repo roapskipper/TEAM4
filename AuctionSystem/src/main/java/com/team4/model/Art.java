@@ -70,7 +70,7 @@ public class Art extends Item implements Serializable {
         System.out.println("Chất liệu    : " + medium);
         System.out.println("Trường phái  : " + style);
         System.out.println("Kích thước   : " + dimensions);
-        System.out.println("Tình trạng   : " + (isOriginal ? "BẢN GỐC" : "Bản sao giới hạn"));
+        System.out.println("Tình trạng   : " + (isOriginal ? "Bản gốc" : "Bản sao"));
 
         if (exhibitionHistory != null && !exhibitionHistory.isEmpty()) {
             System.out.println("Triển lãm    : " + exhibitionHistory);
