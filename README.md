@@ -64,3 +64,5 @@ AuctionSystemClient/
 - [x] **Sprint 3:** Thiết kế Item Card (Thẻ sản phẩm) với dữ liệu Mocking.
 - [ ] **Sprint 4:** Xây dựng Bidding Room (Phòng đấu giá chi tiết).
 - [ ] **Sprint 5:** Ghép nối API/Socket với Back-End Server.
+=======
+"# TEAM4"
