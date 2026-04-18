@@ -56,7 +56,7 @@ AuctionSystemClient/
             ├── views/          # [View] Cấu trúc UI bằng FXML (login.fxml)
             └── styles/         # [Style] Giao diện toàn cục (global.css)
 
-
+```
 6. Lộ trình phát triển FE (Roadmap)
 -[x] Sprint 1: Hoàn thiện Authentication UI (Login/Register) & Setup Maven.
 
