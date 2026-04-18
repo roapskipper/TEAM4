@@ -1,21 +1,11 @@
-# === Java & Maven ===
+# Maven
 target/
-*.class
-*.jar
-*.war
-*.ear
 
-# === IntelliJ IDEA ===
+# IntelliJ IDEA
 .idea/
 *.iml
-out/
-gen/
-.idea_modules/
+*.iws
 
-# === Hệ điều hành (Rác hệ thống) ===
+# Mac/Windows system files
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# === Log files ===
-*.log
