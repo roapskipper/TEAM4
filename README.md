@@ -43,25 +43,27 @@ Chạy ứng dụng từ file Launcher.java (Bỏ qua file Main.java để vư�
 5. Cấu trúc Thư mục (Architecture)
    Phân hệ Front-End được thiết kế theo mô hình MVC (Model-View-Controller), tách biệt hoàn toàn Giao diện và Code xử lý:
 
-Plaintext
+```text
 AuctionSystemClient/
 ├── pom.xml                     # Trái tim của Maven (Dependencies & Plugins)
 └── src/
-└── main/
-├── java/auctionsystemclient/
-│   ├── Main.java       # Khởi tạo kích thước Stage & nạp Scene
-│   ├── Launcher.java   # Mồi khởi chạy (Tránh lỗi runtime components)
-│   └── controller/     # [Controller] Bắt sự kiện (VD: LoginController.java)
-└── resources/
-├── views/          # [View] Cấu trúc UI bằng FXML (login.fxml)
-└── styles/         # [Style] Giao diện toàn cục (global.css)
+    └── main/
+        ├── java/auctionsystemclient/
+        │   ├── Main.java       # Khởi tạo kích thước Stage & nạp Scene
+        │   ├── Launcher.java   # Mồi khởi chạy (Tránh lỗi runtime components)
+        │   └── controller/     # [Controller] Bắt sự kiện (VD: LoginController.java)
+        └── resources/
+            ├── views/          # [View] Cấu trúc UI bằng FXML (login.fxml)
+            └── styles/         # [Style] Giao diện toàn cục (global.css)
+
+
 6. Lộ trình phát triển FE (Roadmap)
-   [x] Sprint 1: Hoàn thiện Authentication UI (Login/Register) & Setup Maven.
+-[x] Sprint 1: Hoàn thiện Authentication UI (Login/Register) & Setup Maven.
 
-[ ] Sprint 2: Xây dựng Dashboard (Trang chủ) & Menu Sidebar.
+-[ ] Sprint 2: Xây dựng Dashboard (Trang chủ) & Menu Sidebar.
 
-[ ] Sprint 3: Thiết kế Item Card (Thẻ sản phẩm) với dữ liệu Mocking.
+-[ ] Sprint 3: Thiết kế Item Card (Thẻ sản phẩm) với dữ liệu Mocking.
 
-[ ] Sprint 4: Xây dựng Bidding Room (Phòng đấu giá chi tiết).
+-[ ] Sprint 4: Xây dựng Bidding Room (Phòng đấu giá chi tiết).
 
-[ ] Sprint 5: Ghép nối API/Socket với Back-End Server.
+-[ ] Sprint 5: Ghép nối API/Socket với Back-End Server.
