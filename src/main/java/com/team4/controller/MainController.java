@@ -1,4 +1,4 @@
-package auctionsystemclient.controller;
+package com.team4.controller;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -10,7 +10,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 
-public class DashboardController {
+public class MainController {
 
     @FXML
     private TilePane auctionGrid;

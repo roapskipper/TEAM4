@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>vn.edu.vnu.uet</groupId>
-    <artifactId>AuctionSystemClient</artifactId>
+    <artifactId>team4</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -44,7 +44,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>auctionsystemclient.Main</mainClass>
+                    <mainClass>com.team4.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

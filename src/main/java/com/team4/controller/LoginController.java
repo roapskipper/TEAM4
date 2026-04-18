@@ -1,4 +1,4 @@
-package auctionsystemclient.controller;
+package com.team4.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -100,7 +100,7 @@ public class LoginController {
 
     private void switchToDashboard() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/dashboard.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(root));

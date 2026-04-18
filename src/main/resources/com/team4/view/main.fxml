@@ -3,8 +3,8 @@
 <?import javafx.scene.layout.*?>
 
 <HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="auctionsystemclient.controller.DashboardController"
-      stylesheets="@../styles/global.css"
+      fx:controller="com.team4.controller.MainController"
+      stylesheets="@style.css"
       style="-fx-background-color: #0a0a0f;">
 
     <VBox prefWidth="260" style="-fx-background-color: #13131a; -fx-padding: 30 20;" spacing="10">

@@ -7,8 +7,8 @@
 <?import javafx.scene.effect.DropShadow?>
 
 <StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="auctionsystemclient.controller.LoginController"
-           stylesheets="@../styles/global.css"
+           fx:controller="com.team4.controller.LoginController"
+           stylesheets="@style.css"
            style="-fx-background-color: #0a0a0f;">
 
     <StackPane style="-fx-background-color: linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));">
