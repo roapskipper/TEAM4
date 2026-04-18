@@ -27,8 +27,8 @@
                 <Label text="PB" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
             </StackPane>
             <VBox alignment="CENTER_LEFT">
-                <Label text="Jeffrey Epstein" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
-                <Label text="International student" style="-fx-text-fill: #9ca3af; -fx-font-size: 12;"/>
+                <Label text="Nguyen Phuc Binh" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
+                <Label text="Testing" style="-fx-text-fill: #9ca3af; -fx-font-size: 12;"/>
             </VBox>
         </HBox>
     </VBox>
