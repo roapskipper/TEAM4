@@ -57,13 +57,10 @@ AuctionSystemClient/
             └── styles/         # [Style] Giao diện toàn cục (global.css)
 
 ```
-6. Lộ trình phát triển FE (Roadmap)
--[x] Sprint 1: Hoàn thiện Authentication UI (Login/Register) & Setup Maven.
+## 6. Lộ trình phát triển FE (Roadmap)
 
--[ ] Sprint 2: Xây dựng Dashboard (Trang chủ) & Menu Sidebar.
-
--[ ] Sprint 3: Thiết kế Item Card (Thẻ sản phẩm) với dữ liệu Mocking.
-
--[ ] Sprint 4: Xây dựng Bidding Room (Phòng đấu giá chi tiết).
-
--[ ] Sprint 5: Ghép nối API/Socket với Back-End Server.
+- [x] **Sprint 1:** Hoàn thiện Authentication UI (Login/Register) & Setup Maven.
+- [x] **Sprint 2:** Xây dựng Dashboard (Trang chủ) & Menu Sidebar.
+- [x] **Sprint 3:** Thiết kế Item Card (Thẻ sản phẩm) với dữ liệu Mocking.
+- [ ] **Sprint 4:** Xây dựng Bidding Room (Phòng đấu giá chi tiết).
+- [ ] **Sprint 5:** Ghép nối API/Socket với Back-End Server.
