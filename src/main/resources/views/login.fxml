@@ -6,7 +6,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.effect.DropShadow?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml/1"
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="auctionsystemclient.controller.LoginController"
            stylesheets="@../styles/global.css"
            style="-fx-background-color: #0a0a0f;">
