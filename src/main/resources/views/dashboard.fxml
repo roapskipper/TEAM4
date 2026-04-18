@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="auctionsystemclient.controller.DashboardController"
+      stylesheets="@../styles/global.css"
+      style="-fx-background-color: #0a0a0f;">
+
+    <VBox prefWidth="260" style="-fx-background-color: #13131a; -fx-padding: 30 20;" spacing="10">
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 0 0 30 0;">
+            <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 8;" prefWidth="35" prefHeight="35">
+                <Label text="⚡" style="-fx-font-size: 18;"/>
+            </StackPane>
+            <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
+        </HBox>
+
+        <Button text="Khám phá" styleClass="nav-btn, active-nav" maxWidth="Infinity" alignment="BASELINE_LEFT"/>
+        <Button text="Phòng đấu giá" styleClass="nav-btn" maxWidth="Infinity" alignment="BASELINE_LEFT"/>
+        <Button text="Sản phẩm của tôi" styleClass="nav-btn" maxWidth="Infinity" alignment="BASELINE_LEFT"/>
+
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <Separator style="-fx-background-color: #27273a; -fx-padding: 0 0 15 0;" />
+        <HBox alignment="CENTER_LEFT" spacing="15">
+            <StackPane style="-fx-background-color: #8b5cf6; -fx-background-radius: 20;" prefWidth="40" prefHeight="40">
+                <Label text="PB" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+            </StackPane>
+            <VBox alignment="CENTER_LEFT">
+                <Label text="Nguyễn Phúc Bình" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
+                <Label text="Sinh viên CN1" style="-fx-text-fill: #9ca3af; -fx-font-size: 12;"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <VBox HBox.hgrow="ALWAYS" style="-fx-background-color: #0a0a0f;">
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 20 40; -fx-background-color: rgba(19, 19, 26, 0.8);" spacing="20">
+            <Label text="Khám phá" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <TextField promptText="Tìm kiếm sản phẩm..." styleClass="search-bar" prefWidth="300"/>
+            <Button text="🔔" styleClass="icon-btn"/>
+        </HBox>
+
+        <ScrollPane fitToWidth="true" style="-fx-background: #0a0a0f; -fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+            <VBox style="-fx-padding: 40;" spacing="30">
+                <Label text="Phiên đấu giá nổi bật" style="-fx-font-size: 18; -fx-text-fill: white; -fx-font-weight: bold;"/>
+
+                <TilePane fx:id="auctionGrid" hgap="25" vgap="25" prefColumns="3"/>
+            </VBox>
+        </ScrollPane>
+    </VBox>
+</HBox>
