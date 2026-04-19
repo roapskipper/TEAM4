@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
                                      password VARCHAR(255) NOT NULL,
                                      full_name VARCHAR(100),
                                      email VARCHAR(100) UNIQUE,
-                                     role VARCHAR(20) NOT NULL,
+                                     role ENUM('ADMIN', 'SELLER', 'BIDDER') NOT NULL,
                                      balance DECIMAL(15,2) NOT NULL DEFAULT 0.00,
 
                                      access_level INT,
@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS items (
                                      name VARCHAR(255) NOT NULL,
                                      description TEXT,
                                      starting_price DECIMAL(15,2) NOT NULL,
-                                     current_price DECIMAL(15,2) NOT NULL,
                                      category VARCHAR(30) NOT NULL,
                                      owner_id VARCHAR(36),
 
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS items (
                                      warranty_months INT,
                                      is_fully_functional BOOLEAN,
                                      technical_spec TEXT,
-                                     tech_spec TEXT,
 
                                      size VARCHAR(30),
                                      material VARCHAR(120),
@@ -87,8 +85,9 @@ CREATE TABLE IF NOT EXISTS auctions (
                                         current_price DECIMAL(15,2) NOT NULL,
                                         start_time DATETIME NOT NULL,
                                         end_time DATETIME NOT NULL,
-                                        status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+                                        status ENUM('OPEN', 'RUNNING', 'FINISHED', 'PAID', 'CANCELED') NOT NULL DEFAULT 'OPEN',
                                         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                        version INT NOT NULL DEFAULT 0, -- CONCURRENT BIDDING
 
                                         CONSTRAINT fk_auctions_item FOREIGN KEY (item_id)
                                             REFERENCES items(id) ON DELETE CASCADE ON UPDATE CASCADE,
