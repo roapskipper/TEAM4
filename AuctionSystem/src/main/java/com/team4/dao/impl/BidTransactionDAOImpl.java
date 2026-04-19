@@ -1,115 +1,122 @@
 package com.team4.dao.impl;
 
-import com.team4.dao.BaseDAO;
+import com.team4.dao.BidTransactionDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.BidTransaction;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-public class BidTransactionDAOImpl implements BaseDAO<BidTransaction> {
+public class BidTransactionDAOImpl implements BidTransactionDAO {
 
-    @Override
-    public boolean save(BidTransaction bid) {
-        String sql = "INSERT INTO bids (id, auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    /**
+     * Helper Method: Chuyển 1 dòng dữ liệu từ MySQL thành đối tượng Java
+     */
+    private BidTransaction mapRowToTransaction(ResultSet rs) throws SQLException {
+        String id = rs.getString("id");
+        String auctionId = rs.getString("auction_id");
+        String bidderId = rs.getString("bidder_id");
+        double bidAmount = rs.getDouble("bid_amount");
 
-            pstmt.setString(1, bid.getId());
-            pstmt.setString(2, bid.getAuctionId());
-            pstmt.setString(3, bid.getBidderId());
-            pstmt.setDouble(4, bid.getBidAmount());
-            pstmt.setTimestamp(5, Timestamp.valueOf(bid.getBidTime()));
+        // Chuyển đổi Timestamp của DB sang LocalDateTime của Java
+        Timestamp bidTimestamp = rs.getTimestamp("bid_time");
 
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    @Override
-    public Optional<BidTransaction> findById(String id) {
-        String sql = "SELECT * FROM bids WHERE id = ?";
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToBid(rs));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public List<BidTransaction> findAll() {
-        List<BidTransaction> bids = new ArrayList<>();
-        String sql = "SELECT * FROM bids ORDER BY bid_time DESC";
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                bids.add(mapResultSetToBid(rs));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return bids;
-    }
-
-    @Override
-    public boolean update(BidTransaction entity) {
-        // Giao dịch tiền bạc là bất biến (Immutable), không được sửa
-        System.out.println("[DAO] Warning: Bid Transactions cannot be updated.");
-        return false;
-    }
-
-    @Override
-    public boolean delete(String id) {
-        String sql = "DELETE FROM bids WHERE id = ?";
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, id);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            return false;
-        }
-    }
-
-    // --- TÍNH NĂNG THÊM CHO TRUNG ---
-    public List<BidTransaction> findByAuctionId(String auctionId) {
-        List<BidTransaction> history = new ArrayList<>();
-        String sql = "SELECT * FROM bids WHERE auction_id = ? ORDER BY bid_amount ASC";
-        try (Connection conn = DatabaseManager.getInstance().getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, auctionId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    history.add(mapResultSetToBid(rs));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return history;
-    }
-
-    // Helper method ánh xạ từ SQL Result sang Object Java
-    private BidTransaction mapResultSetToBid(ResultSet rs) throws SQLException {
         return new BidTransaction(
-                rs.getString("id"),
-                rs.getString("auction_id"),
-                rs.getString("bidder_id"),
-                rs.getDouble("bid_amount"),
-                rs.getTimestamp("bid_time").toLocalDateTime()
+                id,
+                auctionId,
+                bidderId,
+                bidAmount,
+                bidTimestamp != null ? bidTimestamp.toLocalDateTime() : null
         );
+    }
+
+    @Override
+    public boolean insert(BidTransaction transaction) {
+        String sql = "INSERT INTO bids (id, auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, transaction.getId());
+            stmt.setString(2, transaction.getAuctionId());
+            stmt.setString(3, transaction.getBidderId());
+            stmt.setDouble(4, transaction.getBidAmount());
+            stmt.setTimestamp(5, Timestamp.valueOf(transaction.getBidTime()));
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * HÀM ĂN ĐIỂM: Dùng để lấy dữ liệu vẽ Biểu đồ đường (Line Chart) thời gian thực.
+     * Dữ liệu được sắp xếp theo bid_time TĂNG DẦN (ASC) (từ cũ tới mới) để vẽ trục X.
+     */
+    @Override
+    public List<BidTransaction> findByAuctionId(String auctionId) {
+        String sql = "SELECT * FROM bids WHERE auction_id = ? ORDER BY bid_time ASC";
+        List<BidTransaction> list = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, auctionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRowToTransaction(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Dùng cho màn hình "Lịch sử của tôi" của User.
+     * Dữ liệu sắp xếp theo bid_time GIẢM DẦN (DESC) để hiển thị giao dịch mới nhất lên đầu.
+     */
+    @Override
+    public List<BidTransaction> findByBidderId(String bidderId) {
+        String sql = "SELECT * FROM bids WHERE bidder_id = ? ORDER BY bid_time DESC";
+        List<BidTransaction> list = new ArrayList<>();
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, bidderId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRowToTransaction(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    @Override
+    public BidTransaction getHighestBid(String auctionId) {
+        // Sắp xếp giá giảm dần và lấy 1 dòng đầu tiên (LIMIT 1)
+        String sql = "SELECT * FROM bids WHERE auction_id = ? ORDER BY bid_amount DESC LIMIT 1";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, auctionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToTransaction(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // Trả về null nếu phiên này chưa có ai đặt giá
     }
 }

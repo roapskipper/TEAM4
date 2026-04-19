@@ -42,6 +42,7 @@ public class Collectible extends Item implements Serializable {
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
+        this.categorySpecific = categorySpecific;
         this.hasCertificate = hasCertificate;
         this.origin = origin;
         this.specialFeatures = specialFeatures;
@@ -56,7 +57,8 @@ public class Collectible extends Item implements Serializable {
         System.out.println("Năm sản xuất : " + yearOfOrigin + " | Xuất xứ: " + origin);
         System.out.println("Độ hiếm     : " + rarityLevel);
         System.out.println("Tình trạng   : Grade " + conditionGrade);
-        System.out.println("Xác minh     : " + (hasCertificate ? "ĐÃ CÓ CHỨNG CHỈ KIỂM ĐỊNH ✔" : "Chưa có chứng chỉ ⚠"));
+        System.out.println("Loại đặc thù : " + categorySpecific);
+        System.out.println("Xác minh     : " + (hasCertificate ? "ĐÃ CÓ CHỨNG CHỈ KIỂM ĐỊNH " : "Chưa có chứng chỉ "));
 
         if (specialFeatures != null && !specialFeatures.isEmpty()) {
             System.out.println("Đặc điểm quý : " + specialFeatures);
@@ -72,6 +74,7 @@ public class Collectible extends Item implements Serializable {
     public int getYearOfOrigin() { return yearOfOrigin; }
     public String getRarityLevel() { return rarityLevel; }
     public String getConditionGrade() { return conditionGrade; }
+    public String getCategorySpecific() { return categorySpecific; }
     public boolean isHasCertificate() { return hasCertificate; }
     public String getOrigin() { return origin; }
     public String getSpecialFeatures() { return specialFeatures; }
