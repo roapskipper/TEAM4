@@ -47,14 +47,18 @@
 .idea/**/gradle.xml
 .idea/**/libraries
 
- .idea/artifacts
- .idea/compiler.xml
- .idea/jarRepositories.xml
- .idea/modules.xml
- .idea/*.iml
- .idea/modules
- *.iml
- *.ipr
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+# .idea/artifacts
+# .idea/compiler.xml
+# .idea/jarRepositories.xml
+# .idea/modules.xml
+# .idea/*.iml
+# .idea/modules
+*.iml
+# *.ipr
 
 # CMake
 cmake-build-*/
@@ -153,7 +157,7 @@ hs_err_pid*
 replay_pid*
 
 ### Maven ###
-target/
+AuctionSystem/target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
