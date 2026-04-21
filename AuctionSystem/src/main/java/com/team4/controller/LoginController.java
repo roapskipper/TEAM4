@@ -83,7 +83,7 @@ public class LoginController {
         JsonObject response = new JsonObject();
 
         if (action.equals("LOGIN")) {
-            if (u.equals("testing_bidder") && p.equals("123456")) {
+            if (u.equals("tester_bidder") && p.equals("123456")) {
                 response.addProperty("status", "SUCCESS");
                 response.addProperty("message", "Đăng nhập thành công!");
 
