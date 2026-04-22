@@ -88,5 +88,5 @@ mvn clean install
 > 1. Click chuột phải vào file **`pom.xml`**.
 > 2. Chọn **"Add as Maven Project"** (hoặc "Add Maven Projects").
 > 3. Đợi thanh tiến trình của IntelliJ chạy xong ở góc dưới bên phải, sau đó bấm Run lại.
->
+
 > 🚨 *Nếu đã làm các bước trên mà vẫn gặp bất kỳ lỗi nào khác (đỏ file, lỗi SDK,...), vui lòng chụp ảnh màn hình lỗi và gửi vào group chat để các thành viên khác hỗ trợ xử lý ngay!*
