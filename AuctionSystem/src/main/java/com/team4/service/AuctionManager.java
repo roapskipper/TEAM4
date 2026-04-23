@@ -71,4 +71,14 @@ public class AuctionManager {
             obs.updateNewBid(auction, transaction);
         }
     }
+
+    // (Lộc) 5. Lấy danh sách các cuộc đấu giá đang hoạt động
+    public List<Auction> getActiveAuctions() {
+        return activeAuctions;
+    }
+
+    // (Lộc) 6. Hủy theo dõi cập nhật đấu giá
+    public void removeObserver(BidObserver observer) {
+        observers.remove(observer);
+    }
 }
