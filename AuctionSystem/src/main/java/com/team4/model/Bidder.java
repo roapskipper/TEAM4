@@ -1,14 +1,14 @@
 package com.team4.model;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * Lớp Bidder - Người tham gia đấu giá.
  * Kế thừa từ User (Thể hiện tính Inheritance)
  */
-public class Bidder extends User implements Serializable {
+public class Bidder extends User {
     private String shippingAddress;
     private String phoneNumber;
     private List<String> biddedItemIds; // Danh sách ID các món hàng đã từng đấu giá
