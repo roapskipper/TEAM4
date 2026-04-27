@@ -1,107 +1,131 @@
 package com.team4.db;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
-/**
- * Quản lý kết nối Database.
- * Áp dụng SINGLETON PATTERN (Double-Checked Locking) để đảm bảo:
- * 1. Chỉ có 1 instance quản lý việc tạo kết nối.
- * 2. An toàn trong môi trường đa luồng (Thread-safe).
+/**Là cửa vào duy nhất để lấy connection và quản lý transaction.
+ * Có các nhiệm vụ: Mở pool, Cấp connection, Transaction, Đóng pool
+ * Sử dụng Singleton Pattern để đảm bảo chỉ có một instance duy nhất của DatabaseManager trong toàn bộ ứng dụng.
+ * Dùng HikariCP.
+ * Điều này giúp tiết kiệm tài nguyên và đảm bảo tính nhất quán khi quản lý kết nối tới MySQL.
  */
-public class DatabaseManager {
+public final class DatabaseManager {
 
-    // Khai báo các thông tin cấu hình kết nối tới MySQL
-    private static final String URL = "jdbc:mysql://localhost:3306/auction_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh";
-    private static final String USER = "root";
-    private static final String PASSWORD = "admin07";
+    private static HikariDataSource dataSource;
+    private static String url;
+    private static String username;
+    private static String password;
+    private static int poolSize;
+    private static int connectionTimeout;
+    private static int idleTimeout;
+    private static int maxLifetime;
 
-    // 1. Biến static lưu trữ instance duy nhất (volatile để tránh lỗi bộ nhớ cache trong đa luồng)
-    private static volatile DatabaseManager instance;
+    // Không cho tạo instance
+    private DatabaseManager() {}
 
-    /**
-     * 2. Constructor private: Ngăn chặn việc khởi tạo bằng từ khóa 'new' từ bên ngoài.
-     */
-    private DatabaseManager() {
-        try {
-            // Đăng ký (Load) MySQL JDBC Driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            System.err.println("[DatabaseManager] LỖI: Không tìm thấy thư viện MySQL JDBC Driver.");
-            e.printStackTrace();
+    // 1. Khởi tạo - gọi 1 lần khi app start
+        // Tránh race khi khởi tạo
+    public static synchronized void initialize() {
+        if (dataSource == null) {
+            loadConfig();
+            initDataSource();
         }
     }
 
-    /**
-     * 3. Phương thức public static để lấy instance duy nhất.
-     * Sử dụng kỹ thuật Double-Checked Locking để tối ưu hiệu năng trong môi trường đa luồng (Concurrent).
-     */
-    public static DatabaseManager getInstance() {
-        if (instance == null) {
-            synchronized (DatabaseManager.class) {
-                if (instance == null) {
-                    instance = new DatabaseManager();
-                }
-            }
+    // 2. Đọc config
+    private static void loadConfig() {
+        Properties props = new Properties(); // Tạo object để chứa các cặp key=value
+        // Đọc từ file
+        try (InputStream is = DatabaseManager.class
+                .getClassLoader()
+                .getResourceAsStream("database.properties")) {
+
+            if (is == null)
+                throw new RuntimeException("Không tìm thấy database.properties"); // getResourceAsStream trả null nếu không tìm thấy file
+
+            props.load(is);
+            // Lấy các giá trị
+            url               = props.getProperty("db.url");
+            username          = props.getProperty("db.username");
+            password          = props.getProperty("db.password");
+            poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
+            connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
+            idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
+            maxLifetime       = Integer.parseInt(props.getProperty("db.maxLifetime", "1800000"));
+
+        } catch (IOException e) {
+            throw new RuntimeException("Không đọc được database.properties", e);
         }
-        return instance;
     }
 
-    /**
-     * Phương thức cấp phát một Kết nối (Connection) tới MySQL.
-     * Lưu ý: Mỗi lần gọi hàm này sẽ trả về một Connection mới.
-     * Người gọi (các DAO) PHẢI chịu trách nhiệm đóng kết nối bằng try-with-resources.
-     *
-     * @return Đối tượng java.sql.Connection
-     * @throws SQLException Nếu thông tin đăng nhập sai hoặc MySQL chưa bật.
-     */
-    public Connection createConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+    // 3. Khởi tạo pool
+    private static void initDataSource() {
+        HikariConfig config = new HikariConfig();
+        // Truyền thông tin kết nối
+        config.setJdbcUrl(url);
+        config.setUsername(username);
+        config.setPassword(password);
+        // Truyền thông số pool
+        config.setMaximumPoolSize(poolSize);
+        config.setConnectionTimeout(connectionTimeout);
+        config.setIdleTimeout(idleTimeout);
+        config.setMaxLifetime(maxLifetime);
+
+        dataSource = new HikariDataSource(config);
     }
 
-    /**
-     * Phương thức tiện ích tĩnh (Static utility method) để gọi nhanh.
-     * Viết hàm này để code bên các DAO ngắn gọn hơn.
-     * Thay vì gọi: DatabaseManager.getInstance().createConnection();
-     * Chỉ cần gọi: DatabaseManager.getConnection();
-     */
+    // 4. Lấy connection
     public static Connection getConnection() throws SQLException {
-        return getInstance().createConnection();
+        if (dataSource == null)
+            throw new IllegalStateException("DatabaseManager chưa được khởi tạo, hãy gọi initialize() trước");
+        return dataSource.getConnection();
     }
-    /**
-     * Bắt đầu một giao dịch (Tắt tự động lưu)
-     */
+
+
+    // 5. Transaction
     public static void beginTransaction(Connection conn) throws SQLException {
-        if (conn != null && !conn.isClosed()) {
-            conn.setAutoCommit(false);
-        }
+        if (conn == null)
+            throw new IllegalArgumentException("Connection không được null");
+        conn.setAutoCommit(false);
     }
-
-    /**
-     * Xác nhận và lưu toàn bộ thay đổi xuống Database
-     */
     public static void commitTransaction(Connection conn) throws SQLException {
-        if (conn != null && !conn.isClosed()) {
-            conn.commit();
-            conn.setAutoCommit(true); // Trả lại trạng thái mặc định
+        if (conn == null)
+            throw new IllegalArgumentException("Connection không được null");
+        conn.commit(); //lưu toàn bộ thay đổi xuống DB
+        conn.setAutoCommit(true); //trả về trạng thái ban đầu trước khi trả connection về pool
+    }
+    public static void rollbackTransaction(Connection conn) {
+        if (conn == null) return;
+        try {
+            conn.rollback(); //hủy toàn bộ thay đổi chưa commit
+            conn.setAutoCommit(true);
+        } catch (SQLException e) {
+            throw new RuntimeException("Rollback thất bại", e);
         }
     }
 
-    /**
-     * Hủy bỏ thay đổi nếu có lỗi xảy ra (Rollback)
-     */
-    public static void rollbackTransaction(Connection conn) {
-        if (conn != null) {
-            try {
-                if (!conn.isClosed()) {
-                    conn.rollback();
-                    conn.setAutoCommit(true);
-                }
-            } catch (SQLException e) {
-                System.err.println("[DB ERROR] Không thể rollback giao dịch!");
-                e.printStackTrace();
-            }
+    // 6. Kiểm tra kết nối
+    public static boolean healthCheck() {
+        if (dataSource == null) return false;
+        try (Connection conn = dataSource.getConnection()) {
+            return conn.isValid(5); // chờ tối đa 5 giây
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    // 7. Đóng pool
+    public static void shutdown() {
+        // chưa đóng thì mới đóng, tránh đóng 2 lần
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close(); //đóng toàn bộ pool, giải phóng connection
+            dataSource = null;
         }
     }
 }

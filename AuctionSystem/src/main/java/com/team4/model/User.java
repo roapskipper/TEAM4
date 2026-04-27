@@ -161,13 +161,13 @@ public abstract class User extends Entity {
     @Override
     public String toString() {
         return "User{" +
-                "id='" + getId() + '\'' +
-                ", username='" + username + '\'' +
-                ", fullName='" + fullName + '\'' +
-                ", email='" + email + '\'' +
-                ", role=" + role +
-                ", balance=" + balance +
-                ", createdAt=" + getCreatedAt() +
+                "id: '" + getId() + '\'' +
+                ", username: '" + username + '\'' +
+                ", fullName: '" + fullName + '\'' +
+                ", email: '" + email + '\'' +
+                ", role: " + role +
+                ", balance: " + balance +
+                ", createdAt: " + getCreatedAt() +
                 '}';
     }
 

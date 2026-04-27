@@ -1,77 +1,57 @@
 package com.team4.model;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
 /**
  * Lớp Seller - Đại diện cho Người bán trong hệ thống.
- * Kế thừa từ User (Abstraction & Inheritance)
+ * Kế thừa từ User
  */
-public class Seller extends User implements Serializable {
+public class Seller extends User {
     private String storeName;
     private double rating;
-    private List<String> listedItemIds; // Lưu danh sách ID các vật phẩm đang đấu giá
-
+    // Danh sách vật phẩm được bán sẽ được chuyển xuống cho DAO xử lý
     /**
-     * CONSTRUCTOR 1: Dùng khi tạo một Seller mới (Đăng ký mới)
-     * Tự động gán role "SELLER", rating 5.0 và khởi tạo danh sách trống.
+     * CONSTRUCTOR 1: Dùng khi tạo một Seller mới
+     * Tự động gán role "SELLER", rating 5.0.
      */
-    public Seller(String username, String password, String storeName) {
-        super(username, password, "SELLER");
-        this.storeName = storeName;
+    public Seller(String username, String passwordHash, String fullName, String email, String storeName) {
+        super(username, passwordHash, fullName, email, Role.SELLER);
+        this.storeName = normalizeOptional(storeName);
         this.rating = 5.0;
-        this.listedItemIds = new ArrayList<>();
+        validateStoreName(this.storeName);
     }
 
     /**
-     * CONSTRUCTOR 2: Dùng khi DAO lấy dữ liệu từ MySQL lên
-     * Chứa đầy đủ thông tin từ ID đến Balance.
+     * CONSTRUCTOR 2: Dùng khi DAO lấy dữ liệu từ DB
+     * Chứa đầy đủ thông tin.
      */
-    public Seller(String id, String username, String password, String fullName,
-                  String email, double balance, String storeName, double rating) {
-        // Gọi constructor đầy đủ của lớp User
-        super(id, username, password, fullName, email, "SELLER", balance);
-        this.storeName = storeName;
+    public Seller(String id, LocalDateTime creatAt, String username, String passwordHash, String fullName,
+                  String email, BigDecimal balance, String storeName, double rating) {
+        super(id, creatAt, username, passwordHash, fullName, email, Role.SELLER, balance);
+        this.storeName = normalizeOptional(storeName);
         this.rating = rating;
-        this.listedItemIds = new ArrayList<>();
+        validateStoreName(this.storeName);
     }
 
-    // --- LOGIC NGHIỆP VỤ ---
-
-    public void addNewItem(String itemId) {
-        if (itemId != null && !listedItemIds.contains(itemId)) {
-            listedItemIds.add(itemId);
+    // Kiểm tra định dạng storeName
+    // Rating sẽ cho hệ thống quản lý nên không cần validate
+    private void validateStoreName(String storeName) {
+        if (storeName == null || storeName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên cửa hàng không được để trống.");
+        }
+        if (storeName.trim().length() > 100) {
+            throw new IllegalArgumentException("Tên cửa hàng không được vượt quá 100 ký tự.");
         }
     }
 
-    public void setListedItemIds(List<String> listedItemIds) {
-        this.listedItemIds = listedItemIds != null ? listedItemIds : new ArrayList<>();
-    }
-
-    public List<String> getListedItemIds() {
-        return new ArrayList<>(listedItemIds); // Trả về bản sao để bảo vệ tính đóng gói
-    }
-
-    // --- TRIỂN KHAI ĐA HÌNH (POLYMORPHISM) ---
-
     @Override
-    public void displayRolePermissions() {
-        System.out.println("\n========== [ QUYỀN HẠN NGƯỜI BÁN ] ==========");
-        System.out.println("Tên shop    : " + storeName);
-        System.out.println("Chủ sở hữu  : " + username);
-        System.out.println("ID Hệ thống : " + getId());
-        System.out.println("Điểm uy tín : " + rating + " / 5.0");
-        System.out.println("Quyền hạn   : Đăng hàng, Cập nhật giá, Quản lý kho.");
-        System.out.println("Số mặt hàng : " + listedItemIds.size());
-        System.out.println("==============================================\n");
+    public String toString() {
+        return super.toString() + ", storeName: " + storeName + '\'' + ", rating: " + rating;
     }
 
-    // --- GETTERS & SETTERS ---
-
+    // Setter/Getter
     public String getStoreName() { return storeName; }
-    public void setStoreName(String storeName) { this.storeName = storeName; }
-
+    public void setStoreName(String storeName) { validateStoreName(storeName);
+    this.storeName = normalizeOptional(storeName);}
     public double getRating() { return rating; }
-    public void setRating(double rating) { this.rating = rating; }
 }

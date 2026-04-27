@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /**
  * Lớp Admin - Quản trị viên hệ thống.
- * Kế thừa từ User (Thể hiện tính Inheritance và Abstraction)
+ * Kế thừa từ User
  */
 public class Admin extends User {
     // Dùng enum cho 2 kiểu Admin
@@ -32,7 +32,6 @@ public class Admin extends User {
     public Admin(String username, String passwordHash, String fullName, String email, AccessLevel accessLevel, String adminCode) {
         super(username, passwordHash, fullName, email, Role.ADMIN );
         this.accessLevel = accessLevel;
-        this.adminCode = adminCode;
         validateAdminInfo();
         // Tự động dùng constructor mặc định của Entity để sinh UUID và creatAt
     }
@@ -60,7 +59,7 @@ public class Admin extends User {
     // Hiển thị thông tin của Admin và quyền hạn của họ (Dùng Polymorphism để hiển thị khác nhau giữa các loại User)
     @Override
     public String toString() {
-        return super.toString() + ", accessLevel: " + accessLevel;
+        return super.toString() + ", accessLevel: " + accessLevel + '\'';
     }
 
     // Setter/Getter. Việc điều chỉnh Access Level và Admin Code sẽ để cho service
