@@ -1,7 +1,7 @@
 # AuctionSpace: Real-time Online Auction System 🚀
 
 ## Giới thiệu (Abstract)
-**AuctionSpace** là hệ thống Đấu giá Trực tuyến hoạt động theo kiến trúc Client-Server, được phát triển hoàn toàn bằng Java 21. Hệ thống cung cấp trải nghiệm đấu giá thời gian thực (Real-time), hỗ trợ xử lý đồng thời (Concurrency) để tránh tranh chấp dữ liệu, và tích hợp các tính năng nâng cao như Đấu giá tự động (Auto-Bidding) cùng biểu đồ biến động giá trực quan.
+**AuctionSpace** là hệ thống Đấu giá Trực tuyến hoạt động theo kiến trúc Client-Server, được phát triển hoàn toàn bằng Java 21. Hệ thống cung cấp trải nghiệm đấu giá thời gian thực (Real-time), hỗ trợ xử lý đồng thời (Concurrency) để tránh tranh chấp dữ liệu (Lost update, Race condition), và tích hợp các tính năng nâng cao như Đấu giá tự động (Auto-Bidding), Chống bắn tỉa (Anti-sniping) cùng biểu đồ biến động giá trực quan.
 
 Dự án được phát triển bởi **Nhóm 4 - Lớp K70I-IT6** (Đại học Công nghệ - ĐHQGHN).
 
@@ -12,48 +12,64 @@ Dự án được phát triển bởi **Nhóm 4 - Lớp K70I-IT6** (Đại học
 | Thành viên | Vai trò chính | Nhiệm vụ chi tiết |
 | :--- | :--- | :--- |
 | **Hải Anh** | Backend & Architect | Thiết kế kiến trúc hệ thống, xử lý Concurrency (đấu giá đồng thời), triển khai Design Patterns chính (Singleton, Factory). |
-| **Trung** | Database & Logic | Quản lý Database (DAO), viết logic nghiệp vụ cho User/Item, xử lý logic kết thúc phiên đấu giá và tính điểm thắng cuộc. |
+| **Trung** | Database & Logic | Quản lý Database (DAO), viết logic quản lý User/Item, xử lý logic chuyển trạng thái và tính điểm thắng cuộc. |
 | **Bình** | Frontend (GUI) | Phát triển toàn bộ giao diện JavaFX/FXML (Dynamic Form), xử lý hiển thị Real-time Price Curve (biểu đồ giá) và tích hợp Observer Client. |
-| **Lộc** | Networking & QA | Xử lý kết nối Socket/API, cài đặt Auto-Bidding, viết Unit Test (JUnit) và thiết lập CI/CD trên GitHub Actions. |
+| **Lộc** | Networking & QA | Xử lý kết nối Socket/API, cài đặt Auto-Bidding, Anti-sniping, viết Unit Test (JUnit) và thiết lập CI/CD trên GitHub Actions. |
 
 ---
 
-## 🏗 Kiến trúc & Các Class cốt lõi (Core Architecture)
+## 🌟 Tính năng nổi bật & Nghiệp vụ hệ thống (Key Features)
 
-Hệ thống tuân thủ chặt chẽ các nguyên lý hướng đối tượng (OOP) và sử dụng kiến trúc MVC kết hợp Client-Server. Dựa trên sơ đồ cơ sở dữ liệu và yêu cầu giao diện, các Class chính được thiết kế như sau:
+Hệ thống đáp ứng toàn bộ các chức năng bắt buộc và tích hợp tối đa các chức năng nâng cao theo yêu cầu của bài toán:
 
-1. **Nhóm User (Người dùng):**
-    - Class cha `User` phân nhánh thành 3 vai trò: `Admin`, `Bidder`, và `Seller`.
-    - *Tích hợp FE/BE:* Giao diện đăng ký sử dụng ChoiceBox để người dùng chọn vai trò, sau đó luồng logic sẽ định tuyến lưu dữ liệu vào bảng tương ứng.
+### 1. Chức năng cốt lõi (Core Functions)
+- **Quản lý phân quyền:** Đăng nhập/Đăng ký với 3 vai trò (Admin, Bidder, Seller).
+- **Quản lý Phiên đấu giá (State Machine):** Tự động chuyển đổi trạng thái nghiêm ngặt `OPEN → RUNNING → FINISHED → PAID / CANCELED`.
+- **Xử lý Ngoại lệ (Exception Handling):** Bắt lỗi chặt chẽ các trường hợp: Đặt giá thấp hơn giá hiện tại, bid khi phiên đã đóng, mất kết nối mạng đột ngột (Socket timeout).
 
-2. **Nhóm Item (Sản phẩm) - Áp dụng Factory Pattern:**
-    - Class cha `Item` và 5 class con kế thừa: `Electronics`, `Art`, `Fashion`, `Collectibles`, `Vehicles`.
-    - *Tích hợp FE/BE:* Phía Frontend xử lý **Form động (Dynamic Form)** (thay đổi trường nhập liệu theo Category). Phía Backend dùng **Factory Pattern** để tự động khởi tạo đúng đối tượng sản phẩm và lưu vào các bảng con tương ứng.
+### 2. Chức năng nâng cao (Advanced & Bonus Features)
+- **Xử lý Đồng thời (Concurrency Bidding):** Giải quyết triệt để bài toán *Lost Update* và *Race Condition* khi hàng chục người cùng nhấn bid trong một phần nghìn giây. Đảm bảo tính toàn vẹn dữ liệu (Không ai bị trừ tiền oan, không có 2 người cùng thắng).
+- **Auto-Bidding (Đấu giá tự động):** Người dùng thiết lập *maxBid* và *increment*, hệ thống dùng thuật toán (PriorityQueue) để tự động nâng giá tranh top.
+- **Thuật toán Anti-sniping:** Tự động gia hạn thêm thời gian nếu phát hiện có bid đột ngột vào những giây cuối cùng.
+- **Real-time Price Curve:** Biểu đồ đường (Line Chart) trực quan hóa lịch sử đặt giá, vẽ ngay lập tức mà không cần F5/Refresh.
 
-3. **Nhóm Auction & Giao dịch:**
-    - `Auction`: Quản lý phiên đấu giá (start_time, end_time, current_price, status).
-    - `BidTransaction`: Lưu trữ lịch sử đặt giá. Dữ liệu này được đẩy qua Socket để Frontend vẽ biểu đồ Line Chart theo thời gian thực.
-    - `AutoBidding`: Chứa cấu hình tự động đặt giá (`max_bid`, `increment_amount`).
+---
+
+## 🏗 Thiết kế Hướng đối tượng (OOP) & Kiến trúc
+
+Hệ thống tuân thủ chặt chẽ 4 nguyên lý cốt lõi của OOP và sử dụng kiến trúc phân tầng MVC Client-Server.
+
+### 1. Áp dụng 4 nguyên lý OOP
+- **Đóng gói (Encapsulation):** Bảo vệ toàn bộ dữ liệu hệ thống (private/protected fields), chỉ cho phép truy cập qua getter/setter kiểm duyệt.
+- **Kế thừa (Inheritance):** Thiết lập phân cấp đối tượng rõ ràng (Ví dụ: `Admin`, `Bidder`, `Seller` kế thừa từ `User`).
+- **Đa hình (Polymorphism):** Ghi đè (Override) các phương thức như `getDetails()` hoặc `calculateFee()` tùy thuộc vào từng loại sản phẩm.
+- **Trừu tượng (Abstraction):** Khai báo các Abstract Class (`Item`) và Interface làm bản thiết kế chuẩn cho 5 danh mục sản phẩm (Electronics, Art, Fashion, Collectibles, Vehicles).
+
+### 2. Design Patterns áp dụng
+- **Factory Method:** Khởi tạo động các loại Sản phẩm (`ItemFactory`) kết hợp linh hoạt với Dynamic Form trên giao diện JavaFX.
+- **Observer Pattern:** Đồng bộ hóa giao diện đa người dùng. Server đóng vai trò Subject, đẩy (push) tín hiệu cập nhật giá qua Socket về các Client (Observers) mà không cần Polling gây nghẽn mạng.
+- **Singleton Pattern:** Quản lý luồng kết nối duy nhất tới Database (DatabaseManager) và AuctionManager.
+
+---
+
+## 🛠 Tiêu chuẩn & Công nghệ (Technologies & Standards)
+
+Hệ thống được thiết kế hướng tới tiêu chuẩn công nghiệp:
+- **Giao tiếp:** Socket / REST API định dạng JSON. Chỉ Server có quyền thao tác với cơ sở dữ liệu.
+- **Quản lý dự án:** Build tool `Maven`.
+- **Chất lượng mã nguồn (Clean Code):** Tuân thủ tuyệt đối **Google Java Style Guide**.
+- **Quản lý phiên bản:** Sử dụng quy chuẩn **Conventional Commits** trên Git, chia nhánh (branching) rõ ràng cho từng tính năng.
+- **Kiểm thử & CI/CD:** Tích hợp **JUnit** để Unit Test các logic tính toán giá quan trọng, tự động hóa luồng test qua **GitHub Actions**.
 
 ---
 
 ## 📅 Các giai đoạn thực hiện dự án (Roadmap)
 
-- [x] **Giai đoạn 1: Phân tích và Thiết kế hệ thống (Tuần 1)**
-    - Thiết kế lớp (OOP): `User`, `Item`, `Auction`, `BidTransaction`.
-    - Thiết kế Cơ sở dữ liệu và chọn công nghệ (Maven, JavaFX, Socket/REST API).
-- [x] **Giai đoạn 2: Xây dựng nền tảng Backend & Networking (Tuần 2-3)**
-    - Thiết lập Server-Client truyền nhận JSON.
-    - Áp dụng **Singleton** cho Database Manager và **Factory** cho khởi tạo sản phẩm.
-- [x] **Giai đoạn 3: Phát triển GUI & Logic Đấu giá (Tuần 4-5)**
-    - Thiết kế màn hình JavaFX, ghép nối form động.
-    - Cập nhật giá Real-time thông qua **Observer Pattern**.
-- [ ] **Giai đoạn 4: Xử lý nâng cao & Concurrency (Tuần 6-7)**
-    - Xử lý tranh chấp (Race condition) khi nhiều người bid cùng lúc (Lost update).
-    - Cài đặt thuật toán Auto-Bidding, Anti-sniping và vẽ biểu đồ biến động giá.
-- [ ] **Giai đoạn 5: Kiểm thử, Tối ưu & Hoàn thiện (Tuần 8)**
-    - Viết Unit Test bằng JUnit cho logic tính toán giá.
-    - Refactoring mã nguồn theo Google Java Style Guide và đóng gói Demo.
+- [x] **Giai đoạn 1:** Phân tích, thiết kế OOP, Database và chọn công nghệ.
+- [x] **Giai đoạn 2:** Xây dựng Backend, Server-Client truyền nhận JSON, cấu hình Singleton & Factory.
+- [x] **Giai đoạn 3:** Phát triển GUI JavaFX (Form động), cập nhật giá Real-time bằng Observer.
+- [x] **Giai đoạn 4:** Xử lý Concurrency (Khóa luồng Lost update), Auto-Bidding, Anti-sniping và vẽ biểu đồ.
+- [ ] **Giai đoạn 5:** Hoàn thiện Unit Test (JUnit), Refactoring mã nguồn theo chuẩn Google, đóng gói.
 
 ---
 
@@ -71,22 +87,29 @@ mvn clean install
 # BẮT BUỘC chạy từ file: src/main/java/com/team4/Launcher.java
 # (Để bypass lỗi module layer của JavaFX trên JDK 11+)
 ```
----
-
 ## 🔐 Tài khoản Thử nghiệm (Demo Accounts)
 
-Để thuận tiện cho việc kiểm thử và đánh giá hệ thống, nhóm cung cấp sẵn tài khoản test với thông tin như sau:
+Sử dụng các tài khoản dưới đây để truy cập Client Application và kiểm tra luồng phân quyền tương ứng:
 
-> **Vai trò:** Người đấu giá (Bidder)
-> - **Tên đăng nhập:** `tester_bidder`
-> - **Mật khẩu:** `123456`
+| Vai trò | Tên đăng nhập | Mật khẩu | Chức năng chính trên giao diện |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên** | `admin` | `admin` | Xem tổng quan, quản lý người dùng, duyệt phiên đấu giá. |
+| **Người bán** | `seller` | `seller` | Thêm sản phẩm, tạo và quản lý phiên đấu giá của mình. |
+| **Người mua** | `bidder` | `bidder` | Tham gia phòng đấu giá, đặt giá, xem lịch sử và biểu đồ giá. |
 
-*(Lưu ý: Mật khẩu đã được mã hóa trong Database, vui lòng sử dụng đúng thông tin trên để đăng nhập qua giao diện Client).*
+> *(Lưu ý: Mật khẩu thực tế đã được mã hóa Hash an toàn trong Database. Client sẽ tự xử lý đối chiếu khi đăng nhập).*
 
-> ⚠️ **Lưu ý quan trọng (Troubleshooting):**
-> Nếu hệ thống báo lỗi không thể chạy được file `Launcher`, nguyên nhân thường là do IntelliJ chưa nhận diện cấu hình thư viện. Hãy kiểm tra xem file `pom.xml` đã có biểu tượng chữ **M** (Maven) màu xanh chưa. Nếu chưa, hãy làm theo 3 bước sau:
-> 1. Click chuột phải vào file **`pom.xml`**.
-> 2. Chọn **"Add as Maven Project"** (hoặc "Add Maven Projects").
-> 3. Đợi thanh tiến trình của IntelliJ chạy xong ở góc dưới bên phải, sau đó bấm Run lại.
+---
 
-> 🚨 *Nếu đã làm các bước trên mà vẫn gặp bất kỳ lỗi nào khác (đỏ file, lỗi SDK,...), vui lòng chụp ảnh màn hình lỗi và gửi vào group chat để các thành viên khác hỗ trợ xử lý ngay!*
+## ⚠️ Lưu ý quan trọng (Troubleshooting)
+
+> [!CAUTION]
+> **Khắc phục lỗi khởi chạy:**
+>
+> 1. **File chạy chính:** BẮT BUỘC chạy ứng dụng từ file `src/main/java/com/team4/Launcher.java`.
+>
+> 2. **Lỗi Maven:** Nếu hệ thống báo lỗi không thể chạy được file `Launcher` hoặc `cannot find symbol`, nguyên nhân thường là do IntelliJ chưa nhận diện cấu hình thư viện.
+>
+> **Cách khắc phục:** > - Click chuột phải vào file `pom.xml` ở thư mục gốc.
+> - Chọn **"Add as Maven Project"**.
+> - Sau đó bấm icon **Reload All Maven Projects** ở tab Maven bên lề phải, đợi thanh tiến trình chạy xong rồi Run lại.
