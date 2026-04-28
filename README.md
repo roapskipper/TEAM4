@@ -68,7 +68,7 @@ Hệ thống được thiết kế hướng tới tiêu chuẩn công nghiệp:
 - [x] **Giai đoạn 1:** Phân tích, thiết kế OOP, Database và chọn công nghệ.
 - [x] **Giai đoạn 2:** Xây dựng Backend, Server-Client truyền nhận JSON, cấu hình Singleton & Factory.
 - [x] **Giai đoạn 3:** Phát triển GUI JavaFX (Form động), cập nhật giá Real-time bằng Observer.
-- [x] **Giai đoạn 4:** Xử lý Concurrency (Khóa luồng Lost update), Auto-Bidding, Anti-sniping và vẽ biểu đồ.
+- [ ] **Giai đoạn 4:** Xử lý Concurrency (Khóa luồng Lost update), Auto-Bidding, Anti-sniping và vẽ biểu đồ.
 - [ ] **Giai đoạn 5:** Hoàn thiện Unit Test (JUnit), Refactoring mã nguồn theo chuẩn Google, đóng gói.
 
 ---
