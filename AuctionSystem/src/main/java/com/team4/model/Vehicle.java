@@ -1,100 +1,209 @@
 package com.team4.model;
 
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
- * Lớp Vehicle - Đại diện cho phương tiện giao thông đấu giá.
- * Kế thừa từ Item (Tính Inheritance và Polymorphism)
+ * Vehicle: model cho nhóm hàng phương tiện.
  */
-public class Vehicle extends Item implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Vehicle extends Item {
+    // enum cho hộp số
+    public enum Transmission {
+        MANUAL,      // Số sàn
+        AUTOMATIC,   // Số tự động
+        CVT,         // Vô cấp
+        DCT,         // Ly hợp kép
+        OTHER        // Khác
+    }
 
-    // Các thuộc tính riêng của Phương tiện
-    private String brand;
-    private String model;
-    private int manufacturingYear;
-    private int odo;              // Số km đã đi
-    private String engineType;    // Xăng, Dầu, Điện...
-    private String color;
-    private String licensePlate;
-    private boolean hasLegalPapers;
-    private String transmission;  // Số sàn/Tự động
+    // enum cho động cơ
+    public enum EngineType {
+        // Động cơ đốt trong
+        GASOLINE,       // Xăng
+        DIESEL,         // Dầu diesel
 
-    /**
-     * CONSTRUCTOR 1: Dùng khi Seller đăng ký xe mới để đấu giá.
-     * Tự động gán category là "VEHICLE".
-     */
-    public Vehicle(String name, double startingPrice, String desc, String ownerId,
-                   String brand, String model, int manufacturingYear, int odo,
-                   String engineType, String color, String licensePlate,
-                   boolean hasLegalPapers, String transmission) {
+        // Năng lượng mới
+        ELECTRIC,       // Điện
+        HYBRID,         // Hybrid (xăng + điện)
+        PLUG_IN_HYBRID, // Hybrid sạc ngoài
+        HYDROGEN,       // Hydro
 
-        // Gọi constructor 1 của Item (Tự sinh UUID, category = VEHICLE)
-        super(name, startingPrice, desc, "VEHICLE", ownerId);
+        // Khác
+        OTHER           // Khác
+    }
+    private String brand;           // thương hiệu
+    private String model;           // tên model
+    private int manufacturingYear;  // năm sản xuất
+    private int odo;                // số km đã đi
+    private EngineType engineType;      // loại động cơ
+    private String color;           // màu sắc
+    private boolean hasLegalPapers; // có giấy tờ pháp lý
+    private Transmission transmission; // hộp số
 
-        this.brand = brand;
-        this.model = model;
+    // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
+    public Vehicle(String name,
+                   BigDecimal startingPrice,
+                   String description,
+                   String ownerId,
+                   String brand,
+                   String model,
+                   int manufacturingYear,
+                   int odo,
+                   EngineType engineType,
+                   String color,
+                   boolean hasLegalPapers,
+                   Transmission transmission) {
+        super(name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
+        this.model = (model == null || model.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(model);
         this.manufacturingYear = manufacturingYear;
         this.odo = odo;
         this.engineType = engineType;
-        this.color = color;
-        this.licensePlate = licensePlate;
+        this.color = normalizeOptional(color);
         this.hasLegalPapers = hasLegalPapers;
-        this.transmission = transmission;
+        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        validateBrand(this.brand);
+        validateModel(this.model);
+        validateManufacturingYear(this.manufacturingYear);
+        validateOdo(this.odo);
+        validateEngineType(this.engineType);
+        validateColor(this.color);
+        validateTransmission(this.transmission);
     }
 
-    /**
-     * CONSTRUCTOR 2: Dùng cho ItemDAO khi nạp dữ liệu xe từ MySQL lên.
-     */
-    public Vehicle(String id, String name, double startingPrice, double currentPrice,
-                   String desc, String ownerId, String brand, String model,
-                   int manufacturingYear, int odo, String engineType, String color,
-                   String licensePlate, boolean hasLegalPapers, String transmission) {
-
-        // Gọi constructor 2 của Item (Giữ nguyên ID và CurrentPrice từ DB)
-        super(id, name, startingPrice, currentPrice, desc, "VEHICLE", ownerId);
-
-        this.brand = brand;
-        this.model = model;
+    // Constructor dùng khi nạp từ DB (có id và createdAt)
+    public Vehicle(String id,
+                   LocalDateTime createdAt,
+                   String name,
+                   BigDecimal startingPrice,
+                   String description,
+                   String ownerId,
+                   String brand,
+                   String model,
+                   int manufacturingYear,
+                   int odo,
+                   EngineType engineType,
+                   String color,
+                   boolean hasLegalPapers,
+                   Transmission transmission) {
+        super(id, createdAt, name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
+        this.model = (model == null || model.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(model);
         this.manufacturingYear = manufacturingYear;
         this.odo = odo;
         this.engineType = engineType;
-        this.color = color;
-        this.licensePlate = licensePlate;
+        this.color = normalizeOptional(color);
         this.hasLegalPapers = hasLegalPapers;
-        this.transmission = transmission;
+        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        validateBrand(this.brand);
+        validateModel(this.model);
+        validateManufacturingYear(this.manufacturingYear);
+        validateOdo(this.odo);
+        validateEngineType(this.engineType);
+        validateColor(this.color);
+        validateTransmission(this.transmission);
     }
-
-    // --- TRIỂN KHAI ĐA HÌNH (POLYMORPHISM) ---
-
+    // Validate
+    private static void validateBrand(String b) {
+        if (b == null) return;
+        if (b.length() > 120) throw new IllegalArgumentException("Brand không được vượt quá 120 ký tự.");
+    }
+    private static void validateModel(String m) {
+        if (m == null) return;
+        if (m.length() > 120) throw new IllegalArgumentException("Model không được vượt quá 120 ký tự.");
+    }
+    private static void validateManufacturingYear(int year) {
+        if (year == 0) return;
+        int current = LocalDate.now().getYear();
+        final int MIN_YEAR = 1886;
+        if (year < MIN_YEAR || year > current) {
+            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
+                    MIN_YEAR + " .. " + (current) + " (Nếu không rõ có thể điền '0').");
+        }
+    }
+    private static void validateOdo(int odo) {
+        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) phải >= 0.");
+        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer có vẻ không hợp lệ (>1,000,000).");
+    }
+    private static void validateEngineType(EngineType t) {
+        if (t == null)
+            throw new IllegalArgumentException("EngineType không được null. Nếu không rõ loại động cơ, hãy chọn EngineType.OTHER.");
+    }
+    private static void validateColor(String c) {
+        if (c == null) return; // optional
+        if (c.length() > 50) throw new IllegalArgumentException("Color không được vượt quá 50 ký tự.");
+    }
+    private static void validateTransmission(Transmission t) {
+        if (t == null) throw new IllegalArgumentException("Transmission không được null.");
+    }
+    // Summary / toString
     @Override
-    public void showInfo() {
-        System.out.println("\n----------- [ THÔNG TIN PHƯƠNG TIỆN ] -----------");
-        System.out.println("Sản phẩm     : " + getName() + " (ID: " + getId() + ")");
-        System.out.println("Thương hiệu  : " + brand + " " + model);
-        System.out.println("Năm sản xuất : " + manufacturingYear);
-        System.out.println("Số KM (ODO)  : " + odo + " km");
-        System.out.println("Động cơ      : " + engineType + " | Hộp số: " + transmission);
-        System.out.println("Màu sắc      : " + color + " | Biển số: " + (licensePlate != null ? licensePlate : "N/A"));
-        System.out.println("Pháp lý      : " + (hasLegalPapers ? "GIẤY TỜ ĐẦY ĐỦ" : "Chưa đủ giấy tờ"));
-        System.out.println("-------------------------------------------------");
-        System.out.println("GIÁ KHỞI ĐIỂM: $" + getStartingPrice());
-        System.out.println(">>> GIÁ HIỆN TẠI: $" + getCurrentPrice() + " <<<");
-        System.out.println("Người đăng bán: ID-" + getOwnerId());
-        System.out.println("-------------------------------------------------\n");
+    public String summary() {
+        return brand + " " + model +
+                " - " + manufacturingYear +
+                " - " + odo + "km" +
+                " - " + engineType.name() +
+                (hasLegalPapers ? " (Đủ giấy tờ)" : " (Không đủ giấy tờ)");
     }
-
-    // --- GETTERS & SETTERS ---
+    @Override
+    public String toString() {
+        return super.toString()
+                + " | brand: " + brand
+                + " | model: " + model
+                + " | manufacturingYear: " + manufacturingYear
+                + " | odo: " + odo
+                + " | engineType: " + engineType
+                + " | color: " + color
+                + " | hasLegalPapers: " + hasLegalPapers
+                + " | transmission: " + transmission;
+    }
+    // Getters / Setters
     public String getBrand() { return brand; }
+    public void setBrand(String brand) {
+        this.brand = normalizeOptional(brand);
+        validateBrand(this.brand);
+    }
     public String getModel() { return model; }
+    public void setModel(String model) {
+        this.model = normalizeOptional(model);
+        validateModel(this.model);
+    }
     public int getManufacturingYear() { return manufacturingYear; }
+    public void setManufacturingYear(int manufacturingYear) {
+        this.manufacturingYear = manufacturingYear;
+        validateManufacturingYear(this.manufacturingYear);
+    }
     public int getOdo() { return odo; }
-    public String getEngineType() { return engineType; }
+    public void setOdo(int odo) {
+        if (odo < this.odo)
+            throw new IllegalArgumentException("Odo không thể giảm");
+        this.odo = odo;
+        validateOdo(this.odo);
+    }
+    public EngineType getEngineType() { return engineType; }
+    public void setEngineType(EngineType engineType) {
+        this.engineType = engineType;
+        validateEngineType(this.engineType);
+    }
     public String getColor() { return color; }
-    public String getLicensePlate() { return licensePlate; }
-    public boolean isHasLegalPapers() { return hasLegalPapers; }
-    public String getTransmission() { return transmission; }
-
-    public void setOdo(int odo) { this.odo = odo; }
+    public void setColor(String color) {
+        this.color = normalizeOptional(color);
+        validateColor(this.color);
+    }
+    public boolean hasLegalPapers() { return hasLegalPapers; }
     public void setHasLegalPapers(boolean hasLegalPapers) { this.hasLegalPapers = hasLegalPapers; }
+    public Transmission getTransmission() { return transmission; }
+    public void setTransmission(Transmission transmission) {
+        this.transmission = (transmission == null ? Transmission.OTHER : transmission);
+        validateTransmission(this.transmission);
+    }
 }

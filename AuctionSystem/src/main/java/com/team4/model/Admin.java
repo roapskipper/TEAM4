@@ -59,7 +59,7 @@ public class Admin extends User {
     // Hiển thị thông tin của Admin và quyền hạn của họ (Dùng Polymorphism để hiển thị khác nhau giữa các loại User)
     @Override
     public String toString() {
-        return super.toString() + ", accessLevel: " + accessLevel + '\'';
+        return super.toString() + " | accessLevel: " + accessLevel ;
     }
 
     // Setter/Getter. Việc điều chỉnh Access Level và Admin Code sẽ để cho service

@@ -1,75 +1,144 @@
 package com.team4.model;
-
-import java.util.UUID;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 /**
- * Lớp trừu tượng Item - Đại diện cho vật phẩm đấu giá.
- * Kế thừa từ Entity để sử dụng String ID (UUID).
+ * Abstract Item entity: fields, validation and light helpers only.
+ * - Dùng BigDecimal cho tiền (scale = 2)
+ * - Không chứa nghiệp vụ cập nhật nhiều bảng (AuctionService chịu trách nhiệm đó)
  */
 public abstract class Item extends Entity {
-    protected String name;
-    protected String description;
-    protected double startingPrice;
-    protected double currentPrice; // Giá hiện tại sau khi có người bid
-    protected String category;     // Loại mặt hàng
-    protected String ownerId;      // ID của Seller sở hữu món hàng này
-
-    /**
-     * CONSTRUCTOR 1: Dùng khi Seller đăng một mặt hàng mới lên hệ thống.
-     * Tự động sinh UUID cho Item.
-     */
-    public Item(String name, double startingPrice, String desc, String category, String ownerId) {
-        super(UUID.randomUUID().toString()); // Sinh mã ID tự động
-        this.name = name;
-        this.startingPrice = startingPrice;
-        this.currentPrice = startingPrice; // Mới đăng thì giá hiện tại = giá khởi điểm
-        this.description = desc;
-        this.category = category;
-        this.ownerId = ownerId;
+    // Dùng enum cho category
+    public enum ItemCategory {
+        ART,
+        ELECTRONICS,
+        FASHION,
+        VEHICLE,
+        COLLECTIBLE
     }
+    private static final int NAME_MAX = 255;
+    private static final int DESC_MAX = 2000;
+    private static final int OWNER_ID_MAX = 36;
+    private String name;
+    private String description;
+    private BigDecimal startingPrice;
+    private ItemCategory category;
+    private String ownerId;
 
-    /**
-     * CONSTRUCTOR 2: Dùng khi ItemDAO lấy dữ liệu từ MySQL nạp vào Java.
-     */
-    public Item(String id, String name, double startingPrice, double currentPrice, String desc, String category, String ownerId) {
-        super(id); // Sử dụng ID cũ từ Database
-        this.name = name;
-        this.startingPrice = startingPrice;
-        this.currentPrice = currentPrice;
-        this.description = desc;
+    // Constructor dùng cho đối tượng mới
+    protected Item(String name, BigDecimal startingPrice, String description, ItemCategory category, String ownerId) {
+        super(); // Entity() sinh id và createdAt
+        this.name = normalizeName(name);
+        this.description = normalizeDescription(description);
+        this.startingPrice = money(startingPrice);
         this.category = category;
-        this.ownerId = ownerId;
+        this.ownerId = normalizeOwnerId(ownerId);
+        validateBaseItem();
     }
-
-    // --- CÁC PHƯƠNG THỨC LOGIC ---
-
-    public void updateCurrentPrice(double newBid) {
-        // Business Logic: Chỉ cập nhật nếu giá mới cao hơn giá cũ
-        if (newBid > this.currentPrice) {
-            this.currentPrice = newBid;
-            System.out.println("[SYSTEM] Giá vật phẩm '" + name + "' đã tăng lên: $" + newBid);
-        } else {
-            System.out.println("[ERROR] Lỗi: Giá thầu phải cao hơn giá hiện tại (" + currentPrice + ")");
+    // Constructor dùng cho đối tượng đã tồn tại (đọc từ DB)
+    protected Item(String id, LocalDateTime createdAt, String name,
+                   BigDecimal startingPrice,
+                   String description, ItemCategory category, String ownerId) {
+        super(id, createdAt);
+        this.name = normalizeName(name);
+        this.description = normalizeDescription(description);
+        this.startingPrice = money(startingPrice);
+        this.category = category;
+        this.ownerId = normalizeOwnerId(ownerId);
+        validateBaseItem();
+    }
+    // Validate Item
+    protected final void validateBaseItem() {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Tên mặt hàng không được để trống.");
+        }
+        if (name.length() > NAME_MAX) {
+            throw new IllegalArgumentException("Tên mặt hàng không được vượt quá " + NAME_MAX + " ký tự.");
+        }
+        if (startingPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Giá khởi điểm không được âm.");
+        }
+        if (category == null) {
+            throw new IllegalArgumentException("Category không được để trống.");
+        }
+        if (ownerId == null || ownerId.isEmpty()) {
+            throw new IllegalArgumentException("OwnerId không được để trống.");
+        }
+        if (ownerId.length() > OWNER_ID_MAX) {
+            throw new IllegalArgumentException("OwnerId không được dài quá " + OWNER_ID_MAX + " ký tự.");
+        }
+        if (description == null || description.isEmpty()) {
+            throw new IllegalArgumentException("Mô tả không được để trống.");
+        }
+        if (description.length() > DESC_MAX) {
+            throw new IllegalArgumentException("Mô tả không được vượt quá " + DESC_MAX + " ký tự.");
         }
     }
 
-    public abstract void showInfo(); // Thể hiện tính Abstraction
-
-    // --- GETTERS & SETTERS (ENCAPSULATION) ---
-
+    // Getter/setter
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
+    // Đổi tên sp
+    public void setName(String name) {
+        this.name = normalizeName(name);
+        validateBaseItem();
+    }
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public double getStartingPrice() { return startingPrice; }
-
-    public double getCurrentPrice() { return currentPrice; }
-
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-
+    // Đổi mô tả
+    public void setDescription(String description) {
+        this.description = normalizeDescription(description);
+        validateBaseItem();
+    }
+    public BigDecimal getStartingPrice() { return startingPrice; }
+    public ItemCategory getCategory() { return category; }
+    public void setCategory(ItemCategory category) {
+        this.category = category;
+        validateBaseItem();
+    }
     public String getOwnerId() { return ownerId; }
-    public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+    public void setOwnerId(String ownerId) {
+        this.ownerId = normalizeOwnerId(ownerId);
+        validateBaseItem();
+    }
+    // Phương để mô tả, không gắn UI Console
+    // Item này là gì về mặt nghiệp vụ
+    public abstract String summary();
+
+    // Các phương thức chuẩn hóa
+    private static BigDecimal money(BigDecimal amount) {
+        if (amount == null) throw new IllegalArgumentException("Amount không được null.");
+        return amount.setScale(2, RoundingMode.HALF_UP);
+    }
+    private static String normalizeName(String name) {
+        if (name == null) throw new IllegalArgumentException("Tên không được null.");
+        String t = name.trim();
+        return t.isEmpty() ? null : t;
+    }
+    private static String normalizeDescription(String desc) {
+        if (desc == null) return null;
+        String t = desc.trim();
+        return t.isEmpty() ? null : t;
+    }
+    private static String normalizeOwnerId(String ownerId) {
+        if (ownerId == null) throw new IllegalArgumentException("OwnerId không được null.");
+        return ownerId.trim();
+    }
+    // Item này là gì về mặt kỹ thuật
+    @Override
+    public String toString() {
+        return "Item: " +
+                " | id: " + getId() +
+                " | name: " + name +
+                " | startingPrice: " + startingPrice +
+                " | category: " + category +
+                " | ownerId: " + ownerId +
+                " | createdAt: " + getCreatedAt();
+    }
+    protected static String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

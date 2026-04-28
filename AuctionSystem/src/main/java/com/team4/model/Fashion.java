@@ -1,90 +1,177 @@
 package com.team4.model;
-
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
- * Lớp Fashion - Đại diện cho các mặt hàng thời trang (Quần áo, giày dép, phụ kiện).
- * Kế thừa từ Item (Thể hiện tính Inheritance & Polymorphism)
+ * Fashion: model cho nhóm hàng thời trang.
  */
-public class Fashion extends Item implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Fashion extends Item {
+    public enum Size {
+        XS, S, M, L, XL, XXL, XXXL, OTHER
+    }
+    public enum Gender {
+        UNISEX, MALE, FEMALE
+    }
+    public enum ConditionGrade {
+        POOR, FAIR, GOOD, VERY_GOOD, EXCELLENT, MINT
+    }
 
-    // Các thuộc tính riêng của Thời trang
     private String brand;
-    private String size;
+    private Size size;
     private String material;
     private String color;
-    private String gender;
-    private String condition; // New with tags, Used...
-    private boolean isAuthentic; // Kiểm định chính hãng
+    private Gender gender;           // giới tính/đối tượng
+    private ConditionGrade condition; // tình trạng
+    private boolean authentic;       // is_authentic
 
-    /**
-     * CONSTRUCTOR 1: Dùng khi Seller đăng sản phẩm thời trang mới.
-     * Category mặc định là "FASHION".
-     */
-    public Fashion(String name, double startingPrice, String desc, String ownerId,
-                   String brand, String size, String material, String color,
-                   String gender, String condition, boolean isAuthentic) {
-
-        // Gọi constructor 1 của Item (Tự sinh UUID, category = FASHION)
-        super(name, startingPrice, desc, "FASHION", ownerId);
-
-        this.brand = brand;
+    // Constructor khi Seller đăng sản phẩm mới
+    public Fashion(String name,
+                   BigDecimal startingPrice,
+                   String description,
+                   String ownerId,
+                   String brand,
+                   Size size,
+                   String material,
+                   String color,
+                   Gender gender,
+                   ConditionGrade condition,
+                   boolean authentic) {
+        super(name, startingPrice, description, ItemCategory.FASHION, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
         this.size = size;
-        this.material = material;
-        this.color = color;
-        this.gender = gender;
+        this.material = (material == null || material.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(material);
+        this.color = (color == null || color.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(color);
+        this.gender = (gender == null ? Gender.UNISEX : gender);
         this.condition = condition;
-        this.isAuthentic = isAuthentic;
+        this.authentic = authentic;
+        validateBrand(this.brand);
+        validateSize(this.size);
+        validateMaterial(this.material);
+        validateColor(this.color);
+        validateGender(this.gender);
+        validateCondition(this.condition);
+    }
+    // Constructor khi nạp từ DB
+    public Fashion(String id,
+                   LocalDateTime createdAt,
+                   String name,
+                   BigDecimal startingPrice,
+                   String description,
+                   String ownerId,
+                   String brand,
+                   Size size,
+                   String material,
+                   String color,
+                   Gender gender,
+                   ConditionGrade condition,
+                   boolean authentic) {
+        super(id, createdAt, name, startingPrice, description, ItemCategory.FASHION, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
+        this.size = size;
+        this.material = (material == null || material.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(material);
+        this.color = (color == null || color.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(color);
+        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.condition = condition;
+        this.authentic = authentic;
+        validateBrand(this.brand);
+        validateSize(this.size);
+        validateMaterial(this.material);
+        validateColor(this.color);
+        validateGender(this.gender);
+        validateCondition(this.condition);
     }
 
-    /**
-     * CONSTRUCTOR 2: Dùng cho ItemDAO nạp dữ liệu từ MySQL lên.
-     */
-    public Fashion(String id, String name, double startingPrice, double currentPrice,
-                   String desc, String ownerId, String brand, String size,
-                   String material, String color, String gender, String condition,
-                   boolean isAuthentic) {
-
-        // Gọi constructor 2 của Item (Giữ nguyên ID và giá hiện tại từ DB)
-        super(id, name, startingPrice, currentPrice, desc, "FASHION", ownerId);
-
-        this.brand = brand;
-        this.size = size;
-        this.material = material;
-        this.color = color;
-        this.gender = gender;
-        this.condition = condition;
-        this.isAuthentic = isAuthentic;
+    // Validate
+    private static void validateBrand(String brand) {
+        if (brand == null) return; // optional
+        if (brand.length() > 120) {
+            throw new IllegalArgumentException("Brand không được vượt quá 120 ký tự.");
+        }
     }
-
-    // --- TRIỂN KHAI ĐA HÌNH (POLYMORPHISM) ---
-
+    private static void validateSize(Size size) {
+        if  (size == null)
+            throw new IllegalArgumentException("Size không được null.");
+    }
+    private static void validateMaterial(String material) {
+        if (material == null) return;
+        if (material.length() > 120) {
+            throw new IllegalArgumentException("Material không được vượt quá 120 ký tự.");
+        }
+    }
+    private static void validateColor(String color) {
+        if (color == null) return;
+        if (color.length() > 50) {
+            throw new IllegalArgumentException("Color không được vượt quá 50 ký tự.");
+        }
+    }
+    private static void validateGender(Gender gender) {
+        if (gender == null) throw new IllegalArgumentException("Gender không được null.");
+    }
+    private static void validateCondition(ConditionGrade condition) {
+        if (condition == null) throw new IllegalArgumentException("Condition grade không được null.");
+    }
+    // Summary / toString
     @Override
-    public void showInfo() {
-        System.out.println("\n----------- [ THÔNG TIN THỜI TRANG ] -----------");
-        System.out.println("Sản phẩm     : " + getName() + " (ID: " + getId() + ")");
-        System.out.println("Thương hiệu  : " + brand);
-        System.out.println("Size/Màu     : " + size + " / " + color);
-        System.out.println("Chất liệu    : " + material + " | Dành cho: " + gender);
-        System.out.println("Tình trạng   : " + condition);
-        System.out.println("Xác thực Auth: " + (isAuthentic ? "ĐÃ KIỂM ĐỊNH CHÍNH HÃNG ✔" : "Chưa kiểm định ⚠"));
-        System.out.println("-------------------------------------------------");
-        System.out.println("GIÁ KHỞI ĐIỂM: $" + getStartingPrice());
-        System.out.println(">>> GIÁ HIỆN TẠI: $" + getCurrentPrice() + " <<<");
-        System.out.println("Người sở hữu : Seller-" + getOwnerId());
-        System.out.println("-------------------------------------------------\n");
+    public String summary() {
+        return brand + " - " + size +
+                " - " + gender.name() +
+                " - " + condition.name() +
+                (authentic ? " (Hàng thật)" : " (Không xác thực)");
     }
-
-    // --- GETTERS & SETTERS (ENCAPSULATION) ---
+    @Override
+    public String toString() {
+        return super.toString()
+                + " | brand: " + brand
+                + " | size: " + size
+                + " | material: " + material
+                + " | color: " + color
+                + " | gender: " + gender
+                + " | condition: " + condition
+                + " | authentic: " + authentic;
+    }
+    // Getters / Setters
     public String getBrand() { return brand; }
-    public String getSize() { return size; }
+    public void setBrand(String brand) {
+        this.brand = normalizeOptional(brand);
+        validateBrand(this.brand);
+    }
+    public Size getSize() { return size; }
+    public void setSize(Size size) {
+        this.size = size;
+        validateSize(this.size);
+    }
     public String getMaterial() { return material; }
+    public void setMaterial(String material) {
+        this.material = normalizeOptional(material);
+        validateMaterial(this.material);
+    }
     public String getColor() { return color; }
-    public String getGender() { return gender; }
-    public String getCondition() { return condition; }
-    public boolean isAuthentic() { return isAuthentic; }
-
-    public void setCondition(String condition) { this.condition = condition; }
-    public void setAuthentic(boolean authentic) { isAuthentic = authentic; }
+    public void setColor(String color) {
+        this.color = normalizeOptional(color);
+        validateColor(this.color);
+    }
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) {
+        this.gender = (gender == null ? Gender.UNISEX : gender);
+        validateGender(this.gender);
+    }
+    public ConditionGrade getCondition() { return condition; }
+    public void setCondition(ConditionGrade condition) {
+        this.condition = condition;
+        validateCondition(this.condition);
+    }
+    public boolean isAuthentic() { return authentic; }
+    public void setAuthentic(boolean authentic) { this.authentic = authentic; }
 }

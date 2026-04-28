@@ -1,81 +1,142 @@
 package com.team4.model;
-
-import java.io.Serializable;
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 /**
- * Lớp Collectible - Đại diện cho đồ sưu tầm quý hiếm.
- * Kế thừa từ Item (Tính Inheritance và Polymorphism).
+ * Collectible: Đại diện cho đồ sưu tập (Collectible).
  */
-public class Collectible extends Item implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Collectible extends Item {
+    private enum RarityLevel {
+        COMMON,         // Phổ biến
+        UNCOMMON,       // Ít phổ biến
+        RARE,           // Hiếm
+        VERY_RARE,      // Rất hiếm
+        ULTRA_RARE,     // Cực hiếm
+    }
 
-    // Các thuộc tính riêng của Đồ sưu tầm
-    private int yearOfOrigin;
-    private String rarityLevel;   // Hiếm, Rất hiếm, Duy nhất
-    private String conditionGrade;// Điểm bảo quản (VD: 9/10)
-    private String categorySpecific; // Thuộc tính đặc thù (ví dụ: Loại tem, Loại tiền cổ)
-    private boolean hasCertificate;
-    private String origin;
-    private String specialFeatures;
+    private enum ConditionGrade {
+        POOR,           // Kém
+        FAIR,           // Trung bình
+        GOOD,           // Tốt
+        VERY_GOOD,      // Rất tốt
+        EXCELLENT,      // Xuất sắc
+        MINT            // Hoàn hảo (như mới)
+    }
+    private int yearOfOrigin;       // năm xuất xứ
+    private RarityLevel rarityLevel;     // độ hiếm
+    private ConditionGrade conditionGrade; // tình trạng
+    private boolean hasCertificate;  // có chứng chỉ không
+    private String origin;           // xuất xứ (quốc gia/vùng)
 
-    public Collectible(String name, double startingPrice, String desc, String ownerId,
-                       int yearOfOrigin, String rarityLevel, String conditionGrade, String categorySpecific,
-                       boolean hasCertificate, String origin, String specialFeatures) {
-
-        // Gọi super() lên Item để tự sinh UUID và gán category tổng là "COLLECTIBLE"
-        super(name, startingPrice, desc, "COLLECTIBLE", ownerId);
+    // Constructor dùng khi tạo Collectible mới (Seller đăng sản phẩm)
+    public Collectible(String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       int yearOfOrigin,
+                       RarityLevel rarityLevel,
+                       ConditionGrade conditionGrade,
+                       boolean hasCertificate,
+                       String origin) {
+        super(name, startingPrice, description, ItemCategory.COLLECTIBLE, ownerId);
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
-        this.categorySpecific = categorySpecific;
         this.hasCertificate = hasCertificate;
-        this.origin = origin;
-        this.specialFeatures = specialFeatures;
+        this.origin = (origin == null || origin.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(origin);
+        validateYearOfOrigin(this.yearOfOrigin);
+        validateRarityLevel(this.rarityLevel);
+        validateConditionGrade(this.conditionGrade);
+        validateOrigin(this.origin);
     }
 
-    public Collectible(String id, String name, double startingPrice, double currentPrice,
-                       String desc, String ownerId, int yearOfOrigin, String rarityLevel,
-                       String conditionGrade,String categorySpecific, boolean hasCertificate, String origin,
-                       String specialFeatures) {
-
-        super(id, name, startingPrice, currentPrice, desc, "COLLECTIBLE", ownerId);
+    // Constructor dùng khi nạp từ DB
+    public Collectible(String id,
+                       LocalDateTime createdAt,
+                       String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       int yearOfOrigin,
+                       RarityLevel rarityLevel,
+                       ConditionGrade conditionGrade,
+                       boolean hasCertificate,
+                       String origin) {
+        super(id, createdAt, name, startingPrice, description, ItemCategory.COLLECTIBLE, ownerId);
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
-        this.categorySpecific = categorySpecific;
         this.hasCertificate = hasCertificate;
-        this.origin = origin;
-        this.specialFeatures = specialFeatures;
+        this.origin = (origin == null || origin.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(origin);
+        validateYearOfOrigin(this.yearOfOrigin);
+        validateRarityLevel(this.rarityLevel);
+        validateConditionGrade(this.conditionGrade);
+        validateOrigin(this.origin);
     }
 
-    // --- TRIỂN KHAI ĐA HÌNH (POLYMORPHISM) ---
-
-    @Override
-    public void showInfo() {
-        System.out.println("\n----------- [ VẬT PHẨM SƯU TẦM ] -----------");
-        System.out.println("Tên vật phẩm : " + getName() + " (ID: " + getId() + ")");
-        System.out.println("Năm sản xuất : " + yearOfOrigin + " | Xuất xứ: " + origin);
-        System.out.println("Độ hiếm     : " + rarityLevel);
-        System.out.println("Tình trạng   : Grade " + conditionGrade);
-        System.out.println("Loại đặc thù : " + categorySpecific);
-        System.out.println("Xác minh     : " + (hasCertificate ? "ĐÃ CÓ CHỨNG CHỈ KIỂM ĐỊNH " : "Chưa có chứng chỉ "));
-
-        if (specialFeatures != null && !specialFeatures.isEmpty()) {
-            System.out.println("Đặc điểm quý : " + specialFeatures);
+    // Validate
+    private static void validateYearOfOrigin(int year) {
+        if (year == 0) return; // unknown
+        int current = LocalDate.now().getYear();
+        final int MIN_YEAR = -3000;
+        if (year < MIN_YEAR || year > current) {
+            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
+                    MIN_YEAR + " .. " + current + " (Nếu không rõ năm sản xuất có thể điền '0').");
         }
-
-        System.out.println("----------------------------------------------");
-        System.out.println("GIÁ HIỆN TẠI : $" + getCurrentPrice());
-        System.out.println("Người sở hữu : Seller-" + getOwnerId());
-        System.out.println("----------------------------------------------\n");
     }
-
-    // --- GETTERS & SETTERS (ENCAPSULATION) ---
+    private static void validateRarityLevel(RarityLevel rarity) {
+        if (rarity == null)
+           throw new IllegalArgumentException("Rarity level không được để trống.");
+    }
+    private static void validateConditionGrade(ConditionGrade grade) {
+        if (grade == null)
+            throw new IllegalArgumentException("Condition grade không được để trống.");
+    }
+    private static void validateOrigin(String origin) {
+        if (origin == null) return;
+        String o = origin.trim();
+        if (o.length() > 120) throw new IllegalArgumentException("Origin quá dài (tối đa 120 ký tự).");
+    }
+    // Summary / toString
+    @Override
+    public String summary() {
+        return rarityLevel.name() + " - " + conditionGrade.name() +
+                (hasCertificate ? " (Có chứng chỉ)" : "");
+    }
+    @Override
+    public String toString() {
+        return super.toString()
+                + " | yearOfOrigin: " + yearOfOrigin
+                + " | rarityLevel: " + rarityLevel
+                + " | conditionGrade: " + conditionGrade
+                + " | hasCertificate: " + hasCertificate
+                + " | origin: " + origin;
+    }
+    // Getters / Setters
     public int getYearOfOrigin() { return yearOfOrigin; }
-    public String getRarityLevel() { return rarityLevel; }
-    public String getConditionGrade() { return conditionGrade; }
-    public String getCategorySpecific() { return categorySpecific; }
+    public void setYearOfOrigin(int yearOfOrigin) {
+        this.yearOfOrigin = yearOfOrigin;
+        validateYearOfOrigin(this.yearOfOrigin);
+    }
+    public RarityLevel getRarityLevel() { return rarityLevel; }
+    public void setRarityLevel(RarityLevel rarityLevel) {
+        this.rarityLevel = rarityLevel;
+        validateRarityLevel(this.rarityLevel);
+    }
+    public ConditionGrade getConditionGrade() { return conditionGrade; }
+    public void setConditionGrade(ConditionGrade conditionGrade) {
+        this.conditionGrade = conditionGrade;
+        validateConditionGrade(this.conditionGrade);
+    }
     public boolean isHasCertificate() { return hasCertificate; }
+    public void setHasCertificate(boolean hasCertificate) { this.hasCertificate = hasCertificate; }
     public String getOrigin() { return origin; }
-    public String getSpecialFeatures() { return specialFeatures; }
+    public void setOrigin(String origin) {
+        this.origin = normalizeOptional(origin);
+        validateOrigin(this.origin);
+    }
 }

@@ -46,7 +46,7 @@ public class Seller extends User {
 
     @Override
     public String toString() {
-        return super.toString() + ", storeName: " + storeName + '\'' + ", rating: " + rating;
+        return super.toString() + " | storeName: " + storeName + " | rating: " + rating;
     }
 
     // Setter/Getter

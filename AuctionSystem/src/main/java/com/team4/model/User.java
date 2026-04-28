@@ -160,15 +160,14 @@ public abstract class User extends Entity {
     // Không dùng UI cứng
     @Override
     public String toString() {
-        return "User{" +
-                "id: '" + getId() + '\'' +
-                ", username: '" + username + '\'' +
-                ", fullName: '" + fullName + '\'' +
-                ", email: '" + email + '\'' +
-                ", role: " + role +
-                ", balance: " + balance +
-                ", createdAt: " + getCreatedAt() +
-                '}';
+        return "User: " +
+                "id: '" + getId() +
+                " | username: " + username +
+                " | fullName: " + fullName +
+                " | email: " + email +
+                " | role: " + role +
+                " | balance: " + balance +
+                " | createdAt: " + getCreatedAt();
     }
 
     /** CÁC HÀM CHUẨN HÓA (thuôc về lớp,không thuộc về đối tượng). Dùng để chuẩn hóa dữ liệu đầu vào trước khi gán vào thuộc tính của đối tượng

@@ -59,8 +59,8 @@ public class Bidder extends User {
     // toString của User đã in ra thông tin cơ bản của Bidder, 2 thông tin dưới đây không nên được in ra
     // Chỉ dùng khi thật sự cần, không log ra ngoài do là thông tin cá nhân
     private String toShippingDetail() {
-        return "shippingAddress='" + shippingAddress + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'';
+        return "shippingAddress: " + shippingAddress +
+                " | phoneNumber: " + phoneNumber;
     }
 
     // Setter & Getter
