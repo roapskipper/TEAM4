@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.SellerProductsController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1100">
+
+    <HBox spacing="14">
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="totalProducts" text="24" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Tong san pham" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="activeAuctions" text="8" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #22c55e;"/>
+            <Label text="Dang dau gia" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="pendingProducts" text="3" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #eab308;"/>
+            <Label text="Cho duyet" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="soldProducts" text="156" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
+            <Label text="Da ban" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="🔍 Tim kiem san pham..." styleClass="admin-input" prefWidth="280"/>
+        <ComboBox fx:id="categoryFilter" promptText="Tat ca danh muc" styleClass="admin-combo" prefWidth="180"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="addProductBtn" text="➕ Them san pham" onAction="#onAddProduct" styleClass="btn-primary"/>
+    </HBox>
+
+    <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="productsTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
+            <columns>
+                <TableColumn fx:id="colProduct" text="San pham" prefWidth="300"/>
+                <TableColumn fx:id="colCategory" text="Danh muc" prefWidth="120"/>
+                <TableColumn fx:id="colStartPrice" text="Gia khoi diem" prefWidth="130"/>
+                <TableColumn fx:id="colCurrentPrice" text="Gia hien tai" prefWidth="130"/>
+                <TableColumn fx:id="colStatus" text="Trang thai" prefWidth="110"/>
+                <TableColumn fx:id="colDate" text="Ngay tao" prefWidth="100"/>
+                <TableColumn fx:id="colAction" text="Thao tac" prefWidth="120"/>
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

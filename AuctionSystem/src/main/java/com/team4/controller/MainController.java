@@ -1,75 +1,142 @@
 package com.team4.controller;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
+import javafx.scene.Scene;
+import java.net.URL;
+import java.util.ResourceBundle;
 
-public class MainController {
+public class MainController implements Initializable {
 
-    @FXML
-    private TilePane auctionGrid;
+    @FXML private BorderPane mainRoot;
+    @FXML private VBox navContainer;
+    @FXML private StackPane contentArea;
+    @FXML private Label pageTitle, pageSubtitle;
+    @FXML private Label userNameLabel, userRoleBadge;
+    @FXML private StackPane userAvatarBg;
+    @FXML private Button notiBtn;
+    @FXML private Label notiBadge;
 
-    @FXML
-    public void initialize() {
-        String[] products = {"MacBook Pro M3", "iPhone 15 Pro Max", "Đồng hồ Rolex", "Giày Jordan 1", "Màn hình LG 27inch", "Bàn phím cơ Keychron"};
-        String[] prices = {"45.000.000 đ", "29.990.000 đ", "350.000.000 đ", "4.500.000 đ", "7.200.000 đ", "1.800.000 đ"};
+    private String userRole = "bidder";
+    private String currentPage = "";
 
-        for (int i = 0; i < products.length; i++) {
-            VBox card = createProductCard(products[i], prices[i]);
-            auctionGrid.getChildren().add(card);
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+    }
+
+    public void setUserRole(String role) {
+        this.userRole = role;
+        setupSidebar();
+        updateUserInfo();
+
+        if ("admin".equals(role)) loadPage("admin_dashboard", "Tong quan", "Theo doi va dieu hanh toan bo he thong");
+        else if ("seller".equals(role)) loadPage("seller_products", "San pham", "Quan ly san pham dau gia");
+        else loadPage("bidder_auctions", "Dau gia", "Kham pha va tham gia dau gia");
+    }
+
+    private void setupSidebar() {
+        navContainer.getChildren().clear();
+
+        if ("admin".equals(userRole)) {
+            addNavItem("📊", "Tong quan", "admin_dashboard", "Theo doi va dieu hanh he thong");
+            addNavItem("👥", "Nguoi dung", "admin_users", "Khoa/mo tai khoan");
+            addNavItem("🔨", "Dau gia", "admin_auctions", "Duyet va quan ly phien dau gia");
+            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
+        } else if ("seller".equals(userRole)) {
+            addNavItem("📦", "San pham", "seller_products", "Quan ly san pham");
+            addNavItem("📋", "Dau gia cua toi", "bidder_auctions", "Cac phien da tao");
+            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
+        } else {
+            addNavItem("🔨", "Dau gia", "bidder_auctions", "Kham pha phien dau gia");
+            addNavItem("📋", "Dau gia cua toi", "bidding_room", "Cac phien da tham gia");
+            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
         }
     }
 
-    private VBox createProductCard(String name, String price) {
-        VBox card = new VBox(15);
-        card.setStyle("-fx-background-color: #13131a; -fx-background-radius: 12; -fx-border-color: #27273a; -fx-border-radius: 12; -fx-padding: 15; -fx-cursor: hand;");
-        card.setPrefWidth(260);
-        StackPane imagePlaceHolder = new StackPane();
-        imagePlaceHolder.setPrefHeight(160);
-        imagePlaceHolder.setStyle("-fx-background-color: linear-gradient(to bottom right, #2a2a35, #1a1a24); -fx-background-radius: 8;");
-        Label icon = new Label("📦");
-        icon.setStyle("-fx-font-size: 40;");
-        imagePlaceHolder.getChildren().add(icon);
-
-        Label nameLabel = new Label(name);
-        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;");
-
-        HBox priceBox = new HBox();
-        priceBox.setAlignment(Pos.CENTER_LEFT);
-
-        Label priceLabel = new Label(price);
-        priceLabel.setStyle("-fx-text-fill: #ec4899; -fx-font-size: 18; -fx-font-weight: bold;");
-
-        Label spacer = new Label();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        spacer.setMaxWidth(Double.MAX_VALUE);
-
-        Label timeLabel = new Label("⏱ 02:15:30");
-        timeLabel.setStyle("-fx-text-fill: #9ca3af; -fx-font-size: 12;");
-
-        priceBox.getChildren().addAll(priceLabel, spacer, timeLabel);
-
-        Button bidBtn = new Button("Đấu giá ngay");
-        bidBtn.setMaxWidth(Double.MAX_VALUE);
-        bidBtn.setStyle("-fx-background-color: rgba(139, 92, 246, 0.2); -fx-text-fill: #a78bfa; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12; -fx-cursor: hand;");
-
-        card.setOnMouseEntered(e -> {
-            card.setStyle("-fx-background-color: #1a1a24; -fx-background-radius: 12; -fx-border-color: #8b5cf6; -fx-border-radius: 12; -fx-padding: 15; -fx-cursor: hand;");
-            bidBtn.setStyle("-fx-background-color: #8b5cf6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12; -fx-cursor: hand;");
+    private void addNavItem(String icon, String label, String pageId, String subtitle) {
+        Button btn = new Button(icon + "  " + label);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.getStyleClass().add("nav-btn");
+        btn.setOnAction(e -> {
+            selectNavButton(btn);
+            loadPage(pageId, label, subtitle);
         });
+        navContainer.getChildren().add(btn);
+    }
 
-        card.setOnMouseExited(e -> {
-            card.setStyle("-fx-background-color: #13131a; -fx-background-radius: 12; -fx-border-color: #27273a; -fx-border-radius: 12; -fx-padding: 15; -fx-cursor: hand;");
-            bidBtn.setStyle("-fx-background-color: rgba(139, 92, 246, 0.2); -fx-text-fill: #a78bfa; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12; -fx-cursor: hand;");
-        });
+    private void selectNavButton(Button selected) {
+        for (Node n : navContainer.getChildren()) {
+            if (n instanceof Button) {
+                Button b = (Button) n;
+                b.getStyleClass().removeAll("nav-btn-active");
+                b.getStyleClass().add("nav-btn");
+            }
+        }
+        selected.getStyleClass().removeAll("nav-btn");
+        selected.getStyleClass().add("nav-btn-active");
+    }
 
-        card.getChildren().addAll(imagePlaceHolder, nameLabel, priceBox, bidBtn);
-        return card;
+    private void updateUserInfo() {
+        String name = userRole.equals("admin") ? "Admin" :
+                      userRole.equals("seller") ? "Nguoi ban" : "Nguoi mua";
+        userNameLabel.setText(name);
+
+        if ("admin".equals(userRole)) {
+            userRoleBadge.setText("ADMIN");
+            userRoleBadge.setStyle("-fx-text-fill: #ef4444; -fx-padding: 2 8; -fx-background-color: rgba(239,68,68,0.15); -fx-background-radius: 20;");
+            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #ef4444, #f97316); -fx-background-radius: 50%;");
+        } else if ("seller".equals(userRole)) {
+            userRoleBadge.setText("SELLER");
+            userRoleBadge.setStyle("-fx-text-fill: #ec4899; -fx-padding: 2 8; -fx-background-color: rgba(236,72,153,0.15); -fx-background-radius: 20;");
+            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #ec4899, #f43f5e); -fx-background-radius: 50%;");
+        } else {
+            userRoleBadge.setText("BIDDER");
+            userRoleBadge.setStyle("-fx-text-fill: #3b82f6; -fx-padding: 2 8; -fx-background-color: rgba(59,130,246,0.15); -fx-background-radius: 20;");
+            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #3b82f6, #06b6d4); -fx-background-radius: 50%;");
+        }
+    }
+
+    private void loadPage(String pageId, String title, String subtitle) {
+        this.currentPage = pageId;
+        pageTitle.setText(title);
+        pageSubtitle.setText(subtitle);
+
+        try {
+            Parent page = FXMLLoader.load(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(page);
+        } catch (Exception ex) {
+            Label placeholder = new Label("Trang " + title + " (dang phat trien)");
+            placeholder.setStyle("-fx-text-fill: #4b5563; -fx-font-size: 16;");
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(placeholder);
+        }
+    }
+
+    @FXML private void onLogout() {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/com/team4/view/login.fxml"));
+            Stage stage = (Stage) mainRoot.getScene().getWindow();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
+            stage.setScene(scene);
+            stage.setTitle("AuctionSpace - Dang nhap");
+            stage.setMaximized(false);
+            stage.setWidth(1200);
+            stage.setHeight(800);
+            stage.centerOnScreen();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    @FXML private void onNotificationClick() {
+        System.out.println("Notifications clicked");
     }
 }

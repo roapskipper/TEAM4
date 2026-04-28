@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.AdminUsersController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1100">
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField"
+                   promptText="🔍 Tim kiem nguoi dung..."
+                   styleClass="admin-input"
+                   prefWidth="320"/>
+
+        <HBox spacing="8">
+            <Button fx:id="filterAll" text="Tat ca" onAction="#onFilterAll" styleClass="admin-filter-active"/>
+            <Button fx:id="filterActive" text="Hoat dong" onAction="#onFilterActive" styleClass="admin-filter"/>
+            <Button fx:id="filterLocked" text="Bi khoa" onAction="#onFilterLocked" styleClass="admin-filter"/>
+        </HBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Label fx:id="resultCount" text="5 nguoi dung" style="-fx-text-fill: #6b7280; -fx-font-size: 12;"/>
+    </HBox>
+
+    <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
+            <columns>
+                <TableColumn fx:id="colUser" text="Nguoi dung" prefWidth="280"/>
+                <TableColumn fx:id="colRole" text="Vai tro" prefWidth="120"/>
+                <TableColumn fx:id="colStatus" text="Trang thai" prefWidth="120"/>
+                <TableColumn fx:id="colJoined" text="Tham gia" prefWidth="140"/>
+                <TableColumn fx:id="colAuctions" text="Dau gia" prefWidth="80"/>
+                <TableColumn fx:id="colAction" text="Thao tac" prefWidth="140"/>
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>

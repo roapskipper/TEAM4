@@ -1,112 +1,99 @@
 package com.team4.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.team4.util.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import java.io.IOException;
 
 public class LoginController {
 
-    @FXML private VBox loginForm, registerForm;
-    @FXML private Button loginTab, registerTab;
-    @FXML private TextField usernameField, registerUsernameField;
-    @FXML private PasswordField passwordField, registerPasswordField;
-    @FXML private Label errorLabel;
+    @FXML private TextField loginUsername;
+    @FXML private PasswordField loginPassword;
+    @FXML private Label loginError;
+    @FXML private Button loginBtn;
+    @FXML private Button loginTab;
+    @FXML private Button registerTab;
+    @FXML private VBox loginForm;
+    @FXML private VBox registerForm;
+    @FXML private ToggleButton roleBidder;
+    @FXML private ToggleButton roleSeller;
+    @FXML private VBox storeNameBox;
+    @FXML private TextField regStoreName;
+    @FXML private TextField regUsername;
+    @FXML private TextField regEmail;
+    @FXML private PasswordField regPassword;
+    @FXML private PasswordField regConfirmPassword;
+    @FXML private Label regError;
+    @FXML private Button regBtn;
+
+    private final String ADMIN_ACC = "admin";
+    private final String ADMIN_PASS = "admin";
+    private final String BIDDER_ACC = "bidder";
+    private final String BIDDER_PASS = "bidder";
+    private final String SELLER_ACC = "seller";
+    private final String SELLER_PASS = "seller";
 
     @FXML
-    public void handleLoginTab(ActionEvent event) {
-        registerForm.setVisible(false);
-        registerForm.setManaged(false);
-        loginForm.setVisible(true);
-        loginForm.setManaged(true);
+    public void onLoginSubmit(ActionEvent event) {
+        String username = loginUsername.getText();
+        String password = loginPassword.getText();
 
-        loginTab.setStyle("-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;");
-        registerTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #9ca3af; -fx-font-weight: bold; -fx-background-radius: 10;");
+        if (username.equals(ADMIN_ACC) && password.equals(ADMIN_PASS)) {
+            UserSession.createSession(username, "ADMIN");
+            closeWindow();
+        } else if ((username.equals(BIDDER_ACC) && password.equals(BIDDER_PASS)) ||
+                (username.equals(SELLER_ACC) && password.equals(SELLER_PASS))) {
+            UserSession.createSession(username, "USER");
+            closeWindow();
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Lỗi");
+            alert.setHeaderText(null);
+            alert.setContentText("Sai tài khoản hoặc mật khẩu!");
+            alert.showAndWait();
+        }
+    }
+
+    private void closeWindow() {
+        Stage stage = (Stage) loginUsername.getScene().getWindow();
+        stage.close();
     }
 
     @FXML
-    public void handleRegisterTab(ActionEvent event) {
+    public void onLoginTabClicked(ActionEvent event) {
+        loginForm.setVisible(true);
+        loginForm.setManaged(true);
+        registerForm.setVisible(false);
+        registerForm.setManaged(false);
+    }
+
+    @FXML
+    public void onRegisterTabClicked(ActionEvent event) {
         loginForm.setVisible(false);
         loginForm.setManaged(false);
         registerForm.setVisible(true);
         registerForm.setManaged(true);
-
-        registerTab.setStyle("-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;");
-        loginTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #9ca3af; -fx-font-weight: bold; -fx-background-radius: 10;");
     }
 
     @FXML
-    private void handleLogin() {
-        String user = usernameField.getText();
-        String pass = passwordField.getText();
-
-        String jsonResponse = mockSocketServer("LOGIN", user, pass);
-
-        Gson gson = new Gson();
-        JsonObject response = gson.fromJson(jsonResponse, JsonObject.class);
-
-        if (response.get("status").getAsString().equals("SUCCESS")) {
-            switchToDashboard();
+    public void onRoleChanged(ActionEvent event) {
+        if (roleSeller.isSelected()) {
+            storeNameBox.setVisible(true);
+            storeNameBox.setManaged(true);
         } else {
-            errorLabel.setText(response.get("message").getAsString());
-            errorLabel.setStyle("-fx-text-fill: #ef4444;");
-            errorLabel.setVisible(true);
+            storeNameBox.setVisible(false);
+            storeNameBox.setManaged(false);
         }
     }
 
     @FXML
-    private void handleRegister() {
-        String newUser = registerUsernameField.getText();
-        String newPass = registerPasswordField.getText();
-
-        if (newUser.isEmpty() || newPass.isEmpty()) {
-            errorLabel.setText("Vui lòng không để trống thông tin đăng ký!");
-            errorLabel.setStyle("-fx-text-fill: #ef4444;");
-            errorLabel.setVisible(true);
-            return;
-        }
-
-        System.out.println("Giả lập đăng ký: " + newUser);
-        errorLabel.setText("Mô phỏng Đăng ký thành công!");
-        errorLabel.setStyle("-fx-text-fill: #10b981;");
-        errorLabel.setVisible(true);
-    }
-
-    private String mockSocketServer(String action, String u, String p) {
-        JsonObject response = new JsonObject();
-
-        if (action.equals("LOGIN")) {
-            if (u.equals("tester_bidder") && p.equals("123456")) {
-                response.addProperty("status", "SUCCESS");
-                response.addProperty("message", "Đăng nhập thành công!");
-
-                JsonObject data = new JsonObject();
-                data.addProperty("username", u);
-                response.add("data", data);
-            } else {
-                response.addProperty("status", "ERROR");
-                response.addProperty("message", "Tài khoản hoặc mật khẩu không chính xác.");
-            }
-        }
-        return new Gson().toJson(response);
-    }
-
-    private void switchToDashboard() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("AuctionSpace - Trang chủ");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void onRegisterSubmit(ActionEvent event) {
     }
 }
