@@ -3,6 +3,9 @@ package com.team4.controller;
 import com.team4.util.UserSession;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -47,17 +50,41 @@ public class LoginController {
 
         if (username.equals(ADMIN_ACC) && password.equals(ADMIN_PASS)) {
             UserSession.createSession(username, "ADMIN");
-            closeWindow();
+            openMainWindow();
         } else if ((username.equals(BIDDER_ACC) && password.equals(BIDDER_PASS)) ||
                 (username.equals(SELLER_ACC) && password.equals(SELLER_PASS))) {
             UserSession.createSession(username, "USER");
-            closeWindow();
+            openMainWindow();
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Lỗi");
             alert.setHeaderText(null);
             alert.setContentText("Sai tài khoản hoặc mật khẩu!");
             alert.showAndWait();
+        }
+    }
+
+    private void openMainWindow() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
+            Parent root = loader.load();
+
+            MainController mainController = loader.getController();
+            if (UserSession.getInstance() != null) {
+                mainController.setUserRole(UserSession.getInstance().getUsername());
+            }
+
+            Stage stage = new Stage();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
+            stage.setScene(scene);
+            stage.setTitle("AuctionSpace - Home");
+            stage.setMaximized(true);
+            stage.show();
+
+            closeWindow();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

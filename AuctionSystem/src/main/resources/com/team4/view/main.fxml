@@ -15,10 +15,9 @@
 
     <left>
         <VBox fx:id="sidebar"
-              style="-fx-background-color: #111118;"
+              style="-fx-background-color: #111118; -fx-border-color: transparent rgba(255,255,255,0.04) transparent transparent;"
               prefWidth="270" minWidth="220" maxWidth="320"
               spacing="0">
-            <VBox.styleString>-fx-border-color: transparent rgba(255,255,255,0.04) transparent transparent;</VBox.styleString>
 
             <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 24 20 16 20;">
                 <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 12;"
@@ -38,8 +37,7 @@
 
             <Region VBox.vgrow="ALWAYS" />
 
-            <VBox style="-fx-padding: 16;"
-                  styleString="-fx-border-color: rgba(255,255,255,0.04) transparent transparent transparent;">
+            <VBox style="-fx-padding: 16; -fx-border-color: rgba(255,255,255,0.04) transparent transparent transparent;">
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <StackPane fx:id="userAvatarBg"
                                style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 50%;"
@@ -62,8 +60,10 @@
                     <Button fx:id="logoutBtn"
                             text="↩"
                             onAction="#onLogout"
-                            style="-fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-font-size: 18; -fx-padding: 4 8; -fx-cursor: hand;"
-                            tooltip="Dang xuat">
+                            style="-fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-font-size: 18; -fx-padding: 4 8; -fx-cursor: hand;">
+                        <tooltip>
+                            <Tooltip text="Dang xuat"/>
+                        </tooltip>
                     </Button>
                 </HBox>
             </VBox>
@@ -75,8 +75,7 @@
             <HBox fx:id="headerBar"
                   alignment="CENTER_LEFT"
                   spacing="16"
-                  style="-fx-background-color: rgba(10,10,15,0.85); -fx-padding: 16 28;">
-                <HBox.styleString>-fx-border-color: transparent transparent rgba(255,255,255,0.04) transparent;</HBox.styleString>
+                  style="-fx-background-color: rgba(10,10,15,0.85); -fx-padding: 16 28; -fx-border-color: transparent transparent rgba(255,255,255,0.04) transparent;">
 
                 <VBox spacing="3" HBox.hgrow="ALWAYS">
                     <Label fx:id="pageTitle"
