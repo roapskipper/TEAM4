@@ -60,7 +60,7 @@
                     <Button fx:id="logoutBtn"
                             text="↩"
                             onAction="#onLogout"
-                            style="-fx-background-color: transparent; -fx-text-fill: #4b5563; -fx-font-size: 18; -fx-padding: 4 8; -fx-cursor: hand;">
+                            style="-fx-background-color: rgba(255, 255, 255, 0.05); -fx-background-radius: 10; -fx-text-fill: #f3f4f6; -fx-font-size: 18; -fx-padding: 10; -fx-cursor: hand;">
                         <tooltip>
                             <Tooltip text="Dang xuat"/>
                         </tooltip>
