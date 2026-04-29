@@ -1,106 +1,164 @@
 package com.team4.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.io.Serializable;
-import java.util.UUID;
 
-/**
- * Lớp Auction - Phiên đấu giá.
- * Kế thừa từ Entity để sử dụng UUID và đồng bộ với hệ thống.
- */
-public class Auction extends Entity implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private String itemId;                // Link tới vật phẩm đang đấu giá
-    private String sellerId;              // Link tới người tạo (Seller)
-    private String currentHighestBidderId;// Link tới người trả giá cao nhất (Bidder)
-    private double currentPrice;          // Giá hiện tại của phiên
+public class Auction extends Entity {
+    // enum các trạng thái của phiên đấu giá
+    public enum AuctionStatus {
+        PENDING, RUNNING, FINISHED, PAID ,CANCELLED
+    }
+    private String itemId;
+    private String sellerId;
+    private BigDecimal startingPrice;
+    private BigDecimal bidIncrement; // bước giá tối thiểu mỗi lần bid
+    private String currentHighestBidderId;
+    private BigDecimal currentPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String status;                // PENDING, ACTIVE, CLOSED, CANCELLED
+    private AuctionStatus status;
 
-    /**
-     * CONSTRUCTOR 1: Dùng khi Seller tạo một phiên đấu giá mới.
-     * Tự động sinh UUID, startTime là hiện tại và status mặc định là ACTIVE.
-     */
-    public Auction(String itemId, String sellerId, double startingPrice, LocalDateTime endTime) {
-        super(UUID.randomUUID().toString()); // Tự sinh ID phiên đấu giá
+    // Constructor khi tạo một cuộc đấu giá mới
+    public Auction(String itemId, String sellerId, BigDecimal startingPrice,BigDecimal bidIncrement, LocalDateTime endTime) {
+        super();
         this.itemId = itemId;
         this.sellerId = sellerId;
-        this.currentPrice = startingPrice;
+        this.startingPrice = money(startingPrice);
+        this.bidIncrement = money(bidIncrement);
+        this.currentPrice = money(startingPrice);
         this.startTime = LocalDateTime.now();
         this.endTime = endTime;
-        this.status = "ACTIVE";
+        this.status = AuctionStatus.PENDING; // Mă định là "Đang chờ duyệt"
+        validateAuctionInfo();
     }
-
-    /**
-     * CONSTRUCTOR 2: Dùng cho DAO khi nạp dữ liệu từ Database lên Java.
-     */
-    public Auction(String id, String itemId, String sellerId, String currentHighestBidderId,
-                   double currentPrice, LocalDateTime startTime, LocalDateTime endTime, String status) {
-        super(id); // Sử dụng ID cũ từ MySQL
+    // Constructor khi nạp cuộc đấu giá lên từ DB
+    public Auction(String id, LocalDateTime createdAt,
+                   String itemId, String sellerId,
+                   String currentHighestBidderId,
+                   BigDecimal startingPrice, BigDecimal currentPrice,
+                   BigDecimal bidIncrement,
+                   LocalDateTime startTime, LocalDateTime endTime,
+                   AuctionStatus status) {
+        super(id, createdAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
+        this.startingPrice = money(startingPrice);
+        this.bidIncrement = money(bidIncrement);
         this.currentHighestBidderId = currentHighestBidderId;
-        this.currentPrice = currentPrice;
+        this.currentPrice = money(currentPrice);
         this.startTime = startTime;
         this.endTime = endTime;
         this.status = status;
+        validateAuctionInfo();
     }
 
-    // --- CÁC PHƯƠNG THỨC LOGIC NGHIỆP VỤ ---
-
-    /**
-     * Kiểm tra phiên đã kết thúc chưa dựa trên thời gian hiện tại
-     */
+    // Validate và chuẩn hóa các field
+    private void validateAuctionInfo() {
+        if (itemId == null)
+            throw new IllegalArgumentException("ItemId không được null");
+        if (sellerId == null)
+            throw new IllegalArgumentException("SellerId không được null");
+        if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
+        if (bidIncrement == null || bidIncrement.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
+        if (endTime == null || endTime.isBefore(startTime))
+            throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
+        if (currentPrice.compareTo(startingPrice) < 0)
+            throw new IllegalArgumentException("Giá hiện tại không thể thấp hơn giá khởi điểm");
+        if (status == null)
+            throw new IllegalArgumentException("Trạng thái đấu giá không được null");
+        if (!endTime.isAfter(startTime))
+            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu");
+    }
+    // Làm tròn tiền đến phần trăm
+    private static BigDecimal money(BigDecimal amount) {
+        if (amount == null) throw new IllegalArgumentException("Amount không được null."); // Tránh NPE
+        return amount.setScale(2, RoundingMode.HALF_UP);
+    }
+    /** Các method dưới đây đều public,do service sẽ cần gọi tới*/
+    // Kiểm tra phiên đã hết thời gian chưa
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(endTime);
     }
-
-    /**
-     * Kiểm tra xem phiên còn hiệu lực để đặt giá không
-     */
+    // Kiểm tra có thể đặt giá không
     public boolean canBid() {
-        return "ACTIVE".equalsIgnoreCase(status) && !isExpired();
+        return status == AuctionStatus.RUNNING && !isExpired();
     }
+    // Cập nhật giá mới và người dẫn đầu
+    public void applyBid(String bidderId, BigDecimal amount) {
+        if (!canBid())
+            throw new IllegalStateException("Phiên không thể nhận bid lúc này");
+        if (bidderId == null)
+            throw new IllegalArgumentException("BidderId không được null");
+        if (amount == null)
+            throw new IllegalArgumentException("Amount không được null");
+        if (amount.compareTo(currentPrice.add(bidIncrement)) < 0)
+            throw new IllegalArgumentException("Giá bid phải cao hơn giá hiện tại ít nhất " + bidIncrement);
 
-    /**
-     * Phương thức hỗ trợ hiển thị thời gian còn lại (Dạng rút gọn cho Console)
-     */
-    public String getTimeRemaining() {
-        if (isExpired()) return "Đã kết thúc";
-        java.time.Duration duration = java.time.Duration.between(LocalDateTime.now(), endTime);
-        return String.format("%d giờ, %d phút", duration.toHours(), duration.toMinutesPart());
-    }
-
-    // --- GETTERS & SETTERS (ENCAPSULATION) ---
-
-    public String getItemId() { return itemId; }
-    public String getSellerId() { return sellerId; }
-
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) {
-        if (currentPrice > this.currentPrice) {
-            this.currentPrice = currentPrice;
-        }
-    }
-
-    public String getCurrentHighestBidderId() { return currentHighestBidderId; }
-    public void setCurrentHighestBidderId(String bidderId) {
+        this.currentPrice = money(amount);
         this.currentHighestBidderId = bidderId;
     }
-
-    public LocalDateTime getStartTime() { return startTime; }
-    public LocalDateTime getEndTime() { return endTime; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    @Override
-    public String toString() {
-        return "Auction [" + status + "] - ItemID: " + itemId +
-                ", Highest Price: $" + currentPrice +
-                ", WinnerID: " + (currentHighestBidderId != null ? currentHighestBidderId : "None") +
-                ", Ends in: " + getTimeRemaining();
+    // ACTIVE -> CLOSED
+    public void close() {
+        if (status != AuctionStatus.RUNNING)
+            throw new IllegalStateException("Chỉ có thể close từ ACTIVE");
+        this.status = AuctionStatus.FINISHED;
     }
+    // CLOSED -> PAID, Dùng khi: bidder thanh toán thành công
+    public void markPaid() {
+        if (status != AuctionStatus.FINISHED)
+            throw new IllegalStateException("Chỉ có thể markPaid từ CLOSED");
+        this.status = AuctionStatus.PAID;
+    }
+    //  CANCELLED (từ PENDING hoặc ACTIVE), Dùng khi: admin từ chối hoặc seller hủy
+    public void cancel() {
+        if (status == AuctionStatus.PAID)
+            throw new IllegalStateException("Không thể hủy phiên đã thanh toán");
+        this.status = AuctionStatus.CANCELLED;
+    }
+
+    // Getter/ Setter
+    // Setter chỉ cho phép thay đổi bidIncrement
+    public String getItemId() {
+        return itemId;
+    }
+    public String getSellerId() {
+        return sellerId;
+    }
+    public String getCurrentHighestBidderId() {
+        return currentHighestBidderId;
+    }
+    public BigDecimal getStartingPrice() {
+        return startingPrice;
+    }
+    public BigDecimal getCurrentPrice() {
+        return currentPrice;
+    }
+    public BigDecimal getBidIncrement() {
+        return bidIncrement;
+    }
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+    public AuctionStatus getStatus() {
+        return status;
+    }
+    public void setBidIncrement(BigDecimal bidIncrement) {
+        if (bidIncrement.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
+        this.bidIncrement = money(bidIncrement);
+    }
+     @Override
+     public String toString() {
+         return "Item: " + itemId +
+                 " | Seller: " + sellerId +
+                 " | Current Price: $" + (currentPrice == null ? "n/a" : currentPrice.toPlainString()) + // tránh gọi toString của currentPrice
+                 " | Bid: " + bidIncrement +
+                 " | Status: " + status;
+     }
 }

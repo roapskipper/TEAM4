@@ -1,78 +1,113 @@
 package com.team4.model;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
-import java.io.Serializable;
-import java.util.UUID;
-
-/**
- * Lớp AutoBidding - Lệnh đấu giá tự động.
- * Kế thừa từ Entity để sử dụng hệ thống UUID.
+/** Model cho tính năng đấu giá tự động
+ *
  */
-public class AutoBidding extends Entity implements Serializable {
-    private static final long serialVersionUID = 1L;
-
-    private String auctionId;        // ID của phiên đấu giá đang theo dõi
-    private String bidderId;         // ID của người đặt lệnh tự động
-    private double maxLimit;         // Số tiền cao nhất họ có thể trả
-    private double incrementAmount;  // Bước giá tự động tăng thêm mỗi lần bị vượt mặt
-    private boolean isActive;        // Trạng thái lệnh (Bật/Tắt)
-
-    /**
-     * CONSTRUCTOR 1: Dùng khi người dùng cài đặt lệnh đấu giá tự động mới.
-     * Tự động sinh UUID và đặt trạng thái hoạt động là true.
-     */
-    public AutoBidding(String auctionId, String bidderId, double maxLimit, double incrementAmount) {
-        super(UUID.randomUUID().toString()); // Sinh ID cho lệnh tự động
-        this.auctionId = auctionId;
-        this.bidderId = bidderId;
-        this.maxLimit = maxLimit;
-        this.incrementAmount = incrementAmount;
+public class AutoBidding extends Entity {
+    private final String auctionId;
+    private final String bidderId;
+    private BigDecimal maxLimit;        // giới hạn cao nhất bidder chấp nhận trả
+    private BigDecimal incrementAmount; // bước giá tự động
+    private boolean isActive;           // bật/tắt auto-bid
+    // Tạo cấu hình mới
+    public AutoBidding(String auctionId,
+                       String bidderId,
+                       BigDecimal maxLimit,
+                       BigDecimal incrementAmount) {
+        super();
+        this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
+        this.bidderId = Objects.requireNonNull(bidderId, "bidderId không đợc null").trim();
+        this.maxLimit = money(maxLimit);
+        this.incrementAmount = money(incrementAmount);
         this.isActive = true;
+        validateConfig();
     }
-
-    /**
-     * CONSTRUCTOR 2: Dùng cho DAO nạp dữ liệu từ MySQL lên.
-     */
-    public AutoBidding(String id, String auctionId, String bidderId, double maxLimit, double incrementAmount, boolean isActive) {
-        super(id);
-        this.auctionId = auctionId;
-        this.bidderId = bidderId;
-        this.maxLimit = maxLimit;
-        this.incrementAmount = incrementAmount;
+    // Nạp từ DB (id, createdAt do Entity)
+    public AutoBidding(String id,
+                       LocalDateTime createdAt,
+                       String auctionId,
+                       String bidderId,
+                       BigDecimal maxLimit,
+                       BigDecimal incrementAmount,
+                       boolean isActive) {
+        super(id, createdAt);
+        this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
+        this.bidderId = Objects.requireNonNull(bidderId, "bidderId không được null").trim();
+        this.maxLimit = money(maxLimit);
+        this.incrementAmount = money(incrementAmount);
         this.isActive = isActive;
+        validateConfig();
     }
 
-    // --- CÁC PHƯƠNG THỨC LOGIC ---
-
-    /**
-     * Tính toán giá thầu tiếp theo nếu có người khác trả giá cao hơn.
-     * Trả về -1 nếu giá thầu tiếp theo vượt quá giới hạn maxLimit.
-     */
-    public double calculateNextBid(double currentAuctionPrice) {
-        double nextBid = currentAuctionPrice + incrementAmount;
-        if (nextBid <= maxLimit) {
-            return nextBid;
+    public void validateConfig() {
+        if (incrementAmount == null || incrementAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("incrementAmount phải lớn hơn 0");
         }
-        return -1; // Không thể đặt giá thêm vì đã chạm trần
+        if (maxLimit == null || maxLimit.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("maxLimit phải lớn hơn 0");
+        }
+        if (this.auctionId.isEmpty()) throw new IllegalArgumentException("auctionId không được rỗng");
+        if (this.bidderId.isEmpty()) throw new IllegalArgumentException("bidderId không được rỗng");
     }
 
-    // --- GETTERS & SETTERS (ENCAPSULATION) ---
+    // maxLimit phải lớn hơn giá hiện tại
+    public void validateConfig(BigDecimal currentAuctionPrice) {
+        Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice không được null");
+        validateConfig();
+        if (maxLimit.compareTo(money(currentAuctionPrice)) <= 0) {
+            throw new IllegalArgumentException("maxLimit phải lớn hơn giá hiện tại của phiên");
+        }
+    }
+    /**
+     * Tính giá đặt kế tiếp = currentAuctionPrice + incrementAmount.
+     * - Nếu auto-bid không active hoặc giá mới vượt quá maxLimit -> trả Optional.empty()
+     * - Trả Optional.of(nextBid) nếu hợp lệ (đã làm tròn scale = 2)
+     * - Dùng Optional để tránh NPE, tốn bộ nhớ hơn 1 chút
+     */
+    public Optional<BigDecimal> calculateNextBid(BigDecimal currentAuctionPrice) {
+        Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice không được null");
+        if (!isActive) return Optional.empty(); // Trả về "không gì cả"
+        BigDecimal current = money(currentAuctionPrice);
+        BigDecimal next = money(current.add(incrementAmount));
+        if (next.compareTo(maxLimit) > 0) {
+            return Optional.empty();
+        }
+        return Optional.of(next);
+    }
+    // Bật/tắt auto-bid (synchronized để an toàn đơn giản đa luồng)
+    public synchronized void activate() { this.isActive = true; }
+    public synchronized void deactivate() { this.isActive = false; }
 
+    private static BigDecimal money(BigDecimal amount) {
+        if (amount == null) throw new IllegalArgumentException("Amount không được null");
+        return amount.setScale(2, RoundingMode.HALF_UP);
+    }
+    // Getters / setters
     public String getAuctionId() { return auctionId; }
     public String getBidderId() { return bidderId; }
-
-    public double getMaxLimit() { return maxLimit; }
-    public void setMaxLimit(double maxLimit) { this.maxLimit = maxLimit; }
-
-    public double getIncrementAmount() { return incrementAmount; }
-    public void setIncrementAmount(double incrementAmount) { this.incrementAmount = incrementAmount; }
-
+    public BigDecimal getMaxLimit() { return maxLimit; }
+    public void setMaxLimit(BigDecimal maxLimit) {
+        this.maxLimit = money(maxLimit);
+        validateConfig();
+    }
+    public BigDecimal getIncrementAmount() { return incrementAmount; }
+    public void setIncrementAmount(BigDecimal incrementAmount) {
+        this.incrementAmount = money(incrementAmount);
+        validateConfig();
+    }
     public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
-
     @Override
     public String toString() {
-        return "AutoBidding [ID: " + getId() + "] - Auction: " + auctionId +
-                ", Bidder: " + bidderId + ", MaxLimit: $" + maxLimit +
-                ", Step: +$" + incrementAmount + ", Status: " + (isActive ? "ACTIVE" : "DISABLED");
+        return "AutoBidding: " + getId() +
+                " | auctionId : " + auctionId +
+                " | bidderId : " + bidderId +
+                " | maxLimit : " + maxLimit +
+                " | incrementAmount : " + incrementAmount +
+                " | isActive : " + isActive;
     }
 }

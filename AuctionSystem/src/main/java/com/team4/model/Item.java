@@ -128,7 +128,7 @@ public abstract class Item extends Entity {
         return "Item: " +
                 " | id: " + getId() +
                 " | name: " + name +
-                " | startingPrice: " + startingPrice +
+                " | startingPrice: " + (startingPrice==null ? "n/a" : startingPrice.toPlainString()) +
                 " | category: " + category +
                 " | ownerId: " + ownerId +
                 " | createdAt: " + getCreatedAt();

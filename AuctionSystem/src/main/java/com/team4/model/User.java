@@ -40,7 +40,7 @@ public abstract class User extends Entity {
         this.passwordHash = requirePasswordHash(passwordHash);
         this.fullName = normalizeOptional(fullName);
         this.email = normalizeEmail(email);
-        this.role = Objects.requireNonNull(role, "role must not be null");
+        this.role = Objects.requireNonNull(role, "role không được null");
         this.balance = money(BigDecimal.ZERO);
 
         validateBaseInfo();

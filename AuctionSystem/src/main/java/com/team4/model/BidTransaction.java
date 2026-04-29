@@ -1,63 +1,63 @@
 package com.team4.model;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.io.Serializable;
-import java.util.UUID;
+import java.util.Objects;
 
-/**
- * Lớp BidTransaction - Bản ghi lịch sử đặt giá.
- * Kế thừa từ Entity để đồng bộ hệ thống String ID (UUID).
- */
-public class BidTransaction extends Entity implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class BidTransaction extends Entity{
+    private final String auctionId; // id cuộc đấu giá,tham chiếu đến id của model Auction
+    private final String bidderId; // id người đặt giá, tham chiếu đến id của model User
+    private final BigDecimal bidAmount; // mức đặt giá
+    private LocalDateTime bidTime; // thời gian lúc đặt giá
 
-    private String auctionId;     // ID phiên đấu giá tham gia
-    private String bidderId;      // ID người thực hiện đặt giá
-    private double bidAmount;     // Số tiền đặt
-    private LocalDateTime bidTime;// Thời điểm máy chủ ghi nhận giao dịch
-
-    /**
-     * CONSTRUCTOR 1: Dùng khi người mua vừa bấm nút đặt giá.
-     * Tự động sinh mã giao dịch (UUID) và ghi nhận thời gian hiện tại.
-     */
-    public BidTransaction(String auctionId, String bidderId, double bidAmount) {
-        // Tự động cấp ID giao dịch duy nhất toàn cầu
-        super(UUID.randomUUID().toString());
+    // Constructor khi tạo một giao dịch đặt giá mới
+    public BidTransaction(String auctionId, String bidderId, BigDecimal bidAmount) {
+        super();
         this.auctionId = auctionId;
         this.bidderId = bidderId;
-        this.bidAmount = bidAmount;
+        this.bidAmount = normalizeMoney(bidAmount);
         this.bidTime = LocalDateTime.now();
+        validateBidTransaction();
     }
 
-    /**
-     * CONSTRUCTOR 2: Dùng cho DAO nạp dữ liệu lịch sử từ Database lên.
-     */
-    public BidTransaction(String id, String auctionId, String bidderId, double bidAmount, LocalDateTime bidTime) {
-        super(id); // Sử dụng mã giao dịch cũ từ MySQL
+    // Contructor khi lấy lịch sử từ DB
+    public BidTransaction(String BidId, LocalDateTime bidTime, String auctionId, String bidderId, BigDecimal bidAmount) {
+        super(BidId, bidTime);
         this.auctionId = auctionId;
         this.bidderId = bidderId;
-        this.bidAmount = bidAmount;
-        this.bidTime = bidTime;
+        this.bidAmount = normalizeMoney(bidAmount);
+        validateBidTransaction();
     }
 
-    // --- CÁC PHƯƠNG THỨC LOGIC ---
-
-    public boolean isValidBid() {
-        return bidAmount > 0 && auctionId != null && bidderId != null;
+    private static BigDecimal normalizeMoney(BigDecimal amt) {
+        return amt.setScale(2, RoundingMode.HALF_UP);
     }
 
-    // --- GETTERS (ENCAPSULATION) ---
-    // Giao dịch là dữ liệu quá khứ nên chỉ có Getters (Dữ liệu bất biến)
-
-    public String getAuctionId() { return auctionId; }
-    public String getBidderId() { return bidderId; }
-    public double getBidAmount() { return bidAmount; }
-    public LocalDateTime getBidTime() { return bidTime; }
+    // Kiểm tra tính hợp lệ của giao dịch
+    public void validateBidTransaction() {
+        if (auctionId == null)
+            throw new IllegalArgumentException("AuctionId không được null");
+        if (bidderId == null)
+            throw new IllegalArgumentException("BidderId không được null");
+        if (bidAmount == null || bidAmount.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("BidAmount phải lớn hơn 0");
+    }
 
     @Override
     public String toString() {
-        return "Transaction [ID: " + getId().substring(0,8) + "...] " +
-                "Bidder: " + bidderId + " trả $" + bidAmount +
-                " lúc: " + bidTime.toLocalTime();
+        return "Bid: " + getId() + " | AuctionId: " + this.auctionId + " | BidderId: " + this.bidderId + " | BidAmount: " + this.bidAmount + " | BidTime: " + this.bidTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BidTransaction)) return false;
+        BidTransaction that = (BidTransaction)o;
+        return Objects.equals(getId(), that.getId());
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
     }
 }
