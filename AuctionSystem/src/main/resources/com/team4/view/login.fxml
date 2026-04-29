@@ -161,6 +161,7 @@
                 <Button fx:id="loginBtn" text="Dang nhap"
                         maxWidth="Infinity"
                         onAction="#onLoginSubmit"
+                        defaultButton="true"
                         styleClass="btn-primary">
                     <graphic>
                         <Region prefWidth="0" />
