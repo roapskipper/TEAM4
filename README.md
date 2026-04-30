@@ -52,6 +52,32 @@ Hệ thống tuân thủ chặt chẽ 4 nguyên lý cốt lõi của OOP và s�
 
 ---
 
+## Cấu trúc Dự án (Project Structure)
+
+Hệ thống được phân chia module rõ ràng theo mô hình MVC và Client-Server:
+```text
+AuctionSystem/
+├── src/main/java/com/team4/
+│   ├── client/         # Xử lý giao tiếp mạng phía Client (ApiClient, Client)
+│   ├── controller/     # Điều khiển giao diện JavaFX (Login, Main, Admin, Bidder...)
+│   ├── db/             # Quản lý kết nối cơ sở dữ liệu (DatabaseManager - Singleton)
+│   ├── factory/        # Triển khai Factory Pattern khởi tạo 5 loại sản phẩm
+│   ├── model/          # Các thực thể dữ liệu cốt lõi (User, Item, Auction, AutoBidding...)
+│   ├── network/        # Quản lý các gói tin và giao tiếp mạng chung
+│   ├── observer/       # Triển khai Observer Pattern để cập nhật dữ liệu Real-time
+│   ├── server/         # Lõi Server xử lý API và Socket (ApiServer, ClientHandler)
+│   ├── service/        # Chứa luồng nghiệp vụ đấu giá chính (AuctionManager)
+│   ├── util/           # Các lớp tiện ích hỗ trợ (UserSession, Hash...)
+│   ├── Launcher.java   # Điểm khởi chạy ứng dụng (Bypass JavaFX module layer)
+│   └── Main.java       # Cấu hình JavaFX Application
+├── src/main/resources/com/team4/view/
+│   ├── *.fxml          # Toàn bộ file thiết kế giao diện ứng dụng (XML)
+│   └── style.css       # File định dạng CSS tĩnh cho toàn hệ thống
+├── API_Contract.md     # Tài liệu đặc tả giao tiếp API giữa Client - Server
+├── pom.xml             # File cấu hình thư viện và Dependencies của Maven
+└── README.md           # Tài liệu tổng quan dự án
+```
+
 ## 🛠 Tiêu chuẩn & Công nghệ (Technologies & Standards)
 
 Hệ thống được thiết kế hướng tới tiêu chuẩn công nghiệp:
