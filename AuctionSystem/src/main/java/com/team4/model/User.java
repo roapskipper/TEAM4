@@ -38,7 +38,7 @@ public abstract class User extends Entity {
         super();
         this.username = normalizeUsername(username);
         this.passwordHash = requirePasswordHash(passwordHash);
-        this.fullName = normalizeOptional(fullName);
+        this.fullName = Objects.requireNonNull(fullName,"fullName không được null");
         this.email = normalizeEmail(email);
         this.role = Objects.requireNonNull(role, "role không được null");
         this.balance = money(BigDecimal.ZERO);
@@ -53,7 +53,7 @@ public abstract class User extends Entity {
         super(id, createdAt);
         this.username = normalizeUsername(username);
         this.passwordHash = requirePasswordHash(passwordHash);
-        this.fullName = normalizeOptional(fullName);
+        this.fullName = Objects.requireNonNull(fullName,"fullName không được null");
         this.email = normalizeEmail(email);
         this.role = Objects.requireNonNull(role, "role không được null" );
         this.balance = money(balance);

@@ -63,14 +63,14 @@ public class Auction extends Entity {
             throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
         if (bidIncrement == null || bidIncrement.compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
-        if (endTime == null || endTime.isBefore(startTime))
+        if (startTime == null)
+            throw new IllegalArgumentException("Thời gian bắt đầu không được null");
+        if (endTime == null || !endTime.isAfter(startTime))
             throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
         if (currentPrice.compareTo(startingPrice) < 0)
             throw new IllegalArgumentException("Giá hiện tại không thể thấp hơn giá khởi điểm");
         if (status == null)
             throw new IllegalArgumentException("Trạng thái đấu giá không được null");
-        if (!endTime.isAfter(startTime))
-            throw new IllegalArgumentException("Thời gian kết thúc phải sau thời gian bắt đầu");
     }
     // Làm tròn tiền đến phần trăm
     private static BigDecimal money(BigDecimal amount) {

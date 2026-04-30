@@ -26,22 +26,23 @@ public class Admin extends User {
     }
     private static final Pattern ADMIN_CODE_PATTERN = Pattern.compile("^(?=.{8,128}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])\\S+$");
     private AccessLevel accessLevel;
-    private String adminCode; // Mã định danh bảo mật riêng
+    private String adminCodeHash; // Mã định danh bảo mật riêng
 
     // Constructor 1: Dùng khi tạo Admin mới trong hệ thống
-    public Admin(String username, String passwordHash, String fullName, String email, AccessLevel accessLevel, String adminCode) {
+    public Admin(String username, String passwordHash, String fullName, String email, AccessLevel accessLevel, String adminCodeHash) {
         super(username, passwordHash, fullName, email, Role.ADMIN );
         this.accessLevel = accessLevel;
+        this.adminCodeHash = adminCodeHash;
         validateAdminInfo();
         // Tự động dùng constructor mặc định của Entity để sinh UUID và creatAt
     }
 
     // Constructor 2: Dùng khi nạp Admin từ database (đã có ID và balance)
     public Admin(String id, LocalDateTime creatAt, String username, String passwordHash, String fullName,
-                 String email, BigDecimal balance, AccessLevel accessLevel, String adminCode) {
+                 String email, BigDecimal balance, AccessLevel accessLevel, String adminCodeHash) {
         super(id, creatAt, username, passwordHash, fullName, email, Role.ADMIN, balance);
         this.accessLevel = accessLevel;
-        this.adminCode = adminCode;
+        this.adminCodeHash = adminCodeHash;
         validateAdminInfo();
     }
 
@@ -51,7 +52,7 @@ public class Admin extends User {
             throw new IllegalArgumentException("accessLevel không được null.");
         }
         // Admincode phải có ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số, 1 ký tự đặc biệt; không chứa khoảng trắng
-        if (adminCode == null || !ADMIN_CODE_PATTERN.matcher(adminCode.trim()).matches()) {
+        if (adminCodeHash == null || !ADMIN_CODE_PATTERN.matcher(adminCodeHash.trim()).matches()) {
             throw new IllegalArgumentException("adminCode phải gồm 8-128 kí tự, chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt; không chứa khoảng trắng.");
         }
     }
