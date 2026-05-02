@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * Collectible: Đại diện cho đồ sưu tập (Collectible).
  */
 public class Collectible extends Item {
-    private enum RarityLevel {
+    public enum RarityLevel {
         COMMON,         // Phổ biến
         UNCOMMON,       // Ít phổ biến
         RARE,           // Hiếm
@@ -14,7 +14,7 @@ public class Collectible extends Item {
         ULTRA_RARE,     // Cực hiếm
     }
 
-    private enum ConditionGrade {
+    public enum ConditionGrade {
         POOR,           // Kém
         FAIR,           // Trung bình
         GOOD,           // Tốt

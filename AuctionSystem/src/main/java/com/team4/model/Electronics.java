@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
  * Electronics: model cho nhóm hàng điện tử.
  */
 public class Electronics extends Item {
-    private enum ConditionGrade {
+    public enum ConditionGrade {
         POOR,           // Kém
         FAIR,           // Trung bình
         GOOD,           // Tốt
