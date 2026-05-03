@@ -2,20 +2,16 @@ package com.team4.dao;
 
 import com.team4.model.Auction;
 import java.util.List;
+import java.math.BigDecimal;
 
 public interface AuctionDAO {
     Auction findById(String id);
     Auction findByItemId(String itemId);
     List<Auction> findAll();
-    List<Auction> findByStatus(String status); // Tìm các phiên đang OPEN/ACTIVE
+
+    List<Auction> findByStatus(Auction.AuctionStatus status);
 
     boolean insert(Auction auction);
-    boolean update(Auction auction);
-    boolean updateStatus(String auctionId, String newStatus);
-
-    /**
-     * PHƯƠNG THỨC QUAN TRỌNG NHẤT: XỬ LÝ CONCURRENCY
-     * Dùng khi một người dùng (Bidder) đặt giá mới.
-     */
-    boolean placeBid(String auctionId, String bidderId, double newBidPrice);
+    boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus);
+    boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId);
 }

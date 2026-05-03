@@ -7,36 +7,58 @@ import com.team4.model.Auction;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
+/** AuctionDAOImpl
+ * Nó là cầu nối giữa:
+ * object Auction trong Java
+ * bảng auctions trong MySQL
+ *
+ * Nó chỉ nên lo:
+ * đọc 1 dòng SQL rồi dựng thành Auction
+ * ghi Auction xuống DB
+ * cập nhật vài field cần thiết như status, currentPrice, currentHighestBidderId
+ *
+ * Nó không nên lo:
+ * placeBid()
+ * kiểm tra đủ tiền
+ * xử lý cạnh tranh nhiều người bid
+ * Mấy thứ đó thuộc Service
+ */
 public class AuctionDAOImpl implements AuctionDAO {
 
     /**
-     * Helper Method: Chuyển đổi ResultSet thành Object Auction
+     * Chuyển đổi ResultSet thành Object Auction
      */
     private Auction mapRowToAuction(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
+        LocalDateTime createdAt = rs.getTimestamp("created_at").toLocalDateTime();
         String itemId = rs.getString("item_id");
         String sellerId = rs.getString("seller_id");
         String currentHighestBidderId = rs.getString("current_highest_bidder_id");
-        double currentPrice = rs.getDouble("current_price");
+        BigDecimal startingPrice = rs.getBigDecimal("starting_price");
+        BigDecimal currentPrice = rs.getBigDecimal("current_price");
+        BigDecimal bidIncrement = rs.getBigDecimal("bid_increment");
+        String status = rs.getString("status");
 
-        // Chuyển java.sql.Timestamp từ DB sang java.time.LocalDateTime của Java
-        Timestamp startTimestamp = rs.getTimestamp("start_time");
-        Timestamp endTimestamp = rs.getTimestamp("end_time");
+        LocalDateTime startTime = rs.getTimestamp("start_time").toLocalDateTime() ;
+        LocalDateTime endTime = rs.getTimestamp("end_time").toLocalDateTime() ;
 
-        return new Auction(
-                id,
-                itemId,
-                sellerId,
+        return new Auction(id, createdAt,
+                itemId, sellerId,
                 currentHighestBidderId,
-                currentPrice,
-                startTimestamp != null ? startTimestamp.toLocalDateTime() : null,
-                endTimestamp != null ? endTimestamp.toLocalDateTime() : null,
-                rs.getString("status")
-        );
+                startingPrice, currentPrice, bidIncrement,
+                startTime, endTime,
+                Auction.AuctionStatus.valueOf(status));
     }
 
     @Override
+    /**
+     * 1. findById() - tìm theo id
+     * Dùng khi: load chi tiết 1 phiên đấu giá
+     * Ví dụ: user click vào phiên → load thông tin
+     */
     public Auction findById(String id) {
         String sql = "SELECT * FROM auctions WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -52,6 +74,11 @@ public class AuctionDAOImpl implements AuctionDAO {
     }
 
     @Override
+    /**
+     * 2. findByItemId() - tìm theo item
+     * Dùng khi: kiểm tra item đã có phiên đấu giá chưa
+     * Ví dụ: tránh tạo 2 phiên cho cùng 1 item
+     */
     public Auction findByItemId(String itemId) {
         String sql = "SELECT * FROM auctions WHERE item_id = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -67,17 +94,29 @@ public class AuctionDAOImpl implements AuctionDAO {
     }
 
     @Override
+    /**
+     * 3. findAll() - lấy tất cả
+     * Dùng khi: admin xem toàn bộ phiên đấu giá
+     * Ví dụ: màn hình quản lý của admin
+     */
     public List<Auction> findAll() {
-        return executeQueryList("SELECT * FROM auctions ORDER BY start_time DESC");
+        String sql ="SELECT * FROM auctions ORDER BY start_time DESC";
+        return executeQueryList(sql);
     }
 
     @Override
-    public List<Auction> findByStatus(String status) {
+    /**
+     * 4. findByStatus() - tìm theo trạng thái
+     * Dùng khi: lọc phiên theo trạng thái
+     * Ví dụ: scheduler tìm phiên ACTIVE để kiểm tra hết giờ chưa
+     */
+    public List<Auction> findByStatus(Auction.AuctionStatus status) {
+        // sắp xếp theo thời gian kết thúc tăng dần, kết thúc sớm nhất → lên đầu
         String sql = "SELECT * FROM auctions WHERE status = ? ORDER BY end_time ASC";
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, status);
+            stmt.setString(1, status.name());
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRowToAuction(rs));
@@ -90,26 +129,34 @@ public class AuctionDAOImpl implements AuctionDAO {
     }
 
     @Override
+    /**
+     * 5. insert() - tạo mới
+     * Dùng khi: seller tạo phiên đấu giá mới
+     * Ví dụ: seller đăng sản phẩm → tạo phiên mới status=PENDING
+     */
     public boolean insert(Auction auction) {
-        String sql = "INSERT INTO auctions (id, item_id, seller_id, current_highest_bidder_id, " +
-                "current_price, start_time, end_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO auctions (id, created_at, item_id, seller_id, current_highest_bidder_id, " +
+                "starting_price, bid_increment, current_price, start_time, end_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, auction.getId());
-            stmt.setString(2, auction.getItemId());
-            stmt.setString(3, auction.getSellerId());
-
+            stmt.setObject(2, auction.getCreatedAt());
+            stmt.setString(3, auction.getItemId());
+            stmt.setString(4, auction.getSellerId());
             if (auction.getCurrentHighestBidderId() != null) {
-                stmt.setString(4, auction.getCurrentHighestBidderId());
+                stmt.setString(5, auction.getCurrentHighestBidderId());
             } else {
-                stmt.setNull(4, Types.VARCHAR);
+                stmt.setNull(5, Types.VARCHAR);
             }
 
-            stmt.setDouble(5, auction.getCurrentPrice());
-            stmt.setTimestamp(6, Timestamp.valueOf(auction.getStartTime()));
-            stmt.setTimestamp(7, Timestamp.valueOf(auction.getEndTime()));
-            stmt.setString(8, auction.getStatus());
+            stmt.setBigDecimal(6, auction.getStartingPrice());
+            stmt.setBigDecimal(7, auction.getBidIncrement());
+            stmt.setBigDecimal(8, auction.getCurrentPrice());
+            // Dùng Timestamp thay vì LocalDateTime để phù hợp với JDBC
+            stmt.setTimestamp(9, Timestamp.valueOf(auction.getStartTime()));
+            stmt.setTimestamp(10, Timestamp.valueOf(auction.getEndTime()));
+            stmt.setString(11, auction.getStatus().name());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -117,38 +164,17 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
-
     @Override
-    public boolean update(Auction auction) {
-        String sql = "UPDATE auctions SET current_highest_bidder_id = ?, current_price = ?, " +
-                "end_time = ?, status = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            if (auction.getCurrentHighestBidderId() != null) {
-                stmt.setString(1, auction.getCurrentHighestBidderId());
-            } else {
-                stmt.setNull(1, Types.VARCHAR);
-            }
-
-            stmt.setDouble(2, auction.getCurrentPrice());
-            stmt.setTimestamp(3, Timestamp.valueOf(auction.getEndTime()));
-            stmt.setString(4, auction.getStatus());
-            stmt.setString(5, auction.getId());
-
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    @Override
-    public boolean updateStatus(String auctionId, String newStatus) {
+    /**
+     * 6. updateStatus() - cập nhật trạng thái
+     * Dùng khi: chuyển trạng thái phiên
+     * Ví dụ: admin duyệt → PENDING → ACTIVE
+     */
+    public boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus) {
         String sql = "UPDATE auctions SET status = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, newStatus);
+            stmt.setString(1, newStatus.name());
             stmt.setString(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -156,40 +182,26 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
-
-    // =======================================================================
-    //  XỬ LÝ CONCURRENT BIDDING
-    // =======================================================================
     @Override
-    public boolean placeBid(String auctionId, String bidderId, double newBidPrice) {
-        /*
-         * Câu lệnh SQL này sử dụng điều kiện "AND current_price < ?" để áp dụng Optimistic Locking.
-         * Nếu Thread A và Thread B cùng gọi hàm này với giá 100$ và 105$.
-         * Nếu Thread B (105$) chạy xong trước, giá trong DB = 105$.
-         * Khi Thread A (100$) chạy tới, điều kiện `current_price < 100` sẽ bị SAI.
-         * Hàm executeUpdate() sẽ trả về 0 (0 rows affected). Ngăn chặn thành công Lost Update!
-         */
-        String sql = "UPDATE auctions " +
-                "SET current_price = ?, current_highest_bidder_id = ? " +
-                "WHERE id = ? AND status = 'ACTIVE' AND current_price < ?";
-
+    /**
+     * 7. updateCurrentBid() - cập nhật giá đấu
+     * Dùng khi: có bid mới hợp lệ
+     * Ví dụ: user bid 1500$ → cập nhật currentPrice + highestBidderId
+     */
+    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
+        String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1,currentPrice);
+            stmt.setString(2,highestBidderId);
+            stmt.setString(3,id);
 
-            stmt.setDouble(1, newBidPrice);
-            stmt.setString(2, bidderId);
-            stmt.setString(3, auctionId);
-            stmt.setDouble(4, newBidPrice); // Khóa logic ở đây
-
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0; // Trả về true nếu đặt giá thành công, false nếu bị tranh chấp hoặc quá hạn
-
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
-
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
