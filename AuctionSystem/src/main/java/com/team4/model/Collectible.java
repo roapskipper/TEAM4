@@ -13,7 +13,14 @@ public class Collectible extends Item {
         VERY_RARE,      // Rất hiếm
         ULTRA_RARE,     // Cực hiếm
     }
-
+    public static RarityLevel fromNameR(String name) {
+        if (name == null) return null;
+        try {
+            return RarityLevel.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
     public enum ConditionGrade {
         POOR,           // Kém
         FAIR,           // Trung bình
@@ -21,6 +28,14 @@ public class Collectible extends Item {
         VERY_GOOD,      // Rất tốt
         EXCELLENT,      // Xuất sắc
         MINT            // Hoàn hảo (như mới)
+    }
+    public static ConditionGrade fromNameCon(String name) {
+        if (name == null) return null;
+        try {
+            return ConditionGrade.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
     private int yearOfOrigin;       // năm xuất xứ
     private RarityLevel rarityLevel;     // độ hiếm

@@ -8,40 +8,42 @@ import com.team4.model.Seller;
 import com.team4.model.User;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
-
+import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 public class UserDAOImpl implements UserDAO {
 
-    /**
-     * PHẦN 1: FACTORY METHOD (Ánh xạ ResultSet thành Object đa hình)
-     * Đọc 1 dòng từ DB và trả về đúng kiểu Admin, Bidder hoặc Seller
+    /** method mapRowToUser ánh xạ dữ liệu từ sql
+     * Nhận một dòng dữ liệu từ ResultSet, rồi dựng đúng object con của User
      */
     private User mapRowToUser(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
+        LocalDateTime createdAt = rs.getTimestamp("created_at").toLocalDateTime();
         String username = rs.getString("username");
-        String password = rs.getString("password");
+        String passwordHash = rs.getString("password_hash");
         String fullName = rs.getString("full_name");
         String email = rs.getString("email");
         String role = rs.getString("role");
-        double balance = rs.getDouble("balance");
+        BigDecimal balance = rs.getBigDecimal("balance");
 
-        // Dựa vào ROLE để khởi tạo đúng Class con (Polymorphism)
-        switch (role.toUpperCase()) {
-            case "ADMIN":
-                int accessLevel = rs.getInt("access_level");
-                String adminCode = rs.getString("admin_code");
-                return new Admin(id, username, password, fullName, email, balance, accessLevel, adminCode);
+        // Dựa vào ROLE để khởi tạo đúng đô tượng
+        switch (User.Role.valueOf(role)) {
+            case ADMIN:
+                int level = rs.getInt("access_level");
+                Admin.AccessLevel accessLevel = Admin.fromInt(level);
+                String adminCodeHash = rs.getString("admin_code_hash");
+                return new Admin(id, createdAt, username, passwordHash, fullName, email, balance, accessLevel, adminCodeHash);
 
-            case "BIDDER":
+            case BIDDER:
                 String shippingAddress = rs.getString("shipping_address");
                 String phoneNumber = rs.getString("phone_number");
-                return new Bidder(id, username, password, fullName, email, balance, shippingAddress, phoneNumber);
+                return new Bidder(id, createdAt, username, passwordHash, fullName, email, balance, shippingAddress, phoneNumber);
 
-            case "SELLER":
+            case SELLER:
                 String storeName = rs.getString("store_name");
                 double rating = rs.getDouble("rating");
-                return new Seller(id, username, password, fullName, email, balance, storeName, rating);
+                return new Seller(id, createdAt, username, passwordHash, fullName, email, balance, storeName, rating);
 
             default:
                 throw new SQLException("Lỗi: Không nhận diện được role '" + role + "' của user ID: " + id);
@@ -53,6 +55,11 @@ public class UserDAOImpl implements UserDAO {
      */
 
     @Override
+    /**
+     * 1. findById() - tìm theo id
+     * Dùng khi: load thông tin user sau khi đã biết id
+     * Ví dụ: xem profile, update thông tin
+     */
     public User findById(String id) {
         String sql = "SELECT * FROM users WHERE id = ?";
         // Sử dụng try-with-resources để tự động đóng kết nối
@@ -73,6 +80,11 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    /**
+     * 2. findByUsername() - tìm theo username
+     * Dùng khi: user đăng nhập
+     * Ví dụ: kiểm tra username + password
+     */
     public User findByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
         try (Connection conn = DatabaseManager.getConnection();
@@ -92,49 +104,51 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public boolean insert(User user) {
-        String sql = "INSERT INTO users (id, username, password, full_name, email, role, balance, " +
-                "access_level, admin_code, shipping_address, phone_number, store_name, rating) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (id, created_at, username, password_hash, full_name, email, role, balance, " +
+                "access_level, admin_code_hash, shipping_address, phone_number, store_name, rating) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             // Set các trường chung của User
             stmt.setString(1, user.getId());
-            stmt.setString(2, user.getUsername());
-            stmt.setString(3, user.getPassword());
-            stmt.setString(4, user.getFullName());
-            stmt.setString(5, user.getEmail());
-            stmt.setString(6, user.getRole());
-            stmt.setDouble(7, user.getBalance());
+            stmt.setTimestamp(2, Timestamp.valueOf(user.getCreatedAt()));
+            stmt.setString(3, user.getUsername());
+            stmt.setString(4, user.readPasswordHashForPersistence());
+            stmt.setString(5, user.getFullName());
+            stmt.setString(6, user.getEmail());
+            stmt.setString(7, user.getRole().name());
+            stmt.setBigDecimal(8, user.getBalance());
 
-            // Set các trường riêng biệt (áp dụng tính đa hình - instanceOf)
+            // Set các trường riêng biệt
             if (user instanceof Admin) {
                 Admin admin = (Admin) user;
-                stmt.setInt(8, admin.getAccessLevel());
-                stmt.setString(9, admin.getAdminCode());
-                stmt.setNull(10, Types.VARCHAR); // Các cột của role khác để NULL
+                stmt.setInt(9, admin.getAccessLevel().getLevel());
+                stmt.setString(10, admin.getAdminCodeHash());
+                // Dù null nhưng DBMS vẫn yêu cầu cung cấp kiểu dữ liệu cụ thể để đảm bảo tính tương thích
                 stmt.setNull(11, Types.VARCHAR);
                 stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.DECIMAL);
+                stmt.setNull(13, Types.VARCHAR);
+                stmt.setNull(14, Types.DECIMAL);
             }
             else if (user instanceof Bidder) {
                 Bidder bidder = (Bidder) user;
-                stmt.setNull(8, Types.INTEGER);
-                stmt.setNull(9, Types.VARCHAR);
-                stmt.setString(10, bidder.getShippingAddress());
-                stmt.setString(11, bidder.getPhoneNumber());
-                stmt.setNull(12, Types.VARCHAR);
-                stmt.setNull(13, Types.DECIMAL);
+                stmt.setNull(9, Types.INTEGER);
+                stmt.setNull(10, Types.VARCHAR);
+                stmt.setString(11, bidder.getShippingAddress());
+                stmt.setString(12, bidder.getPhoneNumber());
+                stmt.setNull(13, Types.VARCHAR);
+                stmt.setNull(14, Types.DECIMAL);
             }
             else if (user instanceof Seller) {
                 Seller seller = (Seller) user;
-                stmt.setNull(8, Types.INTEGER);
-                stmt.setNull(9, Types.VARCHAR);
+                stmt.setNull(9, Types.INTEGER);
                 stmt.setNull(10, Types.VARCHAR);
                 stmt.setNull(11, Types.VARCHAR);
-                stmt.setString(12, seller.getStoreName());
-                stmt.setDouble(13, seller.getRating());
+                stmt.setNull(12, Types.VARCHAR);
+                stmt.setString(13, seller.getStoreName());
+                stmt.setDouble(14, seller.getRating());
             }
 
             int rowsAffected = stmt.executeUpdate();
@@ -149,7 +163,7 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public boolean update(User user) {
         // Tương tự Insert, nhưng dùng câu lệnh UPDATE
-        String sql = "UPDATE users SET full_name = ?, email = ?, password = ?, balance = ?, " +
+        String sql = "UPDATE users SET full_name = ?, email = ?, password_hash = ?, balance = ?, " +
                 "shipping_address = ?, phone_number = ?, store_name = ? WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -157,8 +171,8 @@ public class UserDAOImpl implements UserDAO {
 
             stmt.setString(1, user.getFullName());
             stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPassword());
-            stmt.setDouble(4, user.getBalance());
+            stmt.setString(3, user.readPasswordHashForPersistence());
+            stmt.setBigDecimal(4, user.getBalance());
 
             // Xử lý đa hình cho UPDATE
             if (user instanceof Bidder) {
@@ -189,6 +203,10 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    /**
+     * 3. findAll() - lấy tất cả
+     * Dùng khi: admin quản lý danh sách user
+     */
     public List<User> findAll() {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users";
@@ -197,11 +215,25 @@ public class UserDAOImpl implements UserDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(mapRowToUser(rs)); // Gọi lại Factory Method
+                list.add(mapRowToUser(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return list;
+    }
+    @Override
+    public boolean updateBalance(String id, BigDecimal newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1,newBalance);
+            stmt.setString(2,id);
+            stmt.executeUpdate();
+        } catch  (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 }

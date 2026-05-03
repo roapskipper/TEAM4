@@ -9,11 +9,35 @@ public class Fashion extends Item {
     public enum Size {
         XS, S, M, L, XL, XXL, XXXL, OTHER
     }
+    public static Size fromNameSize(String name) {
+        if (name == null) return null;
+        try {
+            return Size.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
     public enum Gender {
         UNISEX, MALE, FEMALE
     }
+    public static Gender fromNameGender(String name) {
+        if (name == null) return null;
+        try {
+            return Gender.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
     public enum ConditionGrade {
         POOR, FAIR, GOOD, VERY_GOOD, EXCELLENT, MINT
+    }
+    public static ConditionGrade fromNameCon(String name) {
+        if (name == null) return null;
+        try {
+            return ConditionGrade.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private String brand;

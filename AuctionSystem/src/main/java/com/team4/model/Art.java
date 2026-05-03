@@ -24,6 +24,14 @@ public class Art extends Item {
         MIXED_MEDIA,        // Đa chất liệu
         OTHER
     }
+    public static Medium fromName(String name) {
+        if (name == null) return null;
+        try {
+            return Medium.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
     private String artist;        // tác giả
     private int creationYear;     // năm sáng tác
     private Medium medium;        // chất liệu (sơn dầu, màu nước...)

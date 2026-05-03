@@ -16,6 +16,14 @@ public class Vehicle extends Item {
         DCT,         // Ly hợp kép
         OTHER        // Khác
     }
+    public static Transmission fromNameTran(String name) {
+        if (name == null) return null;
+        try {
+            return Transmission.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 
     // enum cho động cơ
     public enum EngineType {
@@ -31,6 +39,14 @@ public class Vehicle extends Item {
 
         // Khác
         OTHER           // Khác
+    }
+    public static EngineType fromNameEng(String name) {
+        if (name == null) return null;
+        try {
+            return EngineType.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
     private String brand;           // thương hiệu
     private String model;           // tên model

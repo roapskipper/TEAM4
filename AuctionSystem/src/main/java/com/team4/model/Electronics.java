@@ -16,6 +16,14 @@ public class Electronics extends Item {
         EXCELLENT,      // Xuất sắc
         MINT            // Hoàn hảo (như mới)
     }
+    public static ConditionGrade fromNameCon(String name) {
+        if (name == null) return null;
+        try {
+            return ConditionGrade.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 
     private String brand;           // thương hiệu
     private String model;           // tên model

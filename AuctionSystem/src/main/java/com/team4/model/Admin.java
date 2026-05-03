@@ -24,6 +24,10 @@ public class Admin extends User {
             return level;
         }
     }
+
+    public static AccessLevel fromInt(int code) {
+        return AccessLevel.values()[code-1];
+    }
     private static final Pattern ADMIN_CODE_PATTERN = Pattern.compile("^(?=.{8,128}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])\\S+$");
     private AccessLevel accessLevel;
     private String adminCodeHash; // Mã định danh bảo mật riêng
@@ -65,4 +69,10 @@ public class Admin extends User {
 
     // Setter/Getter. Việc điều chỉnh Access Level và Admin Code sẽ để cho service
     public AccessLevel getAccessLevel() { return accessLevel; }
+    /**
+     * Chỉ dùng cho DAO - không expose ra ngoài
+     */
+    public String getAdminCodeHash() {
+        return adminCodeHash;
+    }
 }
