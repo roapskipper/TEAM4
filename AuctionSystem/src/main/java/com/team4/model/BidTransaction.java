@@ -22,11 +22,12 @@ public class BidTransaction extends Entity{
     }
 
     // Contructor khi lấy lịch sử từ DB
-    public BidTransaction(String BidId, LocalDateTime bidTime, String auctionId, String bidderId, BigDecimal bidAmount) {
-        super(BidId, bidTime);
+    public BidTransaction(String BidId, LocalDateTime creatTime, LocalDateTime bidTime, String auctionId, String bidderId, BigDecimal bidAmount) {
+        super(BidId, creatTime);
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.bidAmount = normalizeMoney(bidAmount);
+        this.bidTime = bidTime;
         validateBidTransaction();
     }
 
@@ -59,5 +60,18 @@ public class BidTransaction extends Entity{
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+    // Getter/Setter
+    public String getAuctionId() {
+        return auctionId;
+    }
+    public String getBidderId() {
+        return bidderId;
+    }
+    public BigDecimal getBidAmount() {
+        return bidAmount;
+    }
+    public LocalDateTime getBidTime() {
+        return bidTime;
     }
 }
