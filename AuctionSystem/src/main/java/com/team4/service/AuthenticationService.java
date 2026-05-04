@@ -5,6 +5,7 @@ import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.model.Seller;
 import com.team4.util.PasswordHasher;
+import com.team4.util.BusinessException;
 
 /**
  * Mục đích: xử lý đăng ký, đăng nhập, đổi mật khẩu.
@@ -63,10 +64,5 @@ public class AuthenticationService {
         }
         user.changePasswordHash(PasswordHasher.hashPassword(newRawPassword));
         userDAO.update(user);
-    }
-}
-class BusinessException extends RuntimeException {
-    public BusinessException(String message) {
-        super(message);
     }
 }
