@@ -1,5 +1,7 @@
 package com.team4.model;
 
+import com.team4.util.PasswordHasher;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -122,6 +124,12 @@ public abstract class User extends Entity {
     public final boolean hasEnoughBalance(BigDecimal amount) {
         BigDecimal normalizedAmount = money(amount);
         return this.balance.compareTo(normalizedAmount) >= 0;
+    }
+
+    // Kiểm tra mật khẩu,phục vụ cho ăng nhập
+    public boolean verifyPassword(String rawPassword) {
+        // Gọi class tiện ích PasswordHasher để kiểm tra
+        return PasswordHasher.checkPassword(rawPassword, this.passwordHash);
     }
 
     /**

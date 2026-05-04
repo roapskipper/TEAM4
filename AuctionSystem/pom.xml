@@ -61,6 +61,12 @@
             <artifactId>HikariCP</artifactId>
             <version>5.1.0</version>
         </dependency>
+        <!-- Thư viện jBCrypt để mã hóa mật khẩu -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
     </dependencies>
 
     <build>
