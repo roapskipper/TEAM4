@@ -26,6 +26,7 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/
 
 # AWS User-specific
 .idea/**/aws.xml
@@ -56,7 +57,7 @@
 # .idea/modules.xml
 # .idea/*.iml
 # .idea/modules
-# *.iml
+*.iml
 # *.ipr
 
 # CMake
@@ -156,7 +157,7 @@ hs_err_pid*
 replay_pid*
 
 ### Maven ###
-target/
+AuctionSystem/target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
