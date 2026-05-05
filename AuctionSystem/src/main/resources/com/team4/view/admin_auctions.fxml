@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.AdminAuctionsController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1100">
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField"
+                   promptText="🔍 Tim kiem phien dau gia..."
+                   styleClass="admin-input"
+                   prefWidth="320"/>
+
+        <HBox spacing="8">
+            <Button fx:id="filterAll" text="Tat ca" onAction="#onFilterAll" styleClass="admin-filter-active"/>
+            <Button fx:id="filterPending" text="Cho duyet" onAction="#onFilterPending" styleClass="admin-filter"/>
+            <Button fx:id="filterLive" text="Dang dien ra" onAction="#onFilterLive" styleClass="admin-filter"/>
+            <Button fx:id="filterViolated" text="Vi pham" onAction="#onFilterViolated" styleClass="admin-filter"/>
+        </HBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Label fx:id="resultCount" text="5 phien" style="-fx-text-fill: #6b7280; -fx-font-size: 12;"/>
+    </HBox>
+
+    <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="auctionsTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
+            <columns>
+                <TableColumn fx:id="colItem" text="San pham" prefWidth="280"/>
+                <TableColumn fx:id="colSeller" text="Nguoi ban" prefWidth="140"/>
+                <TableColumn fx:id="colStartPrice" text="Gia khoi diem" prefWidth="130"/>
+                <TableColumn fx:id="colStatus" text="Trang thai" prefWidth="130"/>
+                <TableColumn fx:id="colReports" text="Bao cao" prefWidth="80"/>
+                <TableColumn fx:id="colAction" text="Thao tac" prefWidth="160"/>
+            </columns>
+        </TableView>
+    </VBox>
+</VBox>
