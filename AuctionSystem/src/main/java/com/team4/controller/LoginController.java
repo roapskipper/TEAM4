@@ -1,32 +1,20 @@
 package com.team4.controller;
 
-import com.team4.util.UserSession;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import com.team4.client.ApiClient;
 
 public class LoginController {
 
+    @FXML private VBox loginForm;
     @FXML private TextField loginUsername;
     @FXML private PasswordField loginPassword;
     @FXML private Label loginError;
-    @FXML private Button loginBtn;
-    @FXML private Button loginTab;
-    @FXML private Button registerTab;
-    @FXML private VBox loginForm;
+
     @FXML private VBox registerForm;
-    @FXML private ToggleButton roleBidder;
-    @FXML private ToggleButton roleSeller;
     @FXML private VBox storeNameBox;
     @FXML private TextField regStoreName;
     @FXML private TextField regUsername;
@@ -34,121 +22,99 @@ public class LoginController {
     @FXML private PasswordField regPassword;
     @FXML private PasswordField regConfirmPassword;
     @FXML private Label regError;
-    @FXML private Button regBtn;
-
-    private final String ADMIN_ACC = "admin";
-    private final String ADMIN_PASS = "admin";
-    private final String BIDDER_ACC = "bidder";
-    private final String BIDDER_PASS = "bidder";
-    private final String SELLER_ACC = "seller";
-    private final String SELLER_PASS = "seller";
 
     @FXML
-    public void onLoginSubmit(ActionEvent event) {
+    private void onLoginSubmit() {
+        // Lấy dữ liệu từ field
         String username = loginUsername.getText();
         String password = loginPassword.getText();
 
-        if (username.equals(ADMIN_ACC) && password.equals(ADMIN_PASS)) {
-            UserSession.createSession(username, "ADMIN");
-            openMainWindow();
-        } else if ((username.equals(BIDDER_ACC) && password.equals(BIDDER_PASS)) ||
-                (username.equals(SELLER_ACC) && password.equals(SELLER_PASS))) {
-            UserSession.createSession(username, "USER");
-            openMainWindow();
-        } else {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Lỗi");
-            alert.setHeaderText(null);
-            alert.setContentText("Sai tài khoản hoặc mật khẩu!");
-            alert.showAndWait();
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            showError(loginError, "Vui lòng nhập đầy đủ tài khoản và mật khẩu!");
+            return;
         }
-    }
 
-    private void openMainWindow() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
-            Parent root = loader.load();
+            ApiClient apiClient = new ApiClient();
 
-            MainController mainController = loader.getController();
-            if (UserSession.getInstance() != null) {
-                mainController.setUserRole(UserSession.getInstance().getUsername());
+            String response = apiClient.login(username, password);
+
+            if (response != null) {
+                showError(loginError, "Đăng nhập thành công!");
+                loginError.setStyle("-fx-text-fill: #10b981;");
+                System.out.println("Dữ liệu Server trả về: " + response);
+                try {
+                    javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/seller_products.fxml"));
+                    javafx.scene.Parent root = loader.load();
+
+                    javafx.scene.Scene scene = new javafx.scene.Scene(root);
+                    stage.setScene(scene);
+                    stage.setTitle("Quản lý sản phẩm - AuctionSpace");
+                    stage.show();
+
+                } catch (Exception ex) {
+                    System.out.println("Lỗi không tìm thấy file FXML để chuyển cảnh: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+
+            } else {
+                showError(loginError, "Sai tài khoản hoặc mật khẩu!");
+                loginError.setStyle("-fx-text-fill: #ef4444;");
             }
 
-            Stage stage = new Stage();
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
-            stage.setScene(scene);
-            stage.setTitle("AuctionSpace - Home");
-            stage.setMaximized(true);
-            stage.show();
-
-            closeWindow();
         } catch (Exception e) {
+            showError(loginError, "Lỗi kết nối Server: " + e.getMessage());
+            loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
     }
 
-    private void closeWindow() {
-        Stage stage = (Stage) loginUsername.getScene().getWindow();
-        stage.close();
-    }
-
     @FXML
-    public void onLoginTabClicked(ActionEvent event) {
+    private void onLoginTabClicked() {
         loginForm.setVisible(true);
         loginForm.setManaged(true);
         registerForm.setVisible(false);
         registerForm.setManaged(false);
-
-        loginTab.getStyleClass().removeAll("tab-inactive");
-        loginTab.getStyleClass().add("tab-active");
-
-        registerTab.getStyleClass().removeAll("tab-active");
-        registerTab.getStyleClass().add("tab-inactive");
+        hideErrors();
     }
 
     @FXML
-    public void onRegisterTabClicked(ActionEvent event) {
+    private void onRegisterTabClicked() {
         loginForm.setVisible(false);
         loginForm.setManaged(false);
         registerForm.setVisible(true);
         registerForm.setManaged(true);
-
-        registerTab.getStyleClass().removeAll("tab-inactive");
-        registerTab.getStyleClass().add("tab-active");
-
-        loginTab.getStyleClass().removeAll("tab-active");
-        loginTab.getStyleClass().add("tab-inactive");
+        hideErrors();
     }
 
-    @FXML
-    public void onRoleChanged(ActionEvent event) {
-        if (!roleBidder.isSelected() && !roleSeller.isSelected()) {
-            roleBidder.setSelected(true);
+    private void showError(Label errorLabel, String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+            errorLabel.setManaged(true);
         }
+    }
 
-        if (roleSeller.isSelected()) {
-            storeNameBox.setVisible(true);
-            storeNameBox.setManaged(true);
-
-            roleSeller.getStyleClass().removeAll("role-btn-inactive");
-            roleSeller.getStyleClass().add("role-btn-active");
-
-            roleBidder.getStyleClass().removeAll("role-btn-active");
-            roleBidder.getStyleClass().add("role-btn-inactive");
-        } else {
-            storeNameBox.setVisible(false);
-            storeNameBox.setManaged(false);
-
-            roleBidder.getStyleClass().removeAll("role-btn-inactive");
-            roleBidder.getStyleClass().add("role-btn-active");
-
-            roleSeller.getStyleClass().removeAll("role-btn-active");
-            roleSeller.getStyleClass().add("role-btn-inactive");
+    private void hideErrors() {
+        if (loginError != null) {
+            loginError.setVisible(false);
+            loginError.setManaged(false);
+            loginError.setStyle("-fx-text-fill: #ef4444;");
+        }
+        if (regError != null) {
+            regError.setVisible(false);
+            regError.setManaged(false);
         }
     }
 
     @FXML
-    public void onRegisterSubmit(ActionEvent event) {
+    private void onRegisterSubmit() {
+        System.out.println("Nút Tạo tài khoản được bấm!");
+    }
+
+    @FXML
+    private void onRoleChanged() {
+        System.out.println("Role đăng ký bị thay đổi!");
     }
 }
