@@ -100,16 +100,16 @@ public class Auction extends Entity {
         this.currentPrice = money(amount);
         this.currentHighestBidderId = bidderId;
     }
-    // ACTIVE -> CLOSED
+    // RUNNING -> CLOSED
     public void close() {
         if (status != AuctionStatus.RUNNING)
-            throw new IllegalStateException("Chỉ có thể close từ ACTIVE");
+            throw new IllegalStateException("Chỉ có thể close từ RUNNING");
         this.status = AuctionStatus.FINISHED;
     }
     // CLOSED -> PAID, Dùng khi: bidder thanh toán thành công
     public void markPaid() {
         if (status != AuctionStatus.FINISHED)
-            throw new IllegalStateException("Chỉ có thể markPaid từ CLOSED");
+            throw new IllegalStateException("Chỉ có thể markPaid từ FINISHED");
         this.status = AuctionStatus.PAID;
     }
     //  CANCELLED (từ PENDING hoặc ACTIVE), Dùng khi: admin từ chối hoặc seller hủy
@@ -117,6 +117,10 @@ public class Auction extends Entity {
         if (status == AuctionStatus.PAID)
             throw new IllegalStateException("Không thể hủy phiên đã thanh toán");
         this.status = AuctionStatus.CANCELLED;
+    }
+    // Chuyển từ PENDING sang ACTIVE
+    public void approve() {
+        this.status = AuctionStatus.RUNNING;
     }
 
     // Getter/ Setter
