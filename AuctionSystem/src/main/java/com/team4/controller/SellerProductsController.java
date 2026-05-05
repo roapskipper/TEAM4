@@ -30,7 +30,7 @@ public class SellerProductsController implements Initializable {
 
     private void setupCategoryFilter() {
         categoryFilter.getItems().addAll(
-            "Tat ca", "Dien tu", "Xe co", "Nghe thuat", "Thoi trang", "Do suu tam"
+                "Tat ca", "Dien tu", "Xe co", "Nghe thuat", "Thoi trang", "Do suu tam"
         );
         categoryFilter.getSelectionModel().selectFirst();
     }

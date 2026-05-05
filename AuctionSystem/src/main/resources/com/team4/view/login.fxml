@@ -16,15 +16,12 @@
            fx:controller="com.team4.controller.LoginController"
            stylesheets="@style.css"
            id="loginRoot"
-           prefWidth="1280" prefHeight="720"
+           prefWidth="1000" prefHeight="720"
            styleClass="login-bg">
 
-    <!-- ═══════════ BACKGROUND LAYER ═══════════ -->
     <StackPane id="bgLayer">
-        <!-- Gradient base -->
         <StackPane style="-fx-background-color: #0a0a0f;" />
 
-        <!-- Animated orbs -->
         <StackPane id="orbPurple"
                    style="-fx-background-color: radial-gradient(center 30% 40%, radius 60%, #8b5cf633, transparent);"
                    prefWidth="600" prefHeight="600" />
@@ -35,15 +32,12 @@
                    style="-fx-background-color: radial-gradient(center 50% 50%, radius 40%, #3b82f611, transparent);"
                    prefWidth="400" prefHeight="400" />
 
-        <!-- Grid pattern -->
         <StackPane opacity="0.03"
                    style="-fx-background-color: repeating-linear-gradient(0deg, #ffffff08 0px, #ffffff08 1px, transparent 1px, transparent 60px), repeating-linear-gradient(90deg, #ffffff08 0px, #ffffff08 1px, transparent 1px, transparent 60px);" />
     </StackPane>
 
-    <!-- ═══════════ MAIN CONTENT ═══════════ -->
     <HBox alignment="CENTER" spacing="0">
 
-        <!-- ════ LEFT PANEL: BRANDING ════ -->
         <VBox id="leftPanel"
               style="-fx-background-color: linear-gradient(to bottom right, rgba(139,92,246,0.06), rgba(236,72,153,0.03));"
               prefWidth="580" minWidth="420" maxWidth="700"
@@ -53,7 +47,6 @@
                 <Insets top="64" right="64" bottom="64" left="64"/>
             </padding>
 
-            <!-- Brand Logo -->
             <HBox spacing="14" alignment="CENTER_LEFT">
                 <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 14;"
                            prefWidth="52" prefHeight="52">
@@ -65,10 +58,8 @@
                 </VBox>
             </HBox>
 
-            <!-- Spacer -->
             <Region prefHeight="40" />
 
-            <!-- Welcome Text -->
             <VBox spacing="8">
                 <Label text="Chao mung" styleClass="hero-title"/>
                 <Label text="tro lai" styleClass="hero-title-gradient"/>
@@ -78,7 +69,6 @@
 
             <Region VBox.vgrow="ALWAYS" />
 
-            <!-- Stats -->
             <HBox spacing="32" alignment="CENTER_LEFT">
                 <VBox spacing="4">
                     <Label text="50K+" styleClass="stat-number"/>
@@ -96,17 +86,15 @@
                 </VBox>
             </HBox>
 
-            <!-- Bottom badge -->
             <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 20 0 0 0;">
                 <Label text="UET-VNU" style="-fx-text-fill: #4b5563; -fx-font-size: 12; -fx-font-weight: bold;"/>
                 <Label text="•" style="-fx-text-fill: #374151;"/>
-                <Label text="CN1 2024" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
+                <Label text="K70I - IT6" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
                 <Label text="•" style="-fx-text-fill: #374151;"/>
                 <Label text="Nhom 4" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
             </HBox>
         </VBox>
 
-        <!-- ════ RIGHT PANEL: FORM ════ -->
         <VBox id="rightPanel"
               prefWidth="480" minWidth="380" maxWidth="600"
               alignment="CENTER"
@@ -116,7 +104,6 @@
                 <Insets top="48" right="56" bottom="48" left="56"/>
             </padding>
 
-            <!-- Mobile Logo (hidden on desktop) -->
             <HBox id="mobileLogo" spacing="10" alignment="CENTER" managed="false" visible="false">
                 <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 12;"
                            prefWidth="40" prefHeight="40">
@@ -125,7 +112,6 @@
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>
 
-            <!-- ═══ TAB SWITCHER ═══ -->
             <HBox id="tabSwitcher" spacing="6"
                   style="-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 14; -fx-padding: 5;">
                 <Button fx:id="loginTab" text="Dang nhap"
@@ -167,15 +153,6 @@
                         <Region prefWidth="0" />
                     </graphic>
                 </Button>
-
-                <VBox spacing="4" alignment="CENTER" style="-fx-padding: 8 0 0 0;">
-                    <Label text="Tai khoan test:" style="-fx-text-fill: #4b5563; -fx-font-size: 11;"/>
-                    <HBox spacing="12" alignment="CENTER">
-                        <Label text="admin / admin" style="-fx-text-fill: #6b7280; -fx-font-size: 11; -fx-padding: 3 10; -fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6;"/>
-                        <Label text="bidder / bidder" style="-fx-text-fill: #6b7280; -fx-font-size: 11; -fx-padding: 3 10; -fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6;"/>
-                        <Label text="seller / seller" style="-fx-text-fill: #6b7280; -fx-font-size: 11; -fx-padding: 3 10; -fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 6;"/>
-                    </HBox>
-                </VBox>
             </VBox>
 
             <VBox fx:id="registerForm" spacing="14" managed="false" visible="false">
