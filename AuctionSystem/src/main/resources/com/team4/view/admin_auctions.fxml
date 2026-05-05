@@ -39,6 +39,9 @@
                 <TableColumn fx:id="colReports" text="Bao cao" prefWidth="80"/>
                 <TableColumn fx:id="colAction" text="Thao tac" prefWidth="160"/>
             </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
         </TableView>
     </VBox>
 </VBox>

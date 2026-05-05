@@ -40,7 +40,8 @@
 
         <VBox id="leftPanel"
               style="-fx-background-color: linear-gradient(to bottom right, rgba(139,92,246,0.06), rgba(236,72,153,0.03));"
-              prefWidth="580" minWidth="420" maxWidth="700"
+              prefWidth="580" minWidth="420" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS"
               alignment="CENTER_LEFT"
               spacing="28">
             <padding>
@@ -96,10 +97,11 @@
         </VBox>
 
         <VBox id="rightPanel"
-              prefWidth="480" minWidth="380" maxWidth="600"
+              prefWidth="480" minWidth="380" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS"
               alignment="CENTER"
               spacing="24"
-              style="-fx-background-color: #0a0a0f;">
+              style="-fx-background-color: #1a1a24;">
             <padding>
                 <Insets top="48" right="56" bottom="48" left="56"/>
             </padding>
