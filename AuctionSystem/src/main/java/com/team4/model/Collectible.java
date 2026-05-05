@@ -1,49 +1,157 @@
 package com.team4.model;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+/**
+ * Collectible: Đại diện cho đồ sưu tập (Collectible).
+ */
+public class Collectible extends Item {
+    public enum RarityLevel {
+        COMMON,         // Phổ biến
+        UNCOMMON,       // Ít phổ biến
+        RARE,           // Hiếm
+        VERY_RARE,      // Rất hiếm
+        ULTRA_RARE,     // Cực hiếm
+    }
+    public static RarityLevel fromNameR(String name) {
+        if (name == null) return null;
+        try {
+            return RarityLevel.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+    public enum ConditionGrade {
+        POOR,           // Kém
+        FAIR,           // Trung bình
+        GOOD,           // Tốt
+        VERY_GOOD,      // Rất tốt
+        EXCELLENT,      // Xuất sắc
+        MINT            // Hoàn hảo (như mới)
+    }
+    public static ConditionGrade fromNameCon(String name) {
+        if (name == null) return null;
+        try {
+            return ConditionGrade.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+    private int yearOfOrigin;       // năm xuất xứ
+    private RarityLevel rarityLevel;     // độ hiếm
+    private ConditionGrade conditionGrade; // tình trạng
+    private boolean hasCertificate;  // có chứng chỉ không
+    private String origin;           // xuất xứ (quốc gia/vùng)
 
-import java.io.Serializable;
-
-public class Collectible extends Item implements Serializable {
-    private int yearOfOrigin;      // Năm sản xuất/phát hành (ví dụ: 1950)
-    private String rarityLevel;    // Độ hiếm (Common, Rare, Ultra Rare, Unique)
-    private String conditionGrade; // Thang điểm tình trạng (ví dụ: Mint 10, PSA 9, New)
-    private String category;       // Loại đồ sưu tầm (Tiền cổ, Thẻ bài, Đồng hồ, Đồ chơi cổ)
-    private boolean hasCertificate; // Có giấy chứng nhận kiểm định không?
-    private String origin;         // Nguồn gốc/Xuất xứ (ví dụ: Sưu tập cá nhân, Đấu giá từ Pháp)
-    private String specialFeatures; // Đặc điểm độc bản (ví dụ: Có chữ ký, Lỗi in ấn quý hiếm)
-
-    public Collectible(String id, String name, double startingPrice, String desc,
-                       int yearOfOrigin, String rarityLevel, String conditionGrade,
-                       String category, boolean hasCertificate, String origin,
-                       String specialFeatures) {
-
-        super(id, name, startingPrice, desc);
+    // Constructor dùng khi tạo Collectible mới (Seller đăng sản phẩm)
+    public Collectible(String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       int yearOfOrigin,
+                       RarityLevel rarityLevel,
+                       ConditionGrade conditionGrade,
+                       boolean hasCertificate,
+                       String origin) {
+        super(name, startingPrice, description, ItemCategory.COLLECTIBLE, ownerId);
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
-        this.category = category;
         this.hasCertificate = hasCertificate;
-        this.origin = origin;
-        this.specialFeatures = specialFeatures;
+        this.origin = (origin == null || origin.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(origin);
+        validateYearOfOrigin(this.yearOfOrigin);
+        validateRarityLevel(this.rarityLevel);
+        validateConditionGrade(this.conditionGrade);
+        validateOrigin(this.origin);
     }
 
-    public int getYearOfOrigin() { return yearOfOrigin; }
-    public String getRarityLevel() { return rarityLevel; }
-    public String getConditionGrade() { return conditionGrade; }
-    public String getCategory() { return category; }
-    public boolean isHasCertificate() { return hasCertificate; }
-    public String getOrigin() { return origin; }
-    public String getSpecialFeatures() { return specialFeatures; }
+    // Constructor dùng khi nạp từ DB
+    public Collectible(String id,
+                       LocalDateTime createdAt,
+                       String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       int yearOfOrigin,
+                       RarityLevel rarityLevel,
+                       ConditionGrade conditionGrade,
+                       boolean hasCertificate,
+                       String origin) {
+        super(id, createdAt, name, startingPrice, description, ItemCategory.COLLECTIBLE, ownerId);
+        this.yearOfOrigin = yearOfOrigin;
+        this.rarityLevel = rarityLevel;
+        this.conditionGrade = conditionGrade;
+        this.hasCertificate = hasCertificate;
+        this.origin = (origin == null || origin.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(origin);
+        validateYearOfOrigin(this.yearOfOrigin);
+        validateRarityLevel(this.rarityLevel);
+        validateConditionGrade(this.conditionGrade);
+        validateOrigin(this.origin);
+    }
 
-    @Override
-    public void showInfo() {
-        System.out.println("--- [ĐỒ SƯU TẦM] ---");
-        System.out.println("Sản phẩm: " + name + " | Loại: " + category);
-        System.out.println("Năm: " + yearOfOrigin + " | Độ hiếm: " + rarityLevel);
-        System.out.println("Tình trạng: " + conditionGrade + " | Nguồn gốc: " + origin);
-        System.out.println("Kiểm định: " + (hasCertificate ? "Đã có chứng chỉ" : "Chưa kiểm định"));
-        if (specialFeatures != null && !specialFeatures.isEmpty()) {
-            System.out.println("Đặc điểm quý: " + specialFeatures);
+    // Validate
+    private static void validateYearOfOrigin(int year) {
+        if (year == 0) return; // unknown
+        int current = LocalDate.now().getYear();
+        final int MIN_YEAR = -3000;
+        if (year < MIN_YEAR || year > current) {
+            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
+                    MIN_YEAR + " .. " + current + " (Nếu không rõ năm sản xuất có thể điền '0').");
         }
-        System.out.println("Giá hiện tại: " + currentPrice);
+    }
+    private static void validateRarityLevel(RarityLevel rarity) {
+        if (rarity == null)
+           throw new IllegalArgumentException("Rarity level không được để trống.");
+    }
+    private static void validateConditionGrade(ConditionGrade grade) {
+        if (grade == null)
+            throw new IllegalArgumentException("Condition grade không được để trống.");
+    }
+    private static void validateOrigin(String origin) {
+        if (origin == null) return;
+        String o = origin.trim();
+        if (o.length() > 120) throw new IllegalArgumentException("Origin quá dài (tối đa 120 ký tự).");
+    }
+    // Summary / toString
+    @Override
+    public String summary() {
+        return rarityLevel.name() + " - " + conditionGrade.name() +
+                (hasCertificate ? " (Có chứng chỉ)" : "");
+    }
+    @Override
+    public String toString() {
+        return super.toString()
+                + " | yearOfOrigin: " + yearOfOrigin
+                + " | rarityLevel: " + rarityLevel
+                + " | conditionGrade: " + conditionGrade
+                + " | hasCertificate: " + hasCertificate
+                + " | origin: " + origin;
+    }
+    // Getters / Setters
+    public int getYearOfOrigin() { return yearOfOrigin; }
+    public void setYearOfOrigin(int yearOfOrigin) {
+        this.yearOfOrigin = yearOfOrigin;
+        validateYearOfOrigin(this.yearOfOrigin);
+    }
+    public RarityLevel getRarityLevel() { return rarityLevel; }
+    public void setRarityLevel(RarityLevel rarityLevel) {
+        this.rarityLevel = rarityLevel;
+        validateRarityLevel(this.rarityLevel);
+    }
+    public ConditionGrade getConditionGrade() { return conditionGrade; }
+    public void setConditionGrade(ConditionGrade conditionGrade) {
+        this.conditionGrade = conditionGrade;
+        validateConditionGrade(this.conditionGrade);
+    }
+    public boolean isHasCertificate() { return hasCertificate; }
+    public void setHasCertificate(boolean hasCertificate) { this.hasCertificate = hasCertificate; }
+    public String getOrigin() { return origin; }
+    public void setOrigin(String origin) {
+        this.origin = normalizeOptional(origin);
+        validateOrigin(this.origin);
     }
 }

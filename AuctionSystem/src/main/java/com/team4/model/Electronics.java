@@ -1,49 +1,149 @@
 package com.team4.model;
 
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 
-public class Electronics extends Item implements Serializable {
-    private String brand;           // Thương hiệu (ví dụ: Apple, Samsung)
-    private String model;           // Dòng máy (ví dụ: iPhone 15 Pro, Galaxy S24)
-    private String serialNumber;    // Số Serial (để định danh duy nhất máy này, rất quan trọng khi bàn giao)
-    private String color;           // Màu sắc
-    private String condition;       // Tình trạng (ví dụ: Mới 100%, Likenew 99%, Cũ)
-    private int warrantyMonths;   // Thời gian bảo hành còn lại (tháng)
-    private boolean isFullyFunctional; // Có hoạt động hoàn hảo không? (true/false)
-    private String technicalSpec;   // Thông số kỹ thuật tóm tắt (ví dụ: RAM 8GB, SSD 256GB)
+/**
+ * Electronics: model cho nhóm hàng điện tử.
+ */
+public class Electronics extends Item {
+    public enum ConditionGrade {
+        POOR,           // Kém
+        FAIR,           // Trung bình
+        GOOD,           // Tốt
+        VERY_GOOD,      // Rất tốt
+        EXCELLENT,      // Xuất sắc
+        MINT            // Hoàn hảo (như mới)
+    }
+    public static ConditionGrade fromNameCon(String name) {
+        if (name == null) return null;
+        try {
+            return ConditionGrade.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 
-    public Electronics(String id, String name, double startingPrice, String desc,
-                       String brand, String model, String serialNumber, String color,
-                       String condition, int warrantyMonths, boolean isFullyFunctional,
-                       String technicalSpec) {
-
-        super(id, name, startingPrice, desc);
-        this.brand = brand;
-        this.model = model;
-        this.serialNumber = serialNumber;
-        this.color = color;
-        this.condition = condition;
+    private String brand;           // thương hiệu
+    private String model;           // tên model
+    private ConditionGrade itemCondition;       // tình trạng
+    private int warrantyMonths;     // bảo hành (tháng)
+    private boolean fullyFunctional; // hoạt động đầy đủ
+    // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
+    public Electronics(String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       String brand,
+                       String model,
+                       ConditionGrade itemCondition,
+                       int warrantyMonths,
+                       boolean fullyFunctional) {
+        super(name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
+        this.model = (model == null || model.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(model);
+        this.itemCondition = itemCondition;
         this.warrantyMonths = warrantyMonths;
-        this.isFullyFunctional = isFullyFunctional;
-        this.technicalSpec = technicalSpec;
+        this.fullyFunctional = fullyFunctional;
+        validateBrand(this.brand);
+        validateModel(this.model);
+        validateItemCondition(this.itemCondition);
+        validateWarrantyMonths(this.warrantyMonths);
+    }
+    // Constructor dùng khi nạp từ DB
+    public Electronics(String id,
+                       LocalDateTime createdAt,
+                       String name,
+                       BigDecimal startingPrice,
+                       String description,
+                       String ownerId,
+                       String brand,
+                       String model,
+                       ConditionGrade itemCondition,
+                       int warrantyMonths,
+                       boolean fullyFunctional) {
+        super(id, createdAt, name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
+        this.brand = (brand == null || brand.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(brand);
+        this.model = (model == null || model.trim().isEmpty())
+                ? "Unknown"
+                : normalizeOptional(model);
+        this.itemCondition = itemCondition;
+        this.warrantyMonths = warrantyMonths;
+        this.fullyFunctional = fullyFunctional;
+        validateBrand(this.brand);
+        validateModel(this.model);
+        validateItemCondition(this.itemCondition);
+        validateWarrantyMonths(this.warrantyMonths);
     }
 
-    public String getBrand() { return brand; }
-    public String getModel() { return model; }
-    public String getSerialNumber() { return serialNumber; }
-    public String getColor() { return color; }
-    public String getCondition() { return condition; }
-    public int getWarrantyMonths() { return warrantyMonths; }
-    public boolean isFullyFunctional() { return isFullyFunctional; }
-    public String getTechnicalSpec() { return technicalSpec; }
-
+    // Validate
+    private static void validateBrand(String brand) {
+        if (brand == null || brand.isEmpty()) return;
+        if (brand.length() > 50) {
+            throw new IllegalArgumentException("Brand không được vượt quá 50 ký tự.");
+        }
+    }
+    private static void validateModel(String model) {
+        if (model == null || model.isEmpty()) return;
+        if (model.length() > 50) {
+            throw new IllegalArgumentException("Model không được vượt quá 50 ký tự.");
+        }
+    }
+    private static void validateItemCondition(ConditionGrade cond) {
+        if (cond == null) {
+            throw new IllegalArgumentException("Item condition không được để trống.");
+        }
+    }
+    private static void validateWarrantyMonths(int months) {
+        if (months < 0) {
+            throw new IllegalArgumentException("Warranty months phải >= 0.");
+        }
+    }
+    // Summary / toString
     @Override
-    public void showInfo() {
-        System.out.println("--- [ĐỒ ĐIỆN TỬ] ---");
-        System.out.println("Tên: " + name + " (" + brand + " " + model + ")");
-        System.out.println("Màu: " + color + " | Tình trạng: " + condition);
-        System.out.println("Bảo hành: " + warrantyMonths + " tháng | Hoạt động: " + (isFullyFunctional ? "Hoàn hảo" : "Có lỗi"));
-        System.out.println("Thông số: " + technicalSpec);
-        System.out.println("Giá hiện tại: " + currentPrice);
+    public String summary() {
+        return brand + " " + model +
+                " - " + itemCondition.name() +
+                " - Bảo hành: " + warrantyMonths + " tháng" +
+                (fullyFunctional ? "" : " (Không hoạt động đầy đủ)");
     }
-}
+    @Override
+    public String toString() {
+        return super.toString()
+                + " | brand: " + brand
+                + " | model: " + model
+                + " | condition: " + itemCondition
+                + " | warrantyMonths: " + warrantyMonths
+                + " | fullyFunctional: " + fullyFunctional;
+    }
+    // Getters / Setters
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) {
+        this.brand = normalizeOptional(brand);
+        validateBrand(this.brand);
+    }
+    public String getModel() { return model; }
+    public void setModel(String model) {
+        this.model = normalizeOptional(model);
+        validateModel(this.model);
+    }
+    public ConditionGrade getItemCondition() { return itemCondition; }
+    public void setItemCondition(ConditionGrade itemCondition) {
+        this.itemCondition = itemCondition;
+        validateItemCondition(this.itemCondition);
+    }
+    public int getWarrantyMonths() { return warrantyMonths; }
+    public void setWarrantyMonths(int warrantyMonths) {
+        this.warrantyMonths = warrantyMonths;
+        validateWarrantyMonths(this.warrantyMonths);
+    }
+    public boolean isFullyFunctional() { return fullyFunctional; }
+    public void setFullyFunctional(boolean fullyFunctional) { this.fullyFunctional = fullyFunctional; }
+    }

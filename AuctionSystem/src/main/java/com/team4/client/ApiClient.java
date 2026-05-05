@@ -17,47 +17,60 @@ public class ApiClient {
     public String login(String username, String password) {
         try {
             String body = "username=" + username + "&password=" + password;
-
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "login"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json; charset=UTF-8")
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
-
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                System.out.println("Dang nhap that bai. Status: " + response.statusCode());
-                return null;
-            }
+            if (response.statusCode() == 200) return response.body();
+            System.out.println("Dang nhap that bai. Status: " + response.statusCode());
+            return null;
         } catch (Exception e) {
             System.out.println("Loi ket noi API: " + e.getMessage());
             return null;
         }
     }
 
-    public String register(String username, String password, String role) {
+    public String registerBidder(String username, String password, String fullName, String email, String shippingAddress, String phoneNumber) {
         try {
-            String body = "username=" + username + "&password=" + password + "&role=" + role;
-
+            String body = "username=" + username
+                    + "&password=" + password
+                    + "&fullName=" + fullName
+                    + "&email=" + email
+                    + "&shippingAddress=" + shippingAddress
+                    + "&phoneNumber=" + phoneNumber;
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "register"))
+                    .uri(URI.create(API_URL + "register/bidder"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
-                    .header("Accept", "application/json; charset=UTF-8")
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
-
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200) return response.body();
+            System.out.println("Dang ky that bai. Status: " + response.statusCode());
+            return null;
+        } catch (Exception e) {
+            System.out.println("Loi ket noi API: " + e.getMessage());
+            return null;
+        }
+    }
 
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                System.out.println("Dang ky that bai. Status: " + response.statusCode());
-                return null;
-            }
+    public String registerSeller(String username, String password, String fullName, String email, String storeName) {
+        try {
+            String body = "username=" + username
+                    + "&password=" + password
+                    + "&fullName=" + fullName
+                    + "&email=" + email
+                    + "&storeName=" + storeName;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(API_URL + "register/seller"))
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200) return response.body();
+            System.out.println("Dang ky that bai. Status: " + response.statusCode());
+            return null;
         } catch (Exception e) {
             System.out.println("Loi ket noi API: " + e.getMessage());
             return null;
@@ -68,18 +81,28 @@ public class ApiClient {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "items"))
-                    .header("Accept", "application/json; charset=UTF-8")
                     .GET()
                     .build();
-
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200) return response.body();
+            System.out.println("Loi lay danh sach items. Status: " + response.statusCode());
+            return null;
+        } catch (Exception e) {
+            System.out.println("Loi ket noi API: " + e.getMessage());
+            return null;
+        }
+    }
 
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                System.out.println("Loi lay danh sach items. Status: " + response.statusCode());
-                return null;
-            }
+    public String getAuctions() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(API_URL + "auctions"))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200) return response.body();
+            System.out.println("Loi lay danh sach auctions. Status: " + response.statusCode());
+            return null;
         } catch (Exception e) {
             System.out.println("Loi ket noi API: " + e.getMessage());
             return null;

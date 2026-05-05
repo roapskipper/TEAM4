@@ -1,52 +1,73 @@
 package com.team4.model;
 
-import java.io.Serializable;
-import java.util.ArrayList; // danh sách cụ thể (Class) (Khởi tạo ArrayList<>())
-import java.util.List; //Interface danh sách
+import java.util.regex.Pattern;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-public class Bidder extends User implements Serializable {
-    private double balance;              // Số dư tài khoản (tiền để đi đấu giá)
-    private String shippingAddress;      // Địa chỉ nhận hàng nếu thắng cuộc
-    private String phoneNumber;          // Số điện thoại liên lạc
-    private List<String> biddedItemIds;  // Danh sách ID các món hàng đã từng tham gia trả giá
-
-    public Bidder(String id, String username, String password, double initialBalance,
-                  String shippingAddress, String phoneNumber) {
-
-        super(id, username, password, "BIDDER");
-        this.balance = initialBalance;
-        this.shippingAddress = shippingAddress;
-        this.phoneNumber = phoneNumber;
-        this.biddedItemIds = new ArrayList<>(); // Khởi tạo danh sách rỗng
+/**
+ * Lớp Bidder - Người tham gia đấu giá.
+ * Kế thừa từ User
+ */
+public class Bidder extends User {
+    private String shippingAddress;
+    private String phoneNumber;
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^\\+?[0-9]\\d{6,14}$"
+    ); // Số điện thoại quốc tế, có thể bắt đầu bằng +, theo sau là 7-15 chữ số (tùy quốc gia)
+    /**
+     * CONSTRUCTOR 1: Dùng khi một khách hàng đăng ký mới
+     */
+    public Bidder(String username, String passwordHash, String fullName, String email, String shippingAddress, String phoneNumber) {
+        super(username, passwordHash, fullName, email, Role.BIDDER);
+        this.shippingAddress = normalizeOptional(shippingAddress);
+        this.phoneNumber = normalizeOptional(phoneNumber);
+        validatePhoneNumber(this.phoneNumber);
+        validateShippingAddress(this.shippingAddress);
     }
 
-    public double getBalance() { return balance; }
+    /**
+     * CONSTRUCTOR 2: Dùng khi lấy dữ liệu từ DB
+     */
+    public Bidder(String id, LocalDateTime creatAt, String username, String passwordHash, String fullName, String email, BigDecimal balance, String shippingAddress, String phoneNumber) {
+        super(id, creatAt, username, passwordHash, fullName, email, Role.BIDDER, balance);
+        this.shippingAddress = normalizeOptional(shippingAddress);
+        this.phoneNumber = normalizeOptional(phoneNumber);
+        validatePhoneNumber(this.phoneNumber);
+        validateShippingAddress(this.shippingAddress);
+    }
 
-    public void addBalance(double amount) {
-        if (amount > 0) {
-            this.balance += amount;
-            System.out.println("Nạp tiền thành công! Số dư mới: " + balance);
+    // Kiểm tra định dạng của shippingAddress và phoneNumber
+    private void validateShippingAddress(String shippingAddress) {
+        if (shippingAddress != null) {
+            String adr = shippingAddress.trim();
+            if (adr.isEmpty()) {
+                throw new IllegalArgumentException("Địa chỉ giao hàng không được rỗng nếu được cung cấp.");
+            }
+            if (adr.length() > 255) {
+                throw new IllegalArgumentException("Địa chỉ giao hàng không được vượt quá 255 ký tự.");
+            }
         }
     }
+    private void validatePhoneNumber(String phoneNumber) {
+        if (phoneNumber != null) {
+            String num = phoneNumber.trim();
+            if (!PHONE_PATTERN.matcher(num).matches()) {
+                throw new IllegalArgumentException("Số điện thoại không hợp lệ.");
+            }
+        }
+    }
+    // toString của User đã in ra thông tin cơ bản của Bidder, 2 thông tin dưới đây không nên được in ra
+    // Chỉ dùng khi thật sự cần, không log ra ngoài do là thông tin cá nhân
+    private String toShippingDetail() {
+        return "shippingAddress: " + shippingAddress +
+                " | phoneNumber: " + phoneNumber;
+    }
 
+    // Setter & Getter
     public String getShippingAddress() { return shippingAddress; }
-    public void setShippingAddress(String address) { this.shippingAddress = address; }
+    public void setShippingAddress(String address) { validateShippingAddress(address);
+    this.shippingAddress = address;}
 
     public String getPhoneNumber() { return phoneNumber; }
-
-    public void addBiddedItem(String itemId) {
-        if (!biddedItemIds.contains(itemId)) {
-            biddedItemIds.add(itemId);
-        }
-    }
-
-    @Override
-    public void displayRolePermissions() {
-        System.out.println("--- [QUYỀN HẠN BIDDER] ---");
-        System.out.println("User: " + username);
-        System.out.println("- Có quyền xem danh sách tất cả sản phẩm.");
-        System.out.println("- Có quyền đặt giá thầu (Bid) cho sản phẩm.");
-        System.out.println("- Số dư hiện có: " + balance + " USD");
-        System.out.println("- Số lượng sản phẩm đã quan tâm: " + biddedItemIds.size());
-    }
-}
+    public void setPhoneNumber(String phoneNumber) { validatePhoneNumber(phoneNumber);
+    this.phoneNumber = phoneNumber;}}
