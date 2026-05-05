@@ -159,13 +159,19 @@
 
                 <VBox spacing="6">
                     <Label text="Ban muon tham gia voi tu cach" styleClass="form-label"/>
+                    <fx:define>
+                        <ToggleGroup fx:id="roleGroup"/>
+                    </fx:define>
+
                     <HBox spacing="8">
                         <ToggleButton fx:id="roleBidder" text="⚡ Nguoi mua"
+                                      toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       selected="true"
                                       onAction="#onRoleChanged"
                                       styleClass="role-btn-active"/>
                         <ToggleButton fx:id="roleSeller" text="🏪 Nguoi ban"
+                                      toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       onAction="#onRoleChanged"
                                       styleClass="role-btn-inactive"/>

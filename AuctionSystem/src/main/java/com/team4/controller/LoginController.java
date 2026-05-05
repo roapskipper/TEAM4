@@ -99,6 +99,12 @@ public class LoginController {
         loginForm.setManaged(true);
         registerForm.setVisible(false);
         registerForm.setManaged(false);
+
+        loginTab.getStyleClass().removeAll("tab-inactive");
+        loginTab.getStyleClass().add("tab-active");
+
+        registerTab.getStyleClass().removeAll("tab-active");
+        registerTab.getStyleClass().add("tab-inactive");
     }
 
     @FXML
@@ -107,16 +113,38 @@ public class LoginController {
         loginForm.setManaged(false);
         registerForm.setVisible(true);
         registerForm.setManaged(true);
+
+        registerTab.getStyleClass().removeAll("tab-inactive");
+        registerTab.getStyleClass().add("tab-active");
+
+        loginTab.getStyleClass().removeAll("tab-active");
+        loginTab.getStyleClass().add("tab-inactive");
     }
 
     @FXML
     public void onRoleChanged(ActionEvent event) {
+        if (!roleBidder.isSelected() && !roleSeller.isSelected()) {
+            roleBidder.setSelected(true);
+        }
+
         if (roleSeller.isSelected()) {
             storeNameBox.setVisible(true);
             storeNameBox.setManaged(true);
+
+            roleSeller.getStyleClass().removeAll("role-btn-inactive");
+            roleSeller.getStyleClass().add("role-btn-active");
+
+            roleBidder.getStyleClass().removeAll("role-btn-active");
+            roleBidder.getStyleClass().add("role-btn-inactive");
         } else {
             storeNameBox.setVisible(false);
             storeNameBox.setManaged(false);
+
+            roleBidder.getStyleClass().removeAll("role-btn-inactive");
+            roleBidder.getStyleClass().add("role-btn-active");
+
+            roleSeller.getStyleClass().removeAll("role-btn-active");
+            roleSeller.getStyleClass().add("role-btn-inactive");
         }
     }
 
