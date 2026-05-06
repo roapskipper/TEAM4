@@ -24,11 +24,10 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
     }
 
     @Override
-    public boolean insert(BidTransaction transaction) {
+    public boolean insert(Connection conn, BidTransaction transaction) {
         String sql = "INSERT INTO bid_transactions (id, created_at, auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, transaction.getId());
             stmt.setTimestamp(2, Timestamp.valueOf(transaction.getCreatedAt()));

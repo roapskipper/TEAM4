@@ -188,10 +188,9 @@ public class AuctionDAOImpl implements AuctionDAO {
      * Dùng khi: có bid mới hợp lệ
      * Ví dụ: user bid 1500$ → cập nhật currentPrice + highestBidderId
      */
-    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
+    public boolean updateCurrentBid(Connection conn, String id, BigDecimal currentPrice, String highestBidderId) {
         String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1,currentPrice);
             stmt.setString(2,highestBidderId);
             stmt.setString(3,id);

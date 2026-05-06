@@ -1,6 +1,8 @@
 package com.team4.dao;
 
 import com.team4.model.Auction;
+
+import java.sql.Connection;
 import java.util.List;
 import java.math.BigDecimal;
 
@@ -13,5 +15,5 @@ public interface AuctionDAO {
 
     boolean insert(Auction auction);
     boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus);
-    boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId);
+    boolean updateCurrentBid(Connection conn, String id, BigDecimal currentPrice, String highestBidderId);
 }
