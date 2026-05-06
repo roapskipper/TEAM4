@@ -222,6 +222,7 @@ public class UserDAOImpl implements UserDAO {
         }
         return list;
     }
+    // Dùng cho trường hợp bình thường, DAO tự mở & đóng connection
     @Override
     public boolean updateBalance(String id, BigDecimal newBalance) {
         String sql = "UPDATE users SET balance = ? WHERE id = ?";
@@ -233,6 +234,19 @@ public class UserDAOImpl implements UserDAO {
         } catch  (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+        return true;
+    }
+    // Dùng cho trường hợp cần transaction, connection được truyền vào từ bên ngoài
+    @Override
+    public boolean updateBalance(Connection conn, String id, BigDecimal newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1,newBalance);
+            stmt.setString(2,id);
+            stmt.executeUpdate();
+        } catch  (SQLException e) {
+            e.printStackTrace();
         }
         return true;
     }
