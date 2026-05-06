@@ -1,5 +1,8 @@
 package com.team4.client;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,11 +12,16 @@ import java.util.Scanner;
 
 public class Client {
     private static final String SERVER_ADDRESS = "127.0.0.1";
-    private static final int SERVER_PORT = 18367;
+    private static final int SERVER_PORT = 18368;
 
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private final Gson gson;
+
+    public Client() {
+        this.gson = new Gson();
+    }
 
     public boolean connect() {
         try {
@@ -33,21 +41,26 @@ public class Client {
             try {
                 String serverMessage;
                 while ((serverMessage = in.readLine()) != null) {
-                    if (serverMessage.startsWith("BID_UPDATE")) {
-                        String[] parts = serverMessage.split(",");
-                        if (parts.length == 4) {
-                            String itemId = parts[1];
-                            String bidderId = parts[2];
-                            String amount = parts[3];
+                    try {
+                        JsonObject jsonResponse = JsonParser.parseString(serverMessage).getAsJsonObject();
+                        String action = jsonResponse.has("action") ? jsonResponse.get("action").getAsString() : "";
+
+                        if ("BID_UPDATE".equals(action)) {
+                            JsonObject data = jsonResponse.getAsJsonObject("data");
+                            String itemId = data.get("itemId").getAsString();
+                            String bidderId = data.get("bidderId").getAsString();
+                            String amount = data.get("amount").getAsString();
                             System.out.println("[Cap nhat gia] Item: " + itemId + " | Nguoi dat: " + bidderId + " | Gia moi: " + amount);
+                        } else if ("BID_FAILED".equals(action)) {
+                            JsonObject data = jsonResponse.getAsJsonObject("data");
+                            String itemId = data.has("itemId") ? data.get("itemId").getAsString() : "Unknown";
+                            String reason = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "Loi khong xac dinh";
+                            System.out.println("[Dat gia that bai] Item: " + itemId + " | Ly do: " + reason);
+                        } else {
+                            System.out.println("[Server JSON]: " + serverMessage);
                         }
-                    } else if (serverMessage.startsWith("BID_FAILED")) {
-                        String[] parts = serverMessage.split(",", 3);
-                        if (parts.length == 3) {
-                            System.out.println("[Dat gia that bai] Item: " + parts[1] + " | Ly do: " + parts[2]);
-                        }
-                    } else {
-                        System.out.println("[Server]: " + serverMessage);
+                    } catch (Exception ex) {
+                        System.out.println("[Server Raw]: " + serverMessage);
                     }
 
                     if (listener != null) {
@@ -63,7 +76,17 @@ public class Client {
     }
 
     public void sendBid(int itemId, int bidderId, double amount) {
-        sendMessage("BID," + itemId + "," + bidderId + "," + amount);
+        JsonObject request = new JsonObject();
+        request.addProperty("action", "BID");
+
+        JsonObject data = new JsonObject();
+        data.addProperty("itemId", itemId);
+        data.addProperty("bidderId", bidderId);
+        data.addProperty("amount", amount);
+
+        request.add("data", data);
+
+        sendMessage(request.toString());
     }
 
     public void sendMessage(String message) {

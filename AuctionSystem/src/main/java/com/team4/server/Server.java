@@ -1,5 +1,6 @@
 package com.team4.server;
 
+import com.google.gson.*;
 import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
 import com.team4.dao.impl.UserDAOImpl;
@@ -14,14 +15,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
-    private static final int PORT = 18367;
+    private static final int PORT = 18368;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
 
     private static final AuctionService auctionService = new AuctionService(
@@ -31,6 +35,22 @@ public class Server {
 
     private static final UserService userService = new UserService(new UserDAOImpl());
 
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
+
+    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(formatter.format(src));
+        }
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString(), formatter);
+        }
+    }
+
     public static AuctionService getAuctionService() {
         return auctionService;
     }
@@ -39,7 +59,12 @@ public class Server {
         return userService;
     }
 
+    public static Gson getGson() {
+        return gson;
+    }
+
     public static void main(String[] args) {
+        com.team4.db.DatabaseManager.initialize();
         new ApiServer().start();
 
         System.out.println("Server dang khoi dong tren port " + PORT + "...");
@@ -55,10 +80,6 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void addObserver(ClientHandler handler) {
-        clientHandlers.add(handler);
     }
 
     public static void removeClient(ClientHandler handler) {
@@ -86,12 +107,12 @@ class ClientHandler implements Runnable, BidObserver {
 
     @Override
     public void updateNewBid(Auction auction, BidTransaction transaction) {
-        String data = "{"
-                + "\"auctionId\":\"" + auction.getId() + "\","
-                + "\"itemId\":\"" + auction.getItemId() + "\","
-                + "\"bidderId\":\"" + transaction.getBidderId() + "\","
-                + "\"amount\":" + transaction.getBidAmount()
-                + "}";
+        JsonObject data = new JsonObject();
+        data.addProperty("auctionId", auction.getId());
+        data.addProperty("itemId", auction.getItemId());
+        data.addProperty("bidderId", transaction.getBidderId());
+        data.addProperty("amount", transaction.getBidAmount());
+
         sendMessage(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", data));
     }
 
@@ -120,99 +141,53 @@ class ClientHandler implements Runnable, BidObserver {
         }
     }
 
-    private void handleRequest(String json) {
-        String action = extractValue(json, "action");
+    private void handleRequest(String jsonStr) {
+        try {
+            JsonObject request = JsonParser.parseString(jsonStr).getAsJsonObject();
+            String action = request.has("action") ? request.get("action").getAsString() : "";
 
-        if (action.equals("BID")) {
-            String data = extractBlock(json, "data");
-            String auctionId = extractValue(data, "auctionId");
-            String bidderId = extractValue(data, "bidderId");
-            double amount = Double.parseDouble(extractValue(data, "amount"));
+            if ("BID".equals(action)) {
+                JsonObject data = request.getAsJsonObject("data");
+                String auctionId = data.get("auctionId").getAsString();
+                String bidderId = data.get("bidderId").getAsString();
+                double amount = data.get("amount").getAsDouble();
 
-            try {
-                Auction auction = Server.getAuctionService().getAuctionById(auctionId);
+                try {
+                    Auction auction = Server.getAuctionService().getAuctionById(auctionId);
 
-                // TODO: Cắm BiddingService vào đây khi hoàn thiện
-                // BiddingService.placeBid(bidderId, auctionId, amount);
+                    if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+                        sendMessage(buildResponse("ERROR", "Phien dau gia khong con hoat dong", "BID_FAILED", null));
+                        return;
+                    }
 
-                // Tạm thời kiểm tra cơ bản
-                if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
-                    sendMessage(buildResponse("ERROR", "Phien dau gia khong con hoat dong", null, "null"));
-                    return;
+                    sendMessage(buildResponse("ERROR", "BiddingService chua hoan thien", "BID_FAILED", null));
+
+                } catch (BusinessException e) {
+                    sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));
                 }
 
-                sendMessage(buildResponse("ERROR", "BiddingService chua hoan thien", null, "null"));
-
-            } catch (BusinessException e) {
-                sendMessage(buildResponse("ERROR", e.getMessage(), null, "null"));
-            }
-
-        } else if (action.equals("GET_AUCTIONS")) {
-            try {
-                List<Auction> auctions = Server.getAuctionService().getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
-                String dataArr = "[";
-                boolean first = true;
-                for (int i = 0; i < auctions.size(); i++) {
-                    if (!first) dataArr = dataArr + ",";
-                    Auction a = auctions.get(i);
-                    dataArr = dataArr + "{"
-                            + "\"id\":\"" + a.getId() + "\","
-                            + "\"itemId\":\"" + a.getItemId() + "\","
-                            + "\"currentPrice\":" + a.getCurrentPrice() + ","
-                            + "\"endTime\":\"" + a.getEndTime() + "\","
-                            + "\"status\":\"" + a.getStatus() + "\""
-                            + "}";
-                    first = false;
+            } else if ("GET_AUCTIONS".equals(action)) {
+                try {
+                    List<Auction> auctions = Server.getAuctionService().getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+                    JsonElement dataArr = Server.getGson().toJsonTree(auctions);
+                    sendMessage(buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong", "AUCTIONS_LIST", dataArr));
+                } catch (BusinessException e) {
+                    sendMessage(buildResponse("ERROR", e.getMessage(), null, null));
                 }
-                dataArr = dataArr + "]";
-                sendMessage(buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong", null, dataArr));
-            } catch (BusinessException e) {
-                sendMessage(buildResponse("ERROR", e.getMessage(), null, "null"));
             }
+        } catch (JsonSyntaxException | IllegalStateException e) {
+            sendMessage(buildResponse("ERROR", "Sai dinh dang JSON", null, null));
         }
     }
 
-    private String buildResponse(String status, String message, String action, String data) {
-        String actionField = action != null ? "\"action\":\"" + action + "\"," : "";
-        return "{" + actionField
-                + "\"status\":\"" + status + "\","
-                + "\"message\":\"" + message + "\","
-                + "\"data\":" + data + "}";
-    }
+    private String buildResponse(String status, String message, String action, JsonElement data) {
+        JsonObject response = new JsonObject();
+        if (action != null) response.addProperty("action", action);
+        response.addProperty("status", status);
+        response.addProperty("message", message);
+        if (data != null) response.add("data", data);
 
-    private String extractValue(String json, String key) {
-        String search = "\"" + key + "\":\"";
-        int start = json.indexOf(search);
-        if (start == -1) {
-            search = "\"" + key + "\":";
-            start = json.indexOf(search);
-            if (start == -1) return "";
-            start = start + search.length();
-            int end = json.indexOf(",", start);
-            if (end == -1) end = json.indexOf("}", start);
-            return json.substring(start, end).trim();
-        }
-        start = start + search.length();
-        int end = json.indexOf("\"", start);
-        return json.substring(start, end);
-    }
-
-    private String extractBlock(String json, String key) {
-        String search = "\"" + key + "\":{";
-        int start = json.indexOf(search);
-        if (start == -1) return "{}";
-        start = start + search.length() - 1;
-        int depth = 0;
-        int end = start;
-        while (end < json.length()) {
-            if (json.charAt(end) == '{') depth++;
-            else if (json.charAt(end) == '}') {
-                depth--;
-                if (depth == 0) break;
-            }
-            end++;
-        }
-        return json.substring(start, end + 1);
+        return Server.getGson().toJson(response);
     }
 
     public void sendMessage(String message) {
