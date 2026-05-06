@@ -1,6 +1,6 @@
-import com.team4.util.DatabaseSetup;
+import com.team4.db.DatabaseManager;
 
 public static void main(String[] args) {
-    DatabaseSetup.initDatabase();
+    DatabaseManager.initialize();
     System.out.println("Setup thành công!");
 }
