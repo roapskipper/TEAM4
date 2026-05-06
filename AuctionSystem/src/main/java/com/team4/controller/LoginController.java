@@ -14,6 +14,10 @@ public class LoginController {
     @FXML private PasswordField loginPassword;
     @FXML private Label loginError;
 
+    @FXML private javafx.scene.control.Button loginTab;
+    @FXML private javafx.scene.control.Button registerTab;
+    @FXML private javafx.scene.control.ToggleButton roleBidder;
+    @FXML private javafx.scene.control.ToggleButton roleSeller;
     @FXML private VBox registerForm;
     @FXML private VBox storeNameBox;
     @FXML private TextField regStoreName;
@@ -22,6 +26,8 @@ public class LoginController {
     @FXML private PasswordField regPassword;
     @FXML private PasswordField regConfirmPassword;
     @FXML private Label regError;
+    @FXML private javafx.scene.control.Button loginBtn;
+    @FXML private javafx.scene.control.Button regBtn;
 
     @FXML
     private void onLoginSubmit() {
@@ -77,6 +83,14 @@ public class LoginController {
         registerForm.setVisible(false);
         registerForm.setManaged(false);
         hideErrors();
+        if (loginTab != null && registerTab != null) {
+            loginTab.getStyleClass().removeAll("tab-inactive");
+            loginTab.getStyleClass().add("tab-active");
+            registerTab.getStyleClass().removeAll("tab-active");
+            registerTab.getStyleClass().add("tab-inactive");
+        }
+        if (loginBtn != null) loginBtn.setDefaultButton(true);
+        if (regBtn != null) regBtn.setDefaultButton(false);
     }
 
     @FXML
@@ -86,6 +100,76 @@ public class LoginController {
         registerForm.setVisible(true);
         registerForm.setManaged(true);
         hideErrors();
+        if (loginTab != null && registerTab != null) {
+            registerTab.getStyleClass().removeAll("tab-inactive");
+            registerTab.getStyleClass().add("tab-active");
+            loginTab.getStyleClass().removeAll("tab-active");
+            loginTab.getStyleClass().add("tab-inactive");
+        }
+        if (loginBtn != null) loginBtn.setDefaultButton(false);
+        if (regBtn != null) regBtn.setDefaultButton(true);
+    }
+
+    @FXML
+    private void onRoleChanged() {
+        if (roleSeller.isSelected()) {
+            storeNameBox.setVisible(true);
+            storeNameBox.setManaged(true);
+        } else {
+            storeNameBox.setVisible(false);
+            storeNameBox.setManaged(false);
+        }
+    }
+
+    @FXML
+    private void onRegisterSubmit() {
+        String username = regUsername.getText();
+        String email = regEmail.getText();
+        String password = regPassword.getText();
+        String confirmPass = regConfirmPassword.getText();
+
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
+            showError(regError, "Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+        if (!password.equals(confirmPass)) {
+            showError(regError, "Mật khẩu xác nhận không khớp!");
+            return;
+        }
+
+        boolean isSeller = roleSeller.isSelected();
+        String storeName = regStoreName.getText();
+
+        if (isSeller && storeName.isEmpty()) {
+            showError(regError, "Vui lòng nhập tên cửa hàng!");
+            return;
+        }
+
+        try {
+            ApiClient client = new ApiClient();
+            String response;
+            if (isSeller) {
+                response = client.registerSeller(username, password, username, email, storeName);
+            } else {
+                response = client.registerBidder(username, password, username, email, "Chưa cập nhật", "Chưa cập nhật");
+            }
+
+            if (response != null) {
+                showError(regError, "Đăng ký thành công! Hãy chuyển sang tab Đăng nhập.");
+                regError.setStyle("-fx-text-fill: #10b981;");
+                loginUsername.setText(username);
+                loginPassword.setText(password);
+
+            } else {
+                showError(regError, "Đăng ký thất bại! Tên đăng nhập có thể đã tồn tại.");
+                regError.setStyle("-fx-text-fill: #ef4444;");
+            }
+
+        } catch (Exception e) {
+            showError(regError, "Lỗi kết nối Server: " + e.getMessage());
+            regError.setStyle("-fx-text-fill: #ef4444;");
+            e.printStackTrace();
+        }
     }
 
     private void showError(Label errorLabel, String message) {
@@ -108,13 +192,4 @@ public class LoginController {
         }
     }
 
-    @FXML
-    private void onRegisterSubmit() {
-        System.out.println("Nút Tạo tài khoản được bấm!");
-    }
-
-    @FXML
-    private void onRoleChanged() {
-        System.out.println("Role đăng ký bị thay đổi!");
-    }
 }
