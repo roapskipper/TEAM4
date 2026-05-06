@@ -3,6 +3,7 @@ package com.team4.dao;
 import com.team4.model.User;
 import java.util.List;
 import java.math.BigDecimal;
+import java.sql.Connection;
 
 public interface UserDAO {
     User findById(String id); // tìm theo id
@@ -11,5 +12,6 @@ public interface UserDAO {
     boolean insert(User user); // đăng kí tài khoản mới
     boolean update(User user); // cập nhật profile
     boolean updateBalance(String id, BigDecimal newBalance); // nạp/rút tiền
+    boolean updateBalance(Connection conn, String id, BigDecimal newBalance);
     // Không có ban/xóa user do liên quan đến vật phẩm,cuộc đấu giá
 }
