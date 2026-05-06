@@ -5,6 +5,6 @@ import com.team4.db.DatabaseManager;
 public class TestConnect {
     public static void main(String[] args) {
         DatabaseManager.initialize();
-        System.out.println("Setup thành công!");
+        System.out.println("Setup completed!");
     }
 }
