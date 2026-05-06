@@ -66,26 +66,7 @@ public class SellerProductsController implements Initializable {
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        try {
-            ApiClient apiClient = new ApiClient();
-            String jsonResponse = apiClient.getItems();
-
-            if (jsonResponse != null) {
-                Gson gson = new Gson();
-                Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
-                List<Item> realDataFromServer = gson.fromJson(jsonResponse, listType);
-
-                ObservableList<Item> tableData = FXCollections.observableArrayList(realDataFromServer);
-                productsTable.setItems(tableData);
-
-                System.out.println("Đã tải xong " + realDataFromServer.size() + " sản phẩm từ Server!");
-            } else {
-                System.out.println("Không lấy được dữ liệu từ Server (Server trả về null)!");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Lỗi khi load dữ liệu từ Server: " + e.getMessage());
-            e.printStackTrace();
-        }
+        ApiClient apiClient = new ApiClient();
+        List<Item> realDataFromServer = apiClient.getItems();
     }
 }

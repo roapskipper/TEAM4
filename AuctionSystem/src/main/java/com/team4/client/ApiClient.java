@@ -1,6 +1,9 @@
 package com.team4.client;
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+import com.team4.model.Item;
+
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,6 +12,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApiClient {
     private static final String API_URL = "http://localhost:8080/api/";
@@ -97,18 +102,26 @@ public class ApiClient {
         }
     }
 
-    public String getItems() {
+    public List<Item> getItems() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "items"))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
-            return null;
+
+            if (response.statusCode() == 200) {
+                JsonObject responseObj = JsonParser.parseString(response.body()).getAsJsonObject();
+                if ("SUCCESS".equals(responseObj.get("status").getAsString())) {
+                    JsonArray dataArray = responseObj.getAsJsonArray("data");
+                    Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
+                    return gson.fromJson(dataArray, listType);
+                }
+            }
         } catch (Exception e) {
-            return null;
+            e.printStackTrace();
         }
+        return new ArrayList<>();
     }
 
     public Gson getGson() {
