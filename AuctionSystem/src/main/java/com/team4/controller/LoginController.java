@@ -32,6 +32,7 @@ public class LoginController {
 
     @FXML
     private void onLoginSubmit() {
+        // Lấy dữ liệu từ field
         String username = loginUsername.getText();
         String password = loginPassword.getText();
 
@@ -43,47 +44,46 @@ public class LoginController {
         try {
             ApiClient apiClient = new ApiClient();
             String response = apiClient.login(username, password);
-
             if (response != null) {
-                com.google.gson.JsonObject responseObj = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
-                String status = responseObj.has("status") ? responseObj.get("status").getAsString() : "ERROR";
+                showError(loginError, "Đăng nhập thành công!");
+                loginError.setStyle("-fx-text-fill: #10b981;");
+                System.out.println("Dữ liệu Server trả về: " + response);
 
-                if ("SUCCESS".equals(status)) {
-                    showError(loginError, "Đăng nhập thành công!");
-                    loginError.setStyle("-fx-text-fill: #10b981;");
-
-                    com.google.gson.JsonObject data = responseObj.getAsJsonObject("data");
-                    String role = data.get("role").getAsString();
-
+                try {
                     javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
-                    javafx.fxml.FXMLLoader loader = null;
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
+                    javafx.scene.Parent root = loader.load();
 
-                    if ("SELLER".equals(role)) {
-                        loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/seller_products.fxml"));
-                        stage.setTitle("Quản lý sản phẩm - AuctionSpace");
-                    } else if ("BIDDER".equals(role)) {
-                        loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
-                        stage.setTitle("Bảng điều khiển - AuctionSpace");
-                    } else if ("ADMIN".equals(role)) {
-                        loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/admin_dashboard.fxml"));
-                        stage.setTitle("Quản trị hệ thống - AuctionSpace");
+                    MainController mainController = loader.getController();
+
+                    String role = "bidder";
+                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
+                        role = "seller";
+                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
+                        role = "admin";
                     }
 
-                    if (loader != null) {
-                        javafx.scene.Parent root = loader.load();
-                        javafx.scene.Scene scene = new javafx.scene.Scene(root);
-                        stage.setScene(scene);
-                        stage.show();
-                    }
+                    mainController.setUserRole(role);
 
-                } else {
-                    String message = responseObj.has("message") ? responseObj.get("message").getAsString() : "Sai tài khoản hoặc mật khẩu!";
-                    showError(loginError, message);
-                    loginError.setStyle("-fx-text-fill: #ef4444;");
+                    javafx.scene.Scene scene = new javafx.scene.Scene(root);
+                    String cssPath = getClass().getResource("/com/team4/view/style.css").toExternalForm();
+                    scene.getStylesheets().add(cssPath);
+
+                    stage.setScene(scene);
+                    stage.setTitle("Bảng điều khiển - AuctionSpace");
+
+                    stage.setWidth(1200);
+                    stage.setHeight(800);
+                    stage.centerOnScreen();
+                    stage.show();
+
+                } catch (Exception ex) {
+                    System.out.println("Lỗi chuyển cảnh: " + ex.getMessage());
+                    ex.printStackTrace();
                 }
 
             } else {
-                showError(loginError, "Không nhận được phản hồi từ Server!");
+                showError(loginError, "Sai tài khoản hoặc mật khẩu!");
                 loginError.setStyle("-fx-text-fill: #ef4444;");
             }
 
@@ -93,7 +93,6 @@ public class LoginController {
             e.printStackTrace();
         }
     }
-
     @FXML
     private void onLoginTabClicked() {
         loginForm.setVisible(true);
