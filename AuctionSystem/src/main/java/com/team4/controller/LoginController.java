@@ -6,6 +6,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import com.team4.client.ApiClient;
+import javafx.scene.control.ToggleGroup;
 
 public class LoginController {
 
@@ -111,13 +112,58 @@ public class LoginController {
     }
 
     @FXML
+    public void initialize() {
+        ToggleGroup roleGroup = new ToggleGroup();
+
+        if (roleBidder != null) {
+            roleBidder.setToggleGroup(roleGroup);
+            roleBidder.setFocusTraversable(false);
+        }
+        if (roleSeller != null) {
+            roleSeller.setToggleGroup(roleGroup);
+            roleSeller.setFocusTraversable(false);
+        }
+
+        if (roleBidder != null) {
+            roleBidder.setSelected(true);
+        }
+
+        roleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                if (oldToggle != null) {
+                    oldToggle.setSelected(true);
+                }
+            } else {
+                onRoleChanged();
+            }
+        });
+
+        onRoleChanged();
+    }
+
+    @FXML
     private void onRoleChanged() {
+        if (roleSeller == null || roleBidder == null) return;
+
+        if (storeNameBox != null) {
+            if (roleSeller.isSelected()) {
+                storeNameBox.setVisible(true);
+                storeNameBox.setManaged(true);
+            } else {
+                storeNameBox.setVisible(false);
+                storeNameBox.setManaged(false);
+            }
+        }
+
+        String activeStyle = "-fx-border-color: #a855f7; -fx-text-fill: white; -fx-border-radius: 5; -fx-background-color: transparent;";
+        String inactiveStyle = "-fx-border-color: #4b5563; -fx-text-fill: #9ca3af; -fx-border-radius: 5; -fx-background-color: transparent;";
+
         if (roleSeller.isSelected()) {
-            storeNameBox.setVisible(true);
-            storeNameBox.setManaged(true);
+            roleSeller.setStyle(activeStyle);
+            roleBidder.setStyle(inactiveStyle);
         } else {
-            storeNameBox.setVisible(false);
-            storeNameBox.setManaged(false);
+            roleBidder.setStyle(activeStyle);
+            roleSeller.setStyle(inactiveStyle);
         }
     }
 
