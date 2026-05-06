@@ -6,6 +6,7 @@ import com.team4.dao.UserDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.Auction;
 import com.team4.model.BidTransaction;
+import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
 
@@ -30,30 +31,40 @@ public class BiddingService {
      * kiểm tra amount hợp lệ, cập nhật currentPrice + ghi BidTransaction trong 1 transaction
      */
     public void placeBid(String auctionId, String bidderB_Id, BigDecimal amountB) {
+        // Kiểm tra
         Auction auction = auctionDAO.findById(auctionId);
-        String bidderA_Id = auction.getCurrentHighestBidderId(); // Lấy ID người cũ
-        BigDecimal amountA = auction.getCurrentPrice();
-
         if (auction == null || auction.getStatus() != Auction.AuctionStatus.RUNNING) {
             throw new BusinessException("Phiên đấu giá không tồn tại hoặc đã kết thúc.");
         }
-        if (!userDAO.findById(bidderB_Id).getRole().equals(User.Role.BIDDER)) {
+        User bidderB = userDAO.findById(bidderB_Id);
+        if (!bidderB.getRole().equals(User.Role.BIDDER)) {
             throw new BusinessException("Chỉ người mua mới được phép đặt giá.");
         }
-        if (userDAO.findById(bidderB_Id).getBalance().compareTo(amountB) < 0) {
+        if (auction.getSellerId().equals(bidderB_Id)) {
+            throw new BusinessException("Người bán không được phép đặt giá trên chính phiên đấu giá của mình.");
+        }
+        if (bidderB.getBalance().compareTo(amountB) < 0) {
             throw new BusinessException("Số dư không đủ để đặt giá.");
         }
+        String bidderA_Id = auction.getCurrentHighestBidderId(); // Lấy ID người cũ
+        BigDecimal amountA = auction.getCurrentPrice();
         if (amountB.compareTo(amountA.add(auction.getBidIncrement())) < 0) {
             throw new BusinessException("Giá đặt phải cao hơn giá hiện tại ít nhất bằng bước giá.");
         }
+
         // Xử lý Transaction
         try (Connection conn = DatabaseManager.getConnection()) {
             try {
                 DatabaseManager.beginTransaction(conn); // Tắt autocommit
                 // Trừ tiền B
                 userDAO.updateBalance(conn, bidderB_Id, userDAO.findById(bidderB_Id).getBalance().subtract(amountB));
-                // Cộng tiền A
-                userDAO.updateBalance(conn, bidderA_Id, userDAO.findById(bidderA_Id).getBalance().add(amountA));
+                // Cộng tiền A nếu có tồn tại
+                if (bidderA_Id != null) {
+                    User bidderA = userDAO.findById(bidderA_Id);
+                    if (bidderA != null) {
+                        userDAO.updateBalance(conn, bidderA_Id, bidderA.getBalance().add(amountA));
+                    }
+                }
                 // Cập nhật phiên đấu giá
                 auctionDAO.updateCurrentBid(conn, auctionId, amountB, bidderB_Id);
                 // Tạo bid
