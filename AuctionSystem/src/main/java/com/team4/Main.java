@@ -12,13 +12,13 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         // Load man hinh dang nhap
         FXMLLoader loader = new FXMLLoader(
-            getClass().getResource("/com/team4/view/login.fxml")
+                getClass().getResource("/com/team4/view/login.fxml")
         );
         Parent root = loader.load();
 
         Scene scene = new Scene(root);
         scene.getStylesheets().add(
-            getClass().getResource("/com/team4/view/style.css").toExternalForm()
+                getClass().getResource("/com/team4/view/style.css").toExternalForm()
         );
 
         primaryStage.setTitle("AuctionSpace - Dang nhap");

@@ -36,7 +36,7 @@ public final class DatabaseSetup {
      đọc file database.properties
      lấy ra các giá trị như:
      db.url
-     db.user
+     db.username
      db.password
      kiểm tra dữ liệu có ổn không
      gói lại thành một object cấu hình DbConfig
@@ -57,7 +57,7 @@ public final class DatabaseSetup {
             throw new RuntimeException("Không thể tải database.properties", e);
         }
         String url = properties.getProperty("db.url");
-        String user = properties.getProperty("db.user");
+        String user = properties.getProperty("db.username");
         String password = properties.getProperty("db.password");
         /** Validate 3 thành phần đều không được null/trống
          * Do đã cài mât khẩu trong Workbench nên password không được null
@@ -162,7 +162,6 @@ public final class DatabaseSetup {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Không thể chạy schema.sql", e);
         }
     }
 
@@ -192,6 +191,13 @@ public final class DatabaseSetup {
         }
 
         return adminBase + query;
+    }
+
+    private static boolean isIgnorableSchemaError(SQLException e) {
+        int errorCode = e.getErrorCode();
+        // 1061 là mã lỗi của MySQL khi báo "Duplicate key name" (Trùng tên Index)
+        // 1050 là mã lỗi khi báo "Table already exists"
+        return errorCode == 1061 || errorCode == 1050;
     }
 
     private record DbConfig(String url, String user, String password) {}
