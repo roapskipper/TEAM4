@@ -1,5 +1,7 @@
 package com.team4.server;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.team4.dao.impl.ItemDAOImpl;
 import com.team4.dao.impl.UserDAOImpl;
 import com.team4.dao.impl.AuctionDAOImpl;
@@ -53,16 +55,14 @@ public class ApiServer {
         os.close();
     }
 
-    public static String buildSuccess(String message, String data) {
-        return "{\"status\":\"SUCCESS\","
-                + "\"message\":\"" + message + "\","
-                + "\"data\":" + data + "}";
-    }
-
-    public static String buildError(String message) {
-        return "{\"status\":\"ERROR\","
-                + "\"message\":\"" + message + "\","
-                + "\"data\":null}";
+    public static String buildResponse(String status, String message, JsonElement data) {
+        JsonObject response = new JsonObject();
+        response.addProperty("status", status);
+        response.addProperty("message", message);
+        if (data != null) {
+            response.add("data", data);
+        }
+        return Server.getGson().toJson(response);
     }
 
     public static String parseParam(String body, String key) {
@@ -70,7 +70,7 @@ public class ApiServer {
         for (int i = 0; i < params.length; i++) {
             String[] kv = params[i].split("=", 2);
             if (kv.length == 2 && kv[0].equals(key)) {
-                return kv[1];
+                return java.net.URLDecoder.decode(kv[1], StandardCharsets.UTF_8);
             }
         }
         return null;
@@ -99,20 +99,20 @@ class LoginHandler implements HttpHandler {
         String password = ApiServer.parseParam(body, "password");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildError("Thieu username hoac password"));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
             return;
         }
 
         try {
             User user = authService.login(username, password);
-            String data = "{"
-                    + "\"userId\":\"" + user.getId() + "\","
-                    + "\"role\":\"" + user.getRole() + "\","
-                    + "\"fullName\":\"" + user.getFullName() + "\""
-                    + "}";
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildSuccess("Dang nhap thanh cong!", data));
+            JsonObject data = new JsonObject();
+            data.addProperty("userId", user.getId());
+            data.addProperty("role", user.getRole().name());
+            data.addProperty("fullName", user.getFullName());
+
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));
         } catch (BusinessException e) {
-            ApiServer.sendResponse(exchange, 401, ApiServer.buildError(e.getMessage()));
+            ApiServer.sendResponse(exchange, 401, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         }
     }
 }
@@ -143,7 +143,7 @@ class RegisterBidderHandler implements HttpHandler {
         String phoneNumber = ApiServer.parseParam(body, "phoneNumber");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildError("Thieu username hoac password"));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
             return;
         }
 
@@ -155,9 +155,12 @@ class RegisterBidderHandler implements HttpHandler {
                     shippingAddress != null ? shippingAddress : "",
                     phoneNumber != null ? phoneNumber : ""
             );
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildSuccess("Dang ky Bidder thanh cong!", "null"));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Bidder thanh cong!", null));
         } catch (BusinessException e) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildError(e.getMessage()));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Internal Server Error: " + e.getMessage(), null));
         }
     }
 }
@@ -187,7 +190,7 @@ class RegisterSellerHandler implements HttpHandler {
         String storeName = ApiServer.parseParam(body, "storeName");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildError("Thieu username hoac password"));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
             return;
         }
 
@@ -198,9 +201,12 @@ class RegisterSellerHandler implements HttpHandler {
                     email != null ? email : "",
                     storeName != null ? storeName : ""
             );
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildSuccess("Dang ky Seller thanh cong!", "null"));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Seller thanh cong!", null));
         } catch (BusinessException e) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildError(e.getMessage()));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Internal Server Error: " + e.getMessage(), null));
         }
     }
 }
@@ -219,27 +225,13 @@ class ItemsHandler implements HttpHandler {
             return;
         }
 
-        List<Item> items = itemDAO.findAll();
-        StringBuilder dataBuilder = new StringBuilder("[");
-        for (int i = 0; i < items.size(); i++) {
-            Item item = items.get(i);
-            String name = item.getName().replace("\\", "\\\\").replace("\"", "\\\"");
-            String category = item.getCategory().name();
-
-            dataBuilder.append("{")
-                    .append("\"id\":\"").append(item.getId()).append("\",")
-                    .append("\"name\":\"").append(name).append("\",")
-                    .append("\"category\":\"").append(category).append("\",")
-                    .append("\"startingPrice\":").append(item.getStartingPrice())
-                    .append("}");
-
-            if (i < items.size() - 1) {
-                dataBuilder.append(",");
-            }
+        try {
+            List<Item> items = itemDAO.findAll();
+            JsonElement dataArr = Server.getGson().toJsonTree(items);
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lay danh sach items thanh cong!", dataArr));
+        } catch (Exception e) {
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         }
-        dataBuilder.append("]");
-
-        ApiServer.sendResponse(exchange, 200, ApiServer.buildSuccess("Lay danh sach items thanh cong!", dataBuilder.toString()));
     }
 }
 
@@ -257,24 +249,14 @@ class AuctionsHandler implements HttpHandler {
             return;
         }
 
-        List<Auction> auctions = auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
-        StringBuilder dataBuilder = new StringBuilder("[");
-        for (int i = 0; i < auctions.size(); i++) {
-            Auction a = auctions.get(i);
-            dataBuilder.append("{")
-                    .append("\"id\":\"").append(a.getId()).append("\",")
-                    .append("\"itemId\":\"").append(a.getItemId()).append("\",")
-                    .append("\"currentPrice\":").append(a.getCurrentPrice()).append(",")
-                    .append("\"endTime\":\"").append(a.getEndTime()).append("\",")
-                    .append("\"status\":\"").append(a.getStatus()).append("\"")
-                    .append("}");
-
-            if (i < auctions.size() - 1) {
-                dataBuilder.append(",");
-            }
+        try {
+            List<Auction> auctions = auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+            JsonElement dataArr = Server.getGson().toJsonTree(auctions);
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong!", dataArr));
+        } catch (BusinessException e) {
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
+        } catch (Exception e) {
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         }
-        dataBuilder.append("]");
-
-        ApiServer.sendResponse(exchange, 200, ApiServer.buildSuccess("Lay danh sach phien dau gia thanh cong!", dataBuilder.toString()));
     }
 }

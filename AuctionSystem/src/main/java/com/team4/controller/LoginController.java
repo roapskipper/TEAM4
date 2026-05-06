@@ -197,7 +197,7 @@ public class LoginController {
             if (isSeller) {
                 response = client.registerSeller(username, password, username, email, storeName);
             } else {
-                response = client.registerBidder(username, password, username, email, "Chưa cập nhật", "Chưa cập nhật");
+                response = client.registerBidder(username, password, username, email, "Chưa cập nhật", "09673761411");
             }
 
             if (response != null) {
