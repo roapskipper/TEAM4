@@ -12,8 +12,9 @@ public class Main extends Application {
     @Override
     public void init() {
         String[] fontFiles = {
-                "PlayfairDisplay-VariableFont_wght.ttf",
-                "PlayfairDisplay-Italic-VariableFont_wght.ttf",
+                "Cinzel-VariableFont_wght.ttf",
+                "CormorantGaramond-Italic-VariableFont_wght.ttf",
+                "CormorantGaramond-VariableFont_wght.ttf",
                 "Lato-Black.ttf",
                 "Lato-BlackItalic.ttf",
                 "Lato-Bold.ttf",
@@ -23,18 +24,25 @@ public class Main extends Application {
                 "Lato-LightItalic.ttf",
                 "Lato-Regular.ttf",
                 "Lato-Thin.ttf",
-                "Lato-ThinItalic.ttf"
+                "Lato-ThinItalic.ttf",
+                "Montserrat-Italic-VariableFont_wght.ttf",
+                "Montserrat-VariableFont_wght.ttf",
+                "PlayfairDisplay-Italic-VariableFont_wght.ttf",
+                "PlayfairDisplay-VariableFont_wght.ttf",
+                "Prata-Regular.ttf",
+                "Raleway-Italic-VariableFont_wght.ttf",
+                "Raleway-VariableFont_wght.ttf"
         };
         for (String file : fontFiles) {
             var stream = getClass().getResourceAsStream("/fonts/" + file);
             if (stream != null) {
                 Font.loadFont(stream, 14);
+                System.out.println("[Main] Loaded font: " + file);
             } else {
                 System.err.println("[Main] Font not found: " + file);
             }
         }
     }
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(

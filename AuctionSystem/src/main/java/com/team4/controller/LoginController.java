@@ -1,12 +1,15 @@
 package com.team4.controller;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
 import com.team4.client.ApiClient;
-import javafx.scene.control.ToggleGroup;
 
 public class LoginController {
 
@@ -17,8 +20,8 @@ public class LoginController {
 
     @FXML private javafx.scene.control.Button loginTab;
     @FXML private javafx.scene.control.Button registerTab;
-    @FXML private javafx.scene.control.ToggleButton roleBidder;
-    @FXML private javafx.scene.control.ToggleButton roleSeller;
+    @FXML private ToggleButton roleBidder;
+    @FXML private ToggleButton roleSeller;
     @FXML private VBox registerForm;
     @FXML private VBox storeNameBox;
     @FXML private TextField regStoreName;
@@ -30,9 +33,106 @@ public class LoginController {
     @FXML private javafx.scene.control.Button loginBtn;
     @FXML private javafx.scene.control.Button regBtn;
 
+    // ✅ Fix: khai báo roleGroup là field, không phải local variable
+    private ToggleGroup roleGroup;
+
+    @FXML
+    public void initialize() {
+        roleGroup = new ToggleGroup();
+
+        if (roleBidder != null) {
+            roleBidder.setToggleGroup(roleGroup);
+            roleBidder.setFocusTraversable(false);
+        }
+        if (roleSeller != null) {
+            roleSeller.setToggleGroup(roleGroup);
+            roleSeller.setFocusTraversable(false);
+        }
+
+        if (roleBidder != null) {
+            roleBidder.setSelected(true);
+        }
+
+        // ✅ Fix: chặn deselect trong listener
+        roleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                oldToggle.setSelected(true);
+            } else {
+                updateRoleStyle();
+            }
+        });
+
+        updateRoleStyle();
+    }
+
+    // ✅ Fix: FXML gọi method này (có ActionEvent), chỉ delegate sang updateRoleStyle()
+    @FXML
+    private void onRoleChanged(ActionEvent event) {
+        updateRoleStyle();
+    }
+
+    // Logic thực sự - tách riêng để initialize() cũng gọi được
+    private void updateRoleStyle() {
+        if (roleGroup == null || roleBidder == null || roleSeller == null) return;
+
+        Toggle selected = roleGroup.getSelectedToggle();
+
+        roleBidder.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+        roleSeller.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+
+        if (selected == roleBidder) {
+            roleBidder.getStyleClass().add("role-btn-active");
+            roleSeller.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(false);
+                storeNameBox.setManaged(false);
+            }
+        } else {
+            roleSeller.getStyleClass().add("role-btn-active");
+            roleBidder.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(true);
+                storeNameBox.setManaged(true);
+            }
+        }
+    }
+
+    @FXML
+    private void onLoginTabClicked() {
+        loginForm.setVisible(true);
+        loginForm.setManaged(true);
+        registerForm.setVisible(false);
+        registerForm.setManaged(false);
+        hideErrors();
+        if (loginTab != null && registerTab != null) {
+            loginTab.getStyleClass().removeAll("tab-inactive");
+            loginTab.getStyleClass().add("tab-active");
+            registerTab.getStyleClass().removeAll("tab-active");
+            registerTab.getStyleClass().add("tab-inactive");
+        }
+        if (loginBtn != null) loginBtn.setDefaultButton(true);
+        if (regBtn != null) regBtn.setDefaultButton(false);
+    }
+
+    @FXML
+    private void onRegisterTabClicked() {
+        loginForm.setVisible(false);
+        loginForm.setManaged(false);
+        registerForm.setVisible(true);
+        registerForm.setManaged(true);
+        hideErrors();
+        if (loginTab != null && registerTab != null) {
+            registerTab.getStyleClass().removeAll("tab-inactive");
+            registerTab.getStyleClass().add("tab-active");
+            loginTab.getStyleClass().removeAll("tab-active");
+            loginTab.getStyleClass().add("tab-inactive");
+        }
+        if (loginBtn != null) loginBtn.setDefaultButton(false);
+        if (regBtn != null) regBtn.setDefaultButton(true);
+    }
+
     @FXML
     private void onLoginSubmit() {
-        // Lấy dữ liệu từ field
         String username = loginUsername.getText();
         String password = loginPassword.getText();
 
@@ -71,7 +171,6 @@ public class LoginController {
 
                     stage.setScene(scene);
                     stage.setTitle("Bảng điều khiển - AuctionSpace");
-
                     stage.setWidth(1200);
                     stage.setHeight(800);
                     stage.centerOnScreen();
@@ -91,95 +190,6 @@ public class LoginController {
             showError(loginError, "Lỗi kết nối Server: " + e.getMessage());
             loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
-        }
-    }
-    @FXML
-    private void onLoginTabClicked() {
-        loginForm.setVisible(true);
-        loginForm.setManaged(true);
-        registerForm.setVisible(false);
-        registerForm.setManaged(false);
-        hideErrors();
-        if (loginTab != null && registerTab != null) {
-            loginTab.getStyleClass().removeAll("tab-inactive");
-            loginTab.getStyleClass().add("tab-active");
-            registerTab.getStyleClass().removeAll("tab-active");
-            registerTab.getStyleClass().add("tab-inactive");
-        }
-        if (loginBtn != null) loginBtn.setDefaultButton(true);
-        if (regBtn != null) regBtn.setDefaultButton(false);
-    }
-
-    @FXML
-    private void onRegisterTabClicked() {
-        loginForm.setVisible(false);
-        loginForm.setManaged(false);
-        registerForm.setVisible(true);
-        registerForm.setManaged(true);
-        hideErrors();
-        if (loginTab != null && registerTab != null) {
-            registerTab.getStyleClass().removeAll("tab-inactive");
-            registerTab.getStyleClass().add("tab-active");
-            loginTab.getStyleClass().removeAll("tab-active");
-            loginTab.getStyleClass().add("tab-inactive");
-        }
-        if (loginBtn != null) loginBtn.setDefaultButton(false);
-        if (regBtn != null) regBtn.setDefaultButton(true);
-    }
-
-    @FXML
-    public void initialize() {
-        ToggleGroup roleGroup = new ToggleGroup();
-
-        if (roleBidder != null) {
-            roleBidder.setToggleGroup(roleGroup);
-            roleBidder.setFocusTraversable(false);
-        }
-        if (roleSeller != null) {
-            roleSeller.setToggleGroup(roleGroup);
-            roleSeller.setFocusTraversable(false);
-        }
-
-        if (roleBidder != null) {
-            roleBidder.setSelected(true);
-        }
-
-        roleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
-            if (newToggle == null) {
-                if (oldToggle != null) {
-                    oldToggle.setSelected(true);
-                }
-            } else {
-                onRoleChanged();
-            }
-        });
-
-        onRoleChanged();
-    }
-
-    @FXML
-    private void onRoleChanged() {
-        if (roleSeller == null || roleBidder == null) return;
-
-        if (storeNameBox != null) {
-            if (roleSeller.isSelected()) {
-                storeNameBox.setVisible(true);
-                storeNameBox.setManaged(true);
-            } else {
-                storeNameBox.setVisible(false);
-                storeNameBox.setManaged(false);
-            }
-        }
-
-        String activeStyle = "-fx-border-color: #a855f7; -fx-text-fill: white; -fx-border-radius: 5; -fx-background-color: transparent;";
-        String inactiveStyle = "-fx-border-color: #4b5563; -fx-text-fill: #9ca3af; -fx-border-radius: 5; -fx-background-color: transparent;";
-
-        if (roleSeller.isSelected()) {
-            roleSeller.setStyle(activeStyle);
-            roleBidder.setStyle(inactiveStyle);
-        } else {
-            roleBidder.setStyle(activeStyle);
-            roleSeller.setStyle(inactiveStyle);
         }
     }
 
@@ -221,7 +231,6 @@ public class LoginController {
                 regError.setStyle("-fx-text-fill: #10b981;");
                 loginUsername.setText(username);
                 loginPassword.setText(password);
-
             } else {
                 showError(regError, "Đăng ký thất bại! Tên đăng nhập có thể đã tồn tại.");
                 regError.setStyle("-fx-text-fill: #ef4444;");
