@@ -22,7 +22,18 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
         return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, increment, isActive);
     }
-
+    @Override
+    public AutoBidding findById(String id) {
+        String sql = "SELECT * FROM auto_biddings WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1,id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRowToAutoBidding(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); }
+    return null;}
     @Override
     public AutoBidding findByAuctionAndBidder(String auctionId, String bidderId) {
         String sql = "SELECT * FROM auto_biddings WHERE auction_id = ? AND bidder_id = ?";

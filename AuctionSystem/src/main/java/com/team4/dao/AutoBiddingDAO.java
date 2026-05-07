@@ -3,6 +3,7 @@ import com.team4.model.AutoBidding;
 import java.util.List;
 
 public interface AutoBiddingDAO {
+    AutoBidding findById(String Id);
     /**
      * 1. findByAuctionAndBidder() - tìm config auto-bid
      * Dùng khi: kiểm tra bidder đã cài auto-bid chưa

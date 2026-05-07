@@ -1,6 +1,6 @@
-import com.team4.db.DatabaseManager;
+import com.team4.util.DatabaseSetup;
 
 public static void main(String[] args) {
-    DatabaseManager.initialize();
+    DatabaseSetup.initDatabase(); // Khởi tạo pool kết nối
     System.out.println("Setup thành công!");
 }
