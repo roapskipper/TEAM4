@@ -1,12 +1,15 @@
 package com.team4.controller;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
 import com.team4.client.ApiClient;
-import javafx.scene.control.ToggleGroup;
 
 public class LoginController {
 
@@ -17,8 +20,8 @@ public class LoginController {
 
     @FXML private javafx.scene.control.Button loginTab;
     @FXML private javafx.scene.control.Button registerTab;
-    @FXML private javafx.scene.control.ToggleButton roleBidder;
-    @FXML private javafx.scene.control.ToggleButton roleSeller;
+    @FXML private ToggleButton roleBidder;
+    @FXML private ToggleButton roleSeller;
     @FXML private VBox registerForm;
     @FXML private VBox storeNameBox;
     @FXML private TextField regStoreName;
@@ -30,69 +33,70 @@ public class LoginController {
     @FXML private javafx.scene.control.Button loginBtn;
     @FXML private javafx.scene.control.Button regBtn;
 
-    @FXML
-    private void onLoginSubmit() {
-        // Lấy dữ liệu từ field
-        String username = loginUsername.getText();
-        String password = loginPassword.getText();
+    // ✅ Fix: khai báo roleGroup là field, không phải local variable
+    private ToggleGroup roleGroup;
 
-        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            showError(loginError, "Vui lòng nhập đầy đủ tài khoản và mật khẩu!");
-            return;
+    @FXML
+    public void initialize() {
+        roleGroup = new ToggleGroup();
+
+        if (roleBidder != null) {
+            roleBidder.setToggleGroup(roleGroup);
+            roleBidder.setFocusTraversable(false);
+        }
+        if (roleSeller != null) {
+            roleSeller.setToggleGroup(roleGroup);
+            roleSeller.setFocusTraversable(false);
         }
 
-        try {
-            ApiClient apiClient = new ApiClient();
-            String response = apiClient.login(username, password);
-            if (response != null) {
-                showError(loginError, "Đăng nhập thành công!");
-                loginError.setStyle("-fx-text-fill: #10b981;");
-                System.out.println("Dữ liệu Server trả về: " + response);
+        if (roleBidder != null) {
+            roleBidder.setSelected(true);
+        }
 
-                try {
-                    javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
-                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
-                    javafx.scene.Parent root = loader.load();
-
-                    MainController mainController = loader.getController();
-
-                    String role = "bidder";
-                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
-                        role = "seller";
-                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
-                        role = "admin";
-                    }
-
-                    mainController.setUserRole(role);
-
-                    javafx.scene.Scene scene = new javafx.scene.Scene(root);
-                    String cssPath = getClass().getResource("/com/team4/view/style.css").toExternalForm();
-                    scene.getStylesheets().add(cssPath);
-
-                    stage.setScene(scene);
-                    stage.setTitle("Bảng điều khiển - AuctionSpace");
-
-                    stage.setWidth(1200);
-                    stage.setHeight(800);
-                    stage.centerOnScreen();
-                    stage.show();
-
-                } catch (Exception ex) {
-                    System.out.println("Lỗi chuyển cảnh: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
-
+        // ✅ Fix: chặn deselect trong listener
+        roleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                oldToggle.setSelected(true);
             } else {
-                showError(loginError, "Sai tài khoản hoặc mật khẩu!");
-                loginError.setStyle("-fx-text-fill: #ef4444;");
+                updateRoleStyle();
             }
+        });
 
-        } catch (Exception e) {
-            showError(loginError, "Lỗi kết nối Server: " + e.getMessage());
-            loginError.setStyle("-fx-text-fill: #ef4444;");
-            e.printStackTrace();
+        updateRoleStyle();
+    }
+
+    // ✅ Fix: FXML gọi method này (có ActionEvent), chỉ delegate sang updateRoleStyle()
+    @FXML
+    private void onRoleChanged(ActionEvent event) {
+        updateRoleStyle();
+    }
+
+    // Logic thực sự - tách riêng để initialize() cũng gọi được
+    private void updateRoleStyle() {
+        if (roleGroup == null || roleBidder == null || roleSeller == null) return;
+
+        Toggle selected = roleGroup.getSelectedToggle();
+
+        roleBidder.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+        roleSeller.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+
+        if (selected == roleBidder) {
+            roleBidder.getStyleClass().add("role-btn-active");
+            roleSeller.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(false);
+                storeNameBox.setManaged(false);
+            }
+        } else {
+            roleSeller.getStyleClass().add("role-btn-active");
+            roleBidder.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(true);
+                storeNameBox.setManaged(true);
+            }
         }
     }
+
     @FXML
     private void onLoginTabClicked() {
         loginForm.setVisible(true);
@@ -128,58 +132,75 @@ public class LoginController {
     }
 
     @FXML
-    public void initialize() {
-        ToggleGroup roleGroup = new ToggleGroup();
+    private void onLoginSubmit() {
+        String username = loginUsername.getText();
+        String password = loginPassword.getText();
 
-        if (roleBidder != null) {
-            roleBidder.setToggleGroup(roleGroup);
-            roleBidder.setFocusTraversable(false);
-        }
-        if (roleSeller != null) {
-            roleSeller.setToggleGroup(roleGroup);
-            roleSeller.setFocusTraversable(false);
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            showError(loginError, "Please enter your username and password!");
+            return;
         }
 
-        if (roleBidder != null) {
-            roleBidder.setSelected(true);
-        }
+        try {
+            ApiClient apiClient = new ApiClient();
+            String response = apiClient.login(username, password);
+            if (response != null) {
+                showError(loginError, "Login successful!");
+                loginError.setStyle("-fx-text-fill: #10b981;");
+                System.out.println("Server response: " + response);
 
-        roleGroup.selectedToggleProperty().addListener((observable, oldToggle, newToggle) -> {
-            if (newToggle == null) {
-                if (oldToggle != null) {
-                    oldToggle.setSelected(true);
+                try {
+                    javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
+                    javafx.scene.Parent root = loader.load();
+
+                    MainController mainController = loader.getController();
+
+                    String role = "bidder";
+                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
+                        role = "seller";
+                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
+                        role = "admin";
+                    }
+
+                    mainController.setUserRole(role);
+
+                    javafx.scene.Scene scene = new javafx.scene.Scene(root);
+                    String cssPath = getClass().getResource("/com/team4/view/style.css").toExternalForm();
+                    scene.getStylesheets().add(cssPath);
+
+                    stage.setScene(scene);
+                    stage.setTitle("Dashboard - AuctionSpace");
+                    stage.setWidth(1200);
+                    stage.setHeight(800);
+                    stage.centerOnScreen();
+                    stage.show();
+
+                } catch (Exception ex) {
+                    System.out.println("Scene transition error: " + ex.getMessage());
+                    ex.printStackTrace();
                 }
-            } else {
-                onRoleChanged();
-            }
-        });
 
-        onRoleChanged();
+            } else {
+                showError(loginError, "Invalid username or password!");
+                loginError.setStyle("-fx-text-fill: #ef4444;");
+            }
+
+        } catch (Exception e) {
+            showError(loginError, "Server connection error: " + e.getMessage());
+            loginError.setStyle("-fx-text-fill: #ef4444;");
+            e.printStackTrace();
+        }
     }
 
     @FXML
-    private void onRoleChanged() {
-        if (roleSeller == null || roleBidder == null) return;
-
-        if (storeNameBox != null) {
-            if (roleSeller.isSelected()) {
-                storeNameBox.setVisible(true);
-                storeNameBox.setManaged(true);
-            } else {
-                storeNameBox.setVisible(false);
-                storeNameBox.setManaged(false);
-            }
-        }
-
-        String activeStyle = "-fx-border-color: #a855f7; -fx-text-fill: white; -fx-border-radius: 5; -fx-background-color: transparent;";
-        String inactiveStyle = "-fx-border-color: #4b5563; -fx-text-fill: #9ca3af; -fx-border-radius: 5; -fx-background-color: transparent;";
-
-        if (roleSeller.isSelected()) {
-            roleSeller.setStyle(activeStyle);
-            roleBidder.setStyle(inactiveStyle);
-        } else {
-            roleBidder.setStyle(activeStyle);
-            roleSeller.setStyle(inactiveStyle);
+    private void onTermsClicked() {
+        try {
+            java.awt.Desktop.getDesktop().browse(
+                    new java.net.URI("https://docs.google.com/document/d/1NeyQwm6vGFmt-QHZG8rcC1JXk22AHrWb7CUSLj8QLqM/edit?usp=sharing")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -191,11 +212,11 @@ public class LoginController {
         String confirmPass = regConfirmPassword.getText();
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
-            showError(regError, "Vui lòng điền đầy đủ thông tin!");
+            showError(regError, "Please fill in all required fields!");
             return;
         }
         if (!password.equals(confirmPass)) {
-            showError(regError, "Mật khẩu xác nhận không khớp!");
+            showError(regError, "Passwords do not match!");
             return;
         }
 
@@ -203,7 +224,7 @@ public class LoginController {
         String storeName = regStoreName.getText();
 
         if (isSeller && storeName.isEmpty()) {
-            showError(regError, "Vui lòng nhập tên cửa hàng!");
+            showError(regError, "Please enter your store name!");
             return;
         }
 
@@ -213,22 +234,21 @@ public class LoginController {
             if (isSeller) {
                 response = client.registerSeller(username, password, username, email, storeName);
             } else {
-                response = client.registerBidder(username, password, username, email, "Chưa cập nhật", "09673761411");
+                response = client.registerBidder(username, password, username, email, "Not updated", "09673761411");
             }
 
             if (response != null) {
-                showError(regError, "Đăng ký thành công! Hãy chuyển sang tab Đăng nhập.");
+                showError(regError, "Registration successful! Please switch to the Login tab.");
                 regError.setStyle("-fx-text-fill: #10b981;");
                 loginUsername.setText(username);
                 loginPassword.setText(password);
-
             } else {
-                showError(regError, "Đăng ký thất bại! Tên đăng nhập có thể đã tồn tại.");
+                showError(regError, "Registration failed! Username may already exist.");
                 regError.setStyle("-fx-text-fill: #ef4444;");
             }
 
         } catch (Exception e) {
-            showError(regError, "Lỗi kết nối Server: " + e.getMessage());
+            showError(regError, "Server connection error: " + e.getMessage());
             regError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }

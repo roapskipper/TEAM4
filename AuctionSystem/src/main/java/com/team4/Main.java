@@ -12,23 +12,38 @@ public class Main extends Application {
     @Override
     public void init() {
         String[] fontFiles = {
-                "PlayfairDisplay-VariableFont_wght.ttf",
-                "PlayfairDisplay-Italic-VariableFont_wght.ttf",
-                "Lato-Black.ttf",
-                "Lato-BlackItalic.ttf",
-                "Lato-Bold.ttf",
-                "Lato-BoldItalic.ttf",
-                "Lato-Italic.ttf",
-                "Lato-Light.ttf",
-                "Lato-LightItalic.ttf",
-                "Lato-Regular.ttf",
-                "Lato-Thin.ttf",
-                "Lato-ThinItalic.ttf"
+                // ===== LATO=====
+                "Lato Regular.ttf",
+                "Lato Bold.ttf",
+                "Lato Italic.ttf",
+                "Lato Light.ttf",
+                "Lato Medium.ttf",
+                "Lato Semibold.ttf",
+                "Lato Black.ttf",
+                "Lato Heavy.ttf",
+                "Lato Hairline.ttf",
+                "Lato Thin.ttf",
+
+                // ===== PLAYFAIR DISPLAY=====
+                "PlayfairDisplay-Regular.ttf",
+                "PlayfairDisplay-Bold.ttf",
+                "PlayfairDisplay-BoldItalic.ttf",
+                "PlayfairDisplay-Italic.ttf",
+                "PlayfairDisplay-Medium.ttf",
+                "PlayfairDisplay-MediumItalic.ttf",
+                "PlayfairDisplay-SemiBold.ttf",
+                "PlayfairDisplay-SemiBoldItalic.ttf",
+                "PlayfairDisplay-ExtraBold.ttf",
+                "PlayfairDisplay-ExtraBoldItalic.ttf",
+                "PlayfairDisplay-Black.ttf",
+                "PlayfairDisplay-BlackItalic.ttf"
         };
+
         for (String file : fontFiles) {
             var stream = getClass().getResourceAsStream("/fonts/" + file);
             if (stream != null) {
                 Font.loadFont(stream, 14);
+                System.out.println("[Main] Loaded font: " + file);
             } else {
                 System.err.println("[Main] Font not found: " + file);
             }
