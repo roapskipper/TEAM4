@@ -13,30 +13,30 @@
 
     <HBox spacing="12" alignment="CENTER_LEFT">
         <TextField fx:id="searchField"
-                   promptText="🔍 Tim kiem nguoi dung..."
+                   promptText="🔍 Search users..."
                    styleClass="admin-input"
                    prefWidth="320"/>
 
         <HBox spacing="8">
-            <Button fx:id="filterAll" text="Tat ca" onAction="#onFilterAll" styleClass="admin-filter-active"/>
-            <Button fx:id="filterActive" text="Hoat dong" onAction="#onFilterActive" styleClass="admin-filter"/>
-            <Button fx:id="filterLocked" text="Bi khoa" onAction="#onFilterLocked" styleClass="admin-filter"/>
+            <Button fx:id="filterAll" text="All" onAction="#onFilterAll" styleClass="admin-filter-active"/>
+            <Button fx:id="filterActive" text="Active" onAction="#onFilterActive" styleClass="admin-filter"/>
+            <Button fx:id="filterLocked" text="Locked" onAction="#onFilterLocked" styleClass="admin-filter"/>
         </HBox>
 
         <Region HBox.hgrow="ALWAYS" />
 
-        <Label fx:id="resultCount" text="5 nguoi dung" style="-fx-text-fill: #6b7280; -fx-font-size: 12;"/>
+        <Label fx:id="resultCount" text="5 users" style="-fx-text-fill: #6b7280; -fx-font-size: 12;"/>
     </HBox>
 
     <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
-                <TableColumn fx:id="colUser" text="Nguoi dung" prefWidth="280"/>
-                <TableColumn fx:id="colRole" text="Vai tro" prefWidth="120"/>
-                <TableColumn fx:id="colStatus" text="Trang thai" prefWidth="120"/>
-                <TableColumn fx:id="colJoined" text="Tham gia" prefWidth="140"/>
-                <TableColumn fx:id="colAuctions" text="Dau gia" prefWidth="80"/>
-                <TableColumn fx:id="colAction" text="Thao tac" prefWidth="140"/>
+                <TableColumn fx:id="colUser" text="User" prefWidth="280"/>
+                <TableColumn fx:id="colRole" text="Role" prefWidth="120"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+                <TableColumn fx:id="colJoined" text="Joined" prefWidth="140"/>
+                <TableColumn fx:id="colAuctions" text="Auctions" prefWidth="80"/>
+                <TableColumn fx:id="colAction" text="Action" prefWidth="140"/>
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
