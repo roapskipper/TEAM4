@@ -14,43 +14,43 @@
     <HBox spacing="14">
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="liveCount" text="12" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #ef4444;"/>
-            <Label text="Dang dien ra" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label text="Live" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="upcomingCount" text="8" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
-            <Label text="Sap dien ra" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label text="Upcoming" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="endedCount" text="156" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #6b7280;"/>
-            <Label text="Da ket thuc" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label text="Ended" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="totalBids" text="2.4K" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #8b5cf6;"/>
-            <Label text="Tong luot dau gia" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label text="Total Bids" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
         </VBox>
     </HBox>
 
     <VBox spacing="12" styleClass="filter-panel">
         <HBox spacing="12" alignment="CENTER_LEFT">
-            <TextField fx:id="searchField" promptText="🔍 Tim kiem phien dau gia..." styleClass="admin-input" prefWidth="300"/>
-            <ComboBox fx:id="sortBox" promptText="Sap xep" styleClass="admin-combo" prefWidth="160"/>
+            <TextField fx:id="searchField" promptText="🔍 Search auctions..." styleClass="admin-input" prefWidth="300"/>
+            <ComboBox fx:id="sortBox" promptText="Sort by" styleClass="admin-combo" prefWidth="160"/>
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
 
         <HBox fx:id="categoryPills" spacing="8">
-            <Button text="Tat ca" styleClass="filter-pill-active"/>
-            <Button text="Dien tu" styleClass="filter-pill"/>
-            <Button text="Xe co" styleClass="filter-pill"/>
-            <Button text="Nghe thuat" styleClass="filter-pill"/>
-            <Button text="Thoi trang" styleClass="filter-pill"/>
-            <Button text="Do suu tam" styleClass="filter-pill"/>
+            <Button text="All" styleClass="filter-pill-active"/>
+            <Button text="Electronics" styleClass="filter-pill"/>
+            <Button text="Vehicles" styleClass="filter-pill"/>
+            <Button text="Art" styleClass="filter-pill"/>
+            <Button text="Fashion" styleClass="filter-pill"/>
+            <Button text="Collectibles" styleClass="filter-pill"/>
         </HBox>
 
         <HBox fx:id="statusPills" spacing="8">
-            <Button text="Tat ca" styleClass="filter-pill-active"/>
-            <Button text="Dang dien ra" styleClass="filter-pill"/>
-            <Button text="Sap dien ra" styleClass="filter-pill"/>
-            <Button text="Da ket thuc" styleClass="filter-pill"/>
+            <Button text="All" styleClass="filter-pill-active"/>
+            <Button text="Live" styleClass="filter-pill"/>
+            <Button text="Upcoming" styleClass="filter-pill"/>
+            <Button text="Ended" styleClass="filter-pill"/>
         </HBox>
     </VBox>
 

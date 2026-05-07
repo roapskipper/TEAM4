@@ -18,7 +18,7 @@
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="totalUsersLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="1,245" />
-                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Tong nguoi dung" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Total Users" />
                 </VBox>
             </HBox>
         </VBox>
@@ -30,7 +30,7 @@
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="lockedUsersLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="12" />
-                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Tai khoan bi khoa" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Locked Accounts" />
                 </VBox>
             </HBox>
         </VBox>
@@ -42,7 +42,7 @@
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="pendingAuctionsLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="8" />
-                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Phien cho duyet" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Pending Auctions" />
                 </VBox>
             </HBox>
         </VBox>
@@ -54,7 +54,7 @@
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="liveAuctionsLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="24" />
-                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Dang dien ra" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Live Auctions" />
                 </VBox>
             </HBox>
         </VBox>
@@ -62,15 +62,15 @@
 
     <HBox spacing="16" VBox.vgrow="ALWAYS">
         <VBox prefWidth="500" styleClass="admin-card" HBox.hgrow="ALWAYS">
-            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 16 0;" text="Thong ke dang ky" />
+            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 16 0;" text="Registration Statistics" />
             <BarChart fx:id="regChart" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                <xAxis><CategoryAxis label="Thang" style="-fx-tick-label-fill: #6b7280;" /></xAxis>
-                <yAxis><NumberAxis label="Nguoi dung" style="-fx-tick-label-fill: #6b7280;" /></yAxis>
+                <xAxis><CategoryAxis label="Month" style="-fx-tick-label-fill: #6b7280;" /></xAxis>
+                <yAxis><NumberAxis label="Users" style="-fx-tick-label-fill: #6b7280;" /></yAxis>
             </BarChart>
         </VBox>
 
         <VBox prefWidth="500" spacing="12" styleClass="admin-card" HBox.hgrow="ALWAYS">
-            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 4 0;" text="Canh bao he thong" />
+            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 4 0;" text="System Alerts" />
 
             <VBox fx:id="alertsContainer" spacing="8" VBox.vgrow="ALWAYS">
             </VBox>

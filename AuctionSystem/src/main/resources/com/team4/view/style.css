@@ -1,18 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════
-   style.css - AuctionSpace Dark Theme
-   Day du style cho tat ca cac man hinh
-   File nay thuoc ve Bình (FE - JavaFX)
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ===== 1. ROOT & GLOBAL ===== */
 .root {
     -fx-background-color: #0a0a0f;
-    -fx-font-family: "Segoe UI", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-family: "Lato", "Segoe UI", Arial, sans-serif;
     -fx-font-size: 14px;
     -fx-text-fill: #e5e7eb;
 }
 
-/* ===== 2. LOGIN SCREEN ===== */
 .login-bg {
     -fx-background-color: #0a0a0f;
 }
@@ -20,29 +12,34 @@
 .brand-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display", serif;
     -fx-text-fill: white;
 }
 
 .hero-title {
     -fx-font-size: 52px;
     -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display", serif;
     -fx-text-fill: white;
 }
 
 .hero-title-gradient {
     -fx-font-size: 52px;
     -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display", serif;
     -fx-text-fill: linear-gradient(to right, #c4b5fd, #f9a8d4);
 }
 
 .stat-number {
     -fx-font-size: 32px;
     -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display", serif;
     -fx-text-fill: white;
 }
 
 .stat-label {
     -fx-font-size: 13px;
+    -fx-font-family: "Lato", sans-serif;
     -fx-text-fill: #6b7280;
 }
 
@@ -50,11 +47,11 @@
     -fx-background-color: #1f2937;
 }
 
-/* ===== 3. TABS ===== */
 .tab-active {
     -fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899);
     -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-font-family: "Lato", sans-serif;
     -fx-background-radius: 10;
     -fx-padding: 12;
     -fx-cursor: hand;
@@ -65,13 +62,13 @@
     -fx-background-color: transparent;
     -fx-text-fill: #9ca3af;
     -fx-font-weight: bold;
+    -fx-font-family: "Lato", sans-serif;
     -fx-background-radius: 10;
     -fx-padding: 12;
     -fx-cursor: hand;
     -fx-font-size: 14px;
 }
 
-/* ===== 4. ROLE BUTTONS ===== */
 .role-btn-active {
     -fx-background-color: rgba(139, 92, 246, 0.15);
     -fx-border-color: #8b5cf6;
@@ -79,6 +76,7 @@
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 14;
     -fx-cursor: hand;
     -fx-font-size: 13px;
@@ -92,18 +90,19 @@
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 14;
     -fx-cursor: hand;
     -fx-font-size: 13px;
 }
 
-/* ===== 5. INPUT FIELDS ===== */
 .input-field {
     -fx-background-color: rgba(255, 255, 255, 0.04);
     -fx-border-color: #1f2937;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 14 16;
     -fx-prompt-text-fill: #4b5563;
     -fx-font-size: 14px;
@@ -116,21 +115,23 @@
 
 .form-label {
     -fx-font-size: 13px;
+    -fx-font-family: "Lato", sans-serif;
     -fx-text-fill: #9ca3af;
     -fx-font-weight: medium;
 }
 
 .error-message {
     -fx-text-fill: #ef4444;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
     -fx-padding: 4 0;
 }
 
-/* ===== 6. BUTTONS ===== */
 .btn-primary {
     -fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899);
     -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-font-family: "Lato", sans-serif;
     -fx-background-radius: 12;
     -fx-padding: 14;
     -fx-cursor: hand;
@@ -147,6 +148,7 @@
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 14;
     -fx-cursor: hand;
     -fx-font-size: 14px;
@@ -157,7 +159,6 @@
     -fx-text-fill: white;
 }
 
-/* ===== 7. SIDEBAR NAVIGATION ===== */
 .sidebar-sep {
     -fx-background-color: rgba(255, 255, 255, 0.04);
 }
@@ -165,6 +166,7 @@
 .nav-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 14px;
     -fx-padding: 12 16;
     -fx-background-radius: 10;
@@ -183,6 +185,7 @@
 .nav-btn-active {
     -fx-background-color: linear-gradient(to right, rgba(139, 92, 246, 0.12), rgba(236, 72, 153, 0.06));
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 14px;
     -fx-padding: 12 16;
     -fx-background-radius: 10;
@@ -193,7 +196,6 @@
     -fx-border-radius: 10;
 }
 
-/* ===== 8. CARDS ===== */
 .card, .admin-card, .stat-card, .bidding-card, .profile-card {
     -fx-background-color: rgba(255, 255, 255, 0.04);
     -fx-background-radius: 16;
@@ -237,7 +239,6 @@
     -fx-background-color: rgba(255, 255, 255, 0.06);
 }
 
-/* ===== 9. ADMIN SPECIFIC ===== */
 .admin-stat-card {
     -fx-background-color: rgba(255, 255, 255, 0.04);
     -fx-background-radius: 16;
@@ -253,6 +254,7 @@
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 12 16;
     -fx-prompt-text-fill: #4b5563;
     -fx-font-size: 13px;
@@ -268,12 +270,14 @@
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 4;
 }
 
 .admin-filter {
     -fx-background-color: rgba(255, 255, 255, 0.03);
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
     -fx-padding: 10 16;
     -fx-background-radius: 10;
@@ -289,6 +293,7 @@
 .admin-filter-active {
     -fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899);
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
     -fx-padding: 10 16;
     -fx-background-radius: 10;
@@ -310,6 +315,7 @@
 .admin-table .column-header .label {
     -fx-text-fill: #9ca3af;
     -fx-font-weight: bold;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 12px;
 }
 
@@ -325,14 +331,15 @@
 
 .admin-table .table-cell {
     -fx-text-fill: #d1d5db;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 12 16;
     -fx-font-size: 13px;
 }
 
-/* ===== 10. FILTER PILLS (Bidder) ===== */
 .filter-pill {
     -fx-background-color: rgba(255, 255, 255, 0.03);
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 12px;
     -fx-padding: 8 16;
     -fx-background-radius: 20;
@@ -347,6 +354,7 @@
 .filter-pill-active {
     -fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899);
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 12px;
     -fx-padding: 8 16;
     -fx-background-radius: 20;
@@ -361,10 +369,10 @@
     -fx-spacing: 12;
 }
 
-/* ===== 11. BIDDING ROOM ===== */
 .quick-bid-btn {
     -fx-background-color: rgba(255, 255, 255, 0.05);
     -fx-text-fill: #d1d5db;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 12px;
     -fx-padding: 10;
     -fx-background-radius: 10;
@@ -382,6 +390,7 @@
 .auto-bid-toggle {
     -fx-background-color: rgba(255, 255, 255, 0.05);
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
     -fx-padding: 10 16;
     -fx-background-radius: 10;
@@ -405,6 +414,7 @@
     -fx-background-color: transparent;
     -fx-padding: 8 0;
     -fx-text-fill: #d1d5db;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
 }
 
@@ -419,10 +429,10 @@
     -fx-background-color: transparent;
     -fx-padding: 6 0;
     -fx-text-fill: #9ca3af;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 13px;
 }
 
-/* ===== 12. TABLE ===== */
 .table-view {
     -fx-background-color: transparent;
     -fx-border-color: rgba(255, 255, 255, 0.06);
@@ -446,11 +456,11 @@
 
 .table-cell {
     -fx-text-fill: #d1d5db;
+    -fx-font-family: "Lato", sans-serif;
     -fx-padding: 12 16;
     -fx-font-size: 13px;
 }
 
-/* ===== 13. CHART ===== */
 .chart {
     -fx-background-color: transparent;
     -fx-padding: 0;
@@ -479,7 +489,6 @@
     -fx-padding: 4;
 }
 
-/* ===== 14. SCROLLBAR ===== */
 .scroll-bar {
     -fx-background-color: transparent;
     -fx-pref-width: 6px;
@@ -494,7 +503,6 @@
     -fx-background-color: #4b5563;
 }
 
-/* ===== 15. ALERT BOXES ===== */
 .alert-red {
     -fx-background-color: rgba(239, 68, 68, 0.08);
     -fx-border-color: rgba(239, 68, 68, 0.15);
@@ -516,7 +524,6 @@
     -fx-background-radius: 12;
 }
 
-/* ===== 16. DIALOG ===== */
 .dialog-pane {
     -fx-background-color: #111118;
     -fx-border-color: rgba(255, 255, 255, 0.08);
@@ -527,15 +534,16 @@
 .dialog-pane .button-bar .button {
     -fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899);
     -fx-text-fill: white;
+    -fx-font-family: "Lato", sans-serif;
     -fx-background-radius: 10;
     -fx-padding: 10 20;
     -fx-cursor: hand;
 }
 
-/* ===== 17. BADGES ===== */
 .badge {
     -fx-background-radius: 20;
     -fx-padding: 3 10;
+    -fx-font-family: "Lato", sans-serif;
     -fx-font-size: 11;
     -fx-font-weight: bold;
 }

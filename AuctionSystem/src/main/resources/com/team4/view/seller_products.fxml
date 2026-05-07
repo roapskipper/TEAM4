@@ -33,7 +33,7 @@
 
     <HBox alignment="CENTER_LEFT" spacing="12">
         <TextField fx:id="searchField" prefWidth="280" promptText="🔍 Search..." styleClass="admin-input" />
-        <ComboBox fx:id="categoryFilter" prefWidth="180" promptText="Tat ca danh muc" styleClass="admin-combo" />
+        <ComboBox fx:id="categoryFilter" prefWidth="180" promptText="All Categories" styleClass="admin-combo" />
         <Region HBox.hgrow="ALWAYS" />
         <Button fx:id="addProductBtn" onAction="#onAddProduct" styleClass="btn-primary" text="➕ Add Product" />
     </HBox>

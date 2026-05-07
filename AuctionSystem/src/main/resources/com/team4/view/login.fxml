@@ -55,16 +55,16 @@
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" styleClass="brand-title"/>
-                    <Label text="He thong dau gia truc tuyen" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                    <Label text="Online Auction System" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                 </VBox>
             </HBox>
 
             <Region prefHeight="40" />
 
             <VBox spacing="8">
-                <Label text="Chao mung" styleClass="hero-title"/>
-                <Label text="tro lai" styleClass="hero-title-gradient"/>
-                <Label text="Dang nhap de tiep tuc dau gia va kham pha nhung san pham doc dao tu khap noi."
+                <Label text="Welcome" styleClass="hero-title"/>
+                <Label text="back" styleClass="hero-title-gradient"/>
+                <Label text="Sign in to continue bidding and discover unique items from around the world."
                        wrapText="true" maxWidth="420" style="-fx-font-size: 16; -fx-text-fill: #9ca3af; -fx-line-spacing: 4;"/>
             </VBox>
 
@@ -73,17 +73,17 @@
             <HBox spacing="32" alignment="CENTER_LEFT">
                 <VBox spacing="4">
                     <Label text="50K+" styleClass="stat-number"/>
-                    <Label text="Nguoi dung" styleClass="stat-label"/>
+                    <Label text="Users" styleClass="stat-label"/>
                 </VBox>
                 <Separator orientation="VERTICAL" styleClass="stat-sep"/>
                 <VBox spacing="4">
                     <Label text="10K+" styleClass="stat-number"/>
-                    <Label text="San pham" styleClass="stat-label"/>
+                    <Label text="Items" styleClass="stat-label"/>
                 </VBox>
                 <Separator orientation="VERTICAL" styleClass="stat-sep"/>
                 <VBox spacing="4">
                     <Label text="99%" styleClass="stat-number"/>
-                    <Label text="Uy tin" styleClass="stat-label"/>
+                    <Label text="Trust Rate" styleClass="stat-label"/>
                 </VBox>
             </HBox>
 
@@ -92,7 +92,7 @@
                 <Label text="•" style="-fx-text-fill: #374151;"/>
                 <Label text="K70I - IT6" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
                 <Label text="•" style="-fx-text-fill: #374151;"/>
-                <Label text="Nhom 4" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
+                <Label text="Group 4" style="-fx-text-fill: #4b5563; -fx-font-size: 12;"/>
             </HBox>
         </VBox>
 
@@ -116,11 +116,11 @@
 
             <HBox id="tabSwitcher" spacing="6"
                   style="-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 14; -fx-padding: 5;">
-                <Button fx:id="loginTab" text="Dang nhap"
+                <Button fx:id="loginTab" text="Login"
                         HBox.hgrow="ALWAYS" maxWidth="Infinity"
                         onAction="#onLoginTabClicked"
                         styleClass="tab-active"/>
-                <Button fx:id="registerTab" text="Dang ky"
+                <Button fx:id="registerTab" text="Register"
                         HBox.hgrow="ALWAYS" maxWidth="Infinity"
                         onAction="#onRegisterTabClicked"
                         styleClass="tab-inactive"/>
@@ -128,25 +128,24 @@
 
             <VBox fx:id="loginForm" spacing="18" managed="true" visible="true">
 
-
                 <VBox spacing="6">
-                    <Label text="Ten dang nhap" styleClass="form-label"/>
+                    <Label text="Username" styleClass="form-label"/>
                     <TextField fx:id="loginUsername"
-                               promptText="Nhap ten dang nhap"
+                               promptText="Enter username"
                                styleClass="input-field"/>
                 </VBox>
 
                 <VBox spacing="6">
-                    <Label text="Mat khau" styleClass="form-label"/>
+                    <Label text="Password" styleClass="form-label"/>
                     <PasswordField fx:id="loginPassword"
-                                   promptText="Nhap mat khau"
+                                   promptText="Enter password"
                                    styleClass="input-field"/>
                 </VBox>
 
                 <Label fx:id="loginError" text="" managed="false" visible="false"
                        styleClass="error-message"/>
 
-                <Button fx:id="loginBtn" text="Dang nhap"
+                <Button fx:id="loginBtn" text="Login"
                         maxWidth="Infinity"
                         onAction="#onLoginSubmit"
                         defaultButton="true"
@@ -160,19 +159,19 @@
             <VBox fx:id="registerForm" spacing="14" managed="false" visible="false">
 
                 <VBox spacing="6">
-                    <Label text="Ban muon tham gia voi tu cach" styleClass="form-label"/>
+                    <Label text="Join as" styleClass="form-label"/>
                     <fx:define>
                         <ToggleGroup fx:id="roleGroup"/>
                     </fx:define>
 
                     <HBox spacing="8">
-                        <ToggleButton fx:id="roleBidder" text="⚡ Nguoi mua"
+                        <ToggleButton fx:id="roleBidder" text="⚡ Bidder"
                                       toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       selected="true"
                                       onAction="#onRoleChanged"
                                       styleClass="role-btn-active"/>
-                        <ToggleButton fx:id="roleSeller" text="🏪 Nguoi ban"
+                        <ToggleButton fx:id="roleSeller" text="🏪 Seller"
                                       toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       onAction="#onRoleChanged"
@@ -181,49 +180,49 @@
                 </VBox>
 
                 <VBox fx:id="storeNameBox" spacing="6" managed="false" visible="false">
-                    <Label text="Ten cua hang" styleClass="form-label"/>
+                    <Label text="Store Name" styleClass="form-label"/>
                     <TextField fx:id="regStoreName"
-                               promptText="Nhap ten cua hang"
+                               promptText="Enter store name"
                                styleClass="input-field"/>
                 </VBox>
 
                 <VBox spacing="6">
-                    <Label text="Ten dang nhap" styleClass="form-label"/>
+                    <Label text="Username" styleClass="form-label"/>
                     <TextField fx:id="regUsername"
-                               promptText="Nhap ten dang nhap"
+                               promptText="Enter username"
                                styleClass="input-field"/>
                 </VBox>
 
                 <VBox spacing="6">
                     <Label text="Email" styleClass="form-label"/>
                     <TextField fx:id="regEmail"
-                               promptText="Nhap email"
+                               promptText="Enter email"
                                styleClass="input-field"/>
                 </VBox>
 
                 <VBox spacing="6">
-                    <Label text="Mat khau" styleClass="form-label"/>
+                    <Label text="Password" styleClass="form-label"/>
                     <PasswordField fx:id="regPassword"
-                                   promptText="Nhap mat khau"
+                                   promptText="Enter password"
                                    styleClass="input-field"/>
                 </VBox>
 
                 <VBox spacing="6">
-                    <Label text="Xac nhan mat khau" styleClass="form-label"/>
+                    <Label text="Confirm Password" styleClass="form-label"/>
                     <PasswordField fx:id="regConfirmPassword"
-                                   promptText="Nhap lai mat khau"
+                                   promptText="Confirm password"
                                    styleClass="input-field"/>
                 </VBox>
 
                 <Label fx:id="regError" text="" managed="false" visible="false"
                        styleClass="error-message"/>
 
-                <Button fx:id="regBtn" text="Tao tai khoan"
+                <Button fx:id="regBtn" text="Create Account"
                         maxWidth="Infinity"
                         onAction="#onRegisterSubmit"
                         styleClass="btn-primary"/>
 
-                <Label text="Bang cach dang ky, ban dong y voi Dieu khoan va Chinh sach bao mat"
+                <Label text="By registering, you agree to our Terms and Privacy Policy"
                        wrapText="true"
                        textAlignment="CENTER"
                        style="-fx-text-fill: #374151; -fx-font-size: 11;"/>

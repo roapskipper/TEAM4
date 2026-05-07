@@ -37,7 +37,7 @@
         <Separator styleClass="profile-sep"/>
 
         <VBox spacing="20">
-            <Label text="Update profile" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Update Profile" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
 
             <HBox spacing="16">
                 <VBox spacing="6" HBox.hgrow="ALWAYS">
@@ -51,7 +51,7 @@
             </HBox>
 
             <VBox spacing="6">
-                <Label text="Phone number" styleClass="form-label"/>
+                <Label text="Phone Number" styleClass="form-label"/>
                 <TextField fx:id="editPhone" styleClass="input-field"/>
             </VBox>
         </VBox>
@@ -59,27 +59,27 @@
         <Separator styleClass="profile-sep"/>
 
         <VBox spacing="20">
-            <Label text="Change password" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Change Password" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
 
             <VBox spacing="6">
-                <Label text="Current password" styleClass="form-label"/>
+                <Label text="Current Password" styleClass="form-label"/>
                 <PasswordField fx:id="currentPassword" promptText="Enter current password" styleClass="input-field"/>
             </VBox>
 
             <HBox spacing="16">
                 <VBox spacing="6" HBox.hgrow="ALWAYS">
-                    <Label text="New password" styleClass="form-label"/>
+                    <Label text="New Password" styleClass="form-label"/>
                     <PasswordField fx:id="newPassword" promptText="Enter new password" styleClass="input-field"/>
                 </VBox>
                 <VBox spacing="6" HBox.hgrow="ALWAYS">
-                    <Label text="Confirm new password" styleClass="form-label"/>
+                    <Label text="Confirm New Password" styleClass="form-label"/>
                     <PasswordField fx:id="confirmPassword" promptText="Confirm new password" styleClass="input-field"/>
                 </VBox>
             </HBox>
         </VBox>
 
         <HBox spacing="12" alignment="CENTER_RIGHT">
-            <Button fx:id="saveBtn" text="💾 Save change" onAction="#onSaveProfile" styleClass="btn-primary"/>
+            <Button fx:id="saveBtn" text="💾 Save Changes" onAction="#onSaveProfile" styleClass="btn-primary"/>
             <Button fx:id="cancelBtn" text="Cancel" onAction="#onCancel" styleClass="btn-secondary"/>
         </HBox>
     </VBox>
