@@ -137,7 +137,7 @@ public class LoginController {
         String password = loginPassword.getText();
 
         if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            showError(loginError, "Vui lòng nhập đầy đủ tài khoản và mật khẩu!");
+            showError(loginError, "Please enter your username and password!");
             return;
         }
 
@@ -145,9 +145,9 @@ public class LoginController {
             ApiClient apiClient = new ApiClient();
             String response = apiClient.login(username, password);
             if (response != null) {
-                showError(loginError, "Đăng nhập thành công!");
+                showError(loginError, "Login successful!");
                 loginError.setStyle("-fx-text-fill: #10b981;");
-                System.out.println("Dữ liệu Server trả về: " + response);
+                System.out.println("Server response: " + response);
 
                 try {
                     javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
@@ -170,25 +170,36 @@ public class LoginController {
                     scene.getStylesheets().add(cssPath);
 
                     stage.setScene(scene);
-                    stage.setTitle("Bảng điều khiển - AuctionSpace");
+                    stage.setTitle("Dashboard - AuctionSpace");
                     stage.setWidth(1200);
                     stage.setHeight(800);
                     stage.centerOnScreen();
                     stage.show();
 
                 } catch (Exception ex) {
-                    System.out.println("Lỗi chuyển cảnh: " + ex.getMessage());
+                    System.out.println("Scene transition error: " + ex.getMessage());
                     ex.printStackTrace();
                 }
 
             } else {
-                showError(loginError, "Sai tài khoản hoặc mật khẩu!");
+                showError(loginError, "Invalid username or password!");
                 loginError.setStyle("-fx-text-fill: #ef4444;");
             }
 
         } catch (Exception e) {
-            showError(loginError, "Lỗi kết nối Server: " + e.getMessage());
+            showError(loginError, "Server connection error: " + e.getMessage());
             loginError.setStyle("-fx-text-fill: #ef4444;");
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onTermsClicked() {
+        try {
+            java.awt.Desktop.getDesktop().browse(
+                    new java.net.URI("https://docs.google.com/document/d/1NeyQwm6vGFmt-QHZG8rcC1JXk22AHrWb7CUSLj8QLqM/edit?usp=sharing")
+            );
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -201,11 +212,11 @@ public class LoginController {
         String confirmPass = regConfirmPassword.getText();
 
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
-            showError(regError, "Vui lòng điền đầy đủ thông tin!");
+            showError(regError, "Please fill in all required fields!");
             return;
         }
         if (!password.equals(confirmPass)) {
-            showError(regError, "Mật khẩu xác nhận không khớp!");
+            showError(regError, "Passwords do not match!");
             return;
         }
 
@@ -213,7 +224,7 @@ public class LoginController {
         String storeName = regStoreName.getText();
 
         if (isSeller && storeName.isEmpty()) {
-            showError(regError, "Vui lòng nhập tên cửa hàng!");
+            showError(regError, "Please enter your store name!");
             return;
         }
 
@@ -223,21 +234,21 @@ public class LoginController {
             if (isSeller) {
                 response = client.registerSeller(username, password, username, email, storeName);
             } else {
-                response = client.registerBidder(username, password, username, email, "Chưa cập nhật", "09673761411");
+                response = client.registerBidder(username, password, username, email, "Not updated", "09673761411");
             }
 
             if (response != null) {
-                showError(regError, "Đăng ký thành công! Hãy chuyển sang tab Đăng nhập.");
+                showError(regError, "Registration successful! Please switch to the Login tab.");
                 regError.setStyle("-fx-text-fill: #10b981;");
                 loginUsername.setText(username);
                 loginPassword.setText(password);
             } else {
-                showError(regError, "Đăng ký thất bại! Tên đăng nhập có thể đã tồn tại.");
+                showError(regError, "Registration failed! Username may already exist.");
                 regError.setStyle("-fx-text-fill: #ef4444;");
             }
 
         } catch (Exception e) {
-            showError(regError, "Lỗi kết nối Server: " + e.getMessage());
+            showError(regError, "Server connection error: " + e.getMessage());
             regError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }

@@ -12,27 +12,33 @@ public class Main extends Application {
     @Override
     public void init() {
         String[] fontFiles = {
-                "Cinzel-VariableFont_wght.ttf",
-                "CormorantGaramond-Italic-VariableFont_wght.ttf",
-                "CormorantGaramond-VariableFont_wght.ttf",
-                "Lato-Black.ttf",
-                "Lato-BlackItalic.ttf",
-                "Lato-Bold.ttf",
-                "Lato-BoldItalic.ttf",
-                "Lato-Italic.ttf",
-                "Lato-Light.ttf",
-                "Lato-LightItalic.ttf",
-                "Lato-Regular.ttf",
-                "Lato-Thin.ttf",
-                "Lato-ThinItalic.ttf",
-                "Montserrat-Italic-VariableFont_wght.ttf",
-                "Montserrat-VariableFont_wght.ttf",
-                "PlayfairDisplay-Italic-VariableFont_wght.ttf",
-                "PlayfairDisplay-VariableFont_wght.ttf",
-                "Prata-Regular.ttf",
-                "Raleway-Italic-VariableFont_wght.ttf",
-                "Raleway-VariableFont_wght.ttf"
+                // ===== LATO=====
+                "Lato Regular.ttf",
+                "Lato Bold.ttf",
+                "Lato Italic.ttf",
+                "Lato Light.ttf",
+                "Lato Medium.ttf",
+                "Lato Semibold.ttf",
+                "Lato Black.ttf",
+                "Lato Heavy.ttf",
+                "Lato Hairline.ttf",
+                "Lato Thin.ttf",
+
+                // ===== PLAYFAIR DISPLAY=====
+                "PlayfairDisplay-Regular.ttf",
+                "PlayfairDisplay-Bold.ttf",
+                "PlayfairDisplay-BoldItalic.ttf",
+                "PlayfairDisplay-Italic.ttf",
+                "PlayfairDisplay-Medium.ttf",
+                "PlayfairDisplay-MediumItalic.ttf",
+                "PlayfairDisplay-SemiBold.ttf",
+                "PlayfairDisplay-SemiBoldItalic.ttf",
+                "PlayfairDisplay-ExtraBold.ttf",
+                "PlayfairDisplay-ExtraBoldItalic.ttf",
+                "PlayfairDisplay-Black.ttf",
+                "PlayfairDisplay-BlackItalic.ttf"
         };
+
         for (String file : fontFiles) {
             var stream = getClass().getResourceAsStream("/fonts/" + file);
             if (stream != null) {
@@ -43,6 +49,7 @@ public class Main extends Application {
             }
         }
     }
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(
