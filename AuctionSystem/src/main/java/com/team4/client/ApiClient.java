@@ -1,17 +1,44 @@
 package com.team4.client;
 
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
+import com.team4.model.Item;
+
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApiClient {
     private static final String API_URL = "http://localhost:8080/api/";
     private final HttpClient client;
+    private final Gson gson;
 
     public ApiClient() {
-        this.client = HttpClient.newHttpClient();
+        this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+        this.gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .create();
+    }
+
+    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(formatter.format(src));
+        }
+
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString(), formatter);
+        }
     }
 
     public String login(String username, String password) {
@@ -24,10 +51,8 @@ public class ApiClient {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
             if (response.statusCode() == 200) return response.body();
-            System.out.println("Dang nhap that bai. Status: " + response.statusCode());
             return null;
         } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
             return null;
         }
     }
@@ -77,35 +102,29 @@ public class ApiClient {
         }
     }
 
-    public String getItems() {
+    public List<Item> getItems() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "items"))
                     .GET()
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
-            System.out.println("Loi lay danh sach items. Status: " + response.statusCode());
-            return null;
+
+            if (response.statusCode() == 200) {
+                JsonObject responseObj = JsonParser.parseString(response.body()).getAsJsonObject();
+                if ("SUCCESS".equals(responseObj.get("status").getAsString())) {
+                    JsonArray dataArray = responseObj.getAsJsonArray("data");
+                    Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
+                    return gson.fromJson(dataArray, listType);
+                }
+            }
         } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
+        return new ArrayList<>();
     }
 
-    public String getAuctions() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "auctions"))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
-            System.out.println("Loi lay danh sach auctions. Status: " + response.statusCode());
-            return null;
-        } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
-        }
+    public Gson getGson() {
+        return this.gson;
     }
 }
