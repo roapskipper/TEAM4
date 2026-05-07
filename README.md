@@ -117,11 +117,11 @@ mvn clean install
 
 Sử dụng các tài khoản dưới đây để truy cập Client Application và kiểm tra luồng phân quyền tương ứng:
 
-| Vai trò | Tên đăng nhập | Mật khẩu | Chức năng chính trên giao diện |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên** | `admin` | `admin` | Xem tổng quan, quản lý người dùng, duyệt phiên đấu giá. |
-| **Người bán** | `seller` | `seller` | Thêm sản phẩm, tạo và quản lý phiên đấu giá của mình. |
-| **Người mua** | `bidder` | `bidder` | Tham gia phòng đấu giá, đặt giá, xem lịch sử và biểu đồ giá. |
+| Vai trò | Tên đăng nhập   | Mật khẩu        | Chức năng chính trên giao diện |
+| :--- |:----------------|:----------------| :--- |
+| **Quản trị viên** | `Đang cập nhật` | `Đang cập nhật` | Xem tổng quan, quản lý người dùng, duyệt phiên đấu giá. |
+| **Người bán** | `seller`        | `seller`        | Thêm sản phẩm, tạo và quản lý phiên đấu giá của mình. |
+| **Người mua** | `bidder`        | `bidder`        | Tham gia phòng đấu giá, đặt giá, xem lịch sử và biểu đồ giá. |
 
 > *(Lưu ý: Mật khẩu thực tế đã được mã hóa Hash an toàn trong Database. Client sẽ tự xử lý đối chiếu khi đăng nhập).*
 
