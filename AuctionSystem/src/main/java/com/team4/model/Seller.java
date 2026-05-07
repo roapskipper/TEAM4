@@ -1,44 +1,57 @@
 package com.team4.model;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-public class Seller extends User implements Serializable {
-    private String storeName;            // Tên cửa hàng/Thương hiệu cá nhân
-    private double rating;               // Điểm uy tín (ví dụ: 4.8/5.0 sao)
-    private List<String> listedItemIds;  // Danh sách ID các món hàng ông này đang đăng bán
-
-    public Seller(String id, String username, String password, String storeName) {
-
-        super(id, username, password, "SELLER");
-        this.storeName = storeName;
-        this.rating = 5.0; // Mặc định mới tạo là 5 sao "uy tín" luôn
-        this.listedItemIds = new ArrayList<>(); // Khởi tạo danh sách rỗng để đựng hàng
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+/**
+ * Lớp Seller - Đại diện cho Người bán trong hệ thống.
+ * Kế thừa từ User
+ */
+public class Seller extends User {
+    private String storeName;
+    private double rating;
+    // Danh sách vật phẩm được bán sẽ được chuyển xuống cho DAO xử lý
+    /**
+     * CONSTRUCTOR 1: Dùng khi tạo một Seller mới
+     * Tự động gán role "SELLER", rating 5.0.
+     */
+    public Seller(String username, String passwordHash, String fullName, String email, String storeName) {
+        super(username, passwordHash, fullName, email, Role.SELLER);
+        this.storeName = normalizeOptional(storeName);
+        this.rating = 5.0;
+        validateStoreName(this.storeName);
     }
 
-    public String getStoreName() { return storeName; }
-    public void setStoreName(String storeName) { this.storeName = storeName; }
+    /**
+     * CONSTRUCTOR 2: Dùng khi DAO lấy dữ liệu từ DB
+     * Chứa đầy đủ thông tin.
+     */
+    public Seller(String id, LocalDateTime creatAt, String username, String passwordHash, String fullName,
+                  String email, BigDecimal balance, String storeName, double rating) {
+        super(id, creatAt, username, passwordHash, fullName, email, Role.SELLER, balance);
+        this.storeName = normalizeOptional(storeName);
+        this.rating = rating;
+        validateStoreName(this.storeName);
+    }
 
-    public double getRating() { return rating; }
-    public void setRating(double rating) { this.rating = rating; }
-
-    public void addNewItem(String itemId) {
-        if (!listedItemIds.contains(itemId)) {
-            listedItemIds.add(itemId);
+    // Kiểm tra định dạng storeName
+    // Rating sẽ cho hệ thống quản lý nên không cần validate
+    private void validateStoreName(String storeName) {
+        if (storeName == null || storeName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên cửa hàng không được để trống.");
+        }
+        if (storeName.trim().length() > 100) {
+            throw new IllegalArgumentException("Tên cửa hàng không được vượt quá 100 ký tự.");
         }
     }
 
-    public List<String> getListedItemIds() {
-        return listedItemIds;
+    @Override
+    public String toString() {
+        return super.toString() + " | storeName: " + storeName + " | rating: " + rating;
     }
 
-    @Override
-    public void displayRolePermissions() {
-        System.out.println("--- [QUYỀN HẠN SELLER] ---");
-        System.out.println("Cửa hàng: " + storeName + " (Chủ sở hữu: " + username + ")");
-        System.out.println("- Điểm uy tín: " + rating + " / 5.0");
-        System.out.println("- Có quyền: Đăng sản phẩm mới, Chỉnh sửa thông tin sản phẩm.");
-        System.out.println("- Số lượng sản phẩm đang rao bán: " + listedItemIds.size());
-    }
+    // Setter/Getter
+    public String getStoreName() { return storeName; }
+    public void setStoreName(String storeName) { validateStoreName(storeName);
+    this.storeName = normalizeOptional(storeName);}
+    public double getRating() { return rating; }
 }

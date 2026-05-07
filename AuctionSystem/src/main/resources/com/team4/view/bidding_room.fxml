@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.BiddingRoomController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1200">
+
+    <HBox spacing="20" alignment="CENTER_LEFT">
+        <VBox styleClass="bidding-card" HBox.hgrow="ALWAYS">
+            <HBox spacing="16" alignment="CENTER_LEFT">
+                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 12;"
+                           prefWidth="80" prefHeight="80">
+                    <Label text="📱" style="-fx-font-size: 40;"/>
+                </StackPane>
+                <VBox spacing="4">
+                    <Label fx:id="itemName" text="iPhone 15 Pro Max 256GB" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    <HBox spacing="8">
+                        <Label fx:id="itemCategory" text="Electronics" style="-fx-font-size: 11; -fx-text-fill: #3b82f6; -fx-padding: 2 8; -fx-background-color: rgba(59,130,246,0.1); -fx-background-radius: 20;"/>
+                        <Label fx:id="itemCondition" text="Brand New" style="-fx-font-size: 11; -fx-text-fill: #22c55e; -fx-padding: 2 8; -fx-background-color: rgba(34,197,94,0.1); -fx-background-radius: 20;"/>
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 4 0 0 0;">
+                        <Label fx:id="sellerName" text="TechStore Official" style="-fx-font-size: 13; -fx-text-fill: #9ca3af;"/>
+                        <Label text="⭐ 4.8" style="-fx-font-size: 12; -fx-text-fill: #eab308;"/>
+                        <Label text="✓ Verified" style="-fx-font-size: 11; -fx-text-fill: #22c55e;"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="bidding-price-card" alignment="CENTER" spacing="8">
+            <Label text="Current Price" style="-fx-font-size: 12; -fx-text-fill: #9ca3af;"/>
+            <Label fx:id="currentPrice" text="28,500,000 VND" style="-fx-font-size: 36; -fx-font-weight: bold; -fx-text-fill: #8b5cf6;"/>
+            <HBox spacing="12" alignment="CENTER">
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label text="👥" style="-fx-font-size: 14;"/>
+                    <Label fx:id="bidCount" text="24 bids" style="-fx-font-size: 13; -fx-text-fill: #9ca3af;"/>
+                </HBox>
+                <Label text="•" style="-fx-text-fill: #374151;"/>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label text="⏱" style="-fx-font-size: 14;"/>
+                    <Label fx:id="timeLeft" text="02:34:15" style="-fx-font-size: 13; -fx-text-fill: #ef4444; -fx-font-weight: bold;"/>
+                </HBox>
+                <Label text="•" style="-fx-text-fill: #374151;"/>
+                <Label text="Limit: " style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+                <Label text="50,000,000" style="-fx-font-size: 12; -fx-text-fill: #ec4899; -fx-font-weight: bold;"/>
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+        <VBox spacing="16" HBox.hgrow="ALWAYS" prefWidth="700">
+            <VBox styleClass="bidding-card" VBox.vgrow="ALWAYS">
+                <Label text="📈 Price Chart" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 12 0;"/>
+                <AreaChart fx:id="priceChart" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
+                    <xAxis><NumberAxis label="Time" style="-fx-tick-label-fill: #6b7280;"/></xAxis>
+                    <yAxis><NumberAxis label="Price (VND)" style="-fx-tick-label-fill: #6b7280;"/></yAxis>
+                </AreaChart>
+            </VBox>
+
+            <VBox styleClass="bidding-card" prefHeight="280">
+                <Label text="📋 Bid History" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 12 0;"/>
+                <ListView fx:id="bidHistoryList" VBox.vgrow="ALWAYS" styleClass="bid-list"/>
+            </VBox>
+        </VBox>
+
+        <VBox spacing="16" prefWidth="380">
+
+            <VBox styleClass="bidding-card" spacing="14">
+                <Label text="💰 Place Bid" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;"/>
+
+                <HBox spacing="8">
+                    <Button fx:id="quick100k" text="+100K" onAction="#onQuickBid" styleClass="quick-bid-btn"/>
+                    <Button fx:id="quick200k" text="+200K" onAction="#onQuickBid" styleClass="quick-bid-btn"/>
+                    <Button fx:id="quick500k" text="+500K" onAction="#onQuickBid" styleClass="quick-bid-btn"/>
+                    <Button fx:id="quick1m" text="+1M" onAction="#onQuickBid" styleClass="quick-bid-btn"/>
+                </HBox>
+
+                <VBox spacing="6">
+                    <Label text="Or enter amount" style="-fx-font-size: 12; -fx-text-fill: #9ca3af;"/>
+                    <TextField fx:id="bidAmountField" promptText="Enter amount" styleClass="input-field"/>
+                    <HBox>
+                        <Label text="Min: " style="-fx-font-size: 11; -fx-text-fill: #6b7280;"/>
+                        <Label fx:id="minBidLabel" text="28,600,000" style="-fx-font-size: 11; -fx-text-fill: #8b5cf6;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Max: " style="-fx-font-size: 11; -fx-text-fill: #6b7280;"/>
+                        <Label text="50,000,000" style="-fx-font-size: 11; -fx-text-fill: #ec4899; -fx-font-weight: bold;"/>
+                    </HBox>
+                </VBox>
+
+                <Label fx:id="bidError" text="" managed="false" visible="false" style="-fx-text-fill: #ef4444; -fx-font-size: 12;"/>
+
+                <Button fx:id="placeBidBtn" text="🎯 Place Bid Now" onAction="#onPlaceBid" styleClass="btn-primary"/>
+
+                <VBox spacing="8" style="-fx-padding: 8 0 0 0;">
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <ToggleButton fx:id="autoBidToggle" text="⚡ Auto Bid" onAction="#onAutoBidToggle" styleClass="auto-bid-toggle"/>
+                    </HBox>
+                    <VBox fx:id="autoBidPanel" spacing="6" managed="false" visible="false">
+                        <TextField fx:id="autoBidMax" promptText="Max price (VND)" styleClass="input-field"/>
+                        <TextField fx:id="autoBidIncrement" promptText="Increment (VND)" styleClass="input-field"/>
+                        <Label text="System will automatically bid on your behalf" style="-fx-font-size: 11; -fx-text-fill: #6b7280;" wrapText="true"/>
+                    </VBox>
+                </VBox>
+            </VBox>
+
+            <VBox styleClass="bidding-card" VBox.vgrow="ALWAYS">
+                <Label text="💬 Chat" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 8 0;"/>
+                <ListView fx:id="chatList" VBox.vgrow="ALWAYS" styleClass="chat-list"/>
+                <HBox spacing="8" style="-fx-padding: 8 0 0 0;">
+                    <TextField fx:id="chatInput" promptText="Type a message..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="sendChatBtn" text="➤" onAction="#onSendChat"
+                            style="-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 14; -fx-font-size: 16; -fx-cursor: hand;"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>

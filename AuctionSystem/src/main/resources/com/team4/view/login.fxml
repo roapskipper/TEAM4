@@ -1,112 +1,220 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.animation.*?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
 
-<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.team4.controller.LoginController"
            stylesheets="@style.css"
-           style="-fx-background-color: #0a0a0f;">
-
-    <StackPane style="-fx-background-color: linear-gradient(to bottom right, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));">
-        <StackPane style="-fx-background-color: transparent;" fx:id="gridBackground"/>
-    </StackPane>
+           id="loginRoot"
+           prefWidth="1000" prefHeight="720"
+           styleClass="login-bg">
 
     <HBox alignment="CENTER" spacing="0">
 
-        <VBox fx:id="leftPanel" HBox.hgrow="ALWAYS" minWidth="400" maxWidth="Infinity" style="-fx-background-color: linear-gradient(to bottom right, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.1)); -fx-padding: 60;" alignment="CENTER_LEFT" spacing="30">
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #8b5cf6, #ec4899); -fx-background-radius: 12;" prefWidth="50" prefHeight="50">
-                    <Label text="⚡" style="-fx-font-size: 24;"/>
+        <VBox id="leftPanel"
+              prefWidth="580" minWidth="420" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS"
+              alignment="CENTER_LEFT"
+              spacing="28">
+            <padding>
+                <Insets top="64" right="64" bottom="64" left="64"/>
+            </padding>
+
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 12;"
+                           prefWidth="52" prefHeight="52">
+                    <Label text="⚡" style="-fx-font-size: 26; -fx-text-fill: white;" />
                 </StackPane>
-                <Label text="AuctionSpace" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <VBox spacing="2">
+                    <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                    <Label text="Online Auction System" style="-fx-font-size: 13; -fx-text-fill: #555555;"/>
+                </VBox>
             </HBox>
 
-            <VBox spacing="10">
-                <Label text="Chào mừng" style="-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                <Label text="trở lại" style="-fx-font-size: 48; -fx-font-weight: bold; -fx-text-fill: linear-gradient(to right, #a78bfa, #f9a8d4);"/>
+            <Region prefHeight="40" />
+
+            <VBox spacing="8">
+                <Label text="Welcome" styleClass="hero-title"/>
+                <Label text="back" styleClass="hero-title-gradient"/>
+                <Label text="Sign in to continue bidding and discover unique items from around the world."
+                       wrapText="true" maxWidth="420" style="-fx-font-size: 16; -fx-text-fill: #555555; -fx-line-spacing: 4;"/>
             </VBox>
 
-            <Label text="Đăng nhập để tiếp tục đấu giá và khám phá những sản phẩm độc đáo." style="-fx-font-size: 16; -fx-text-fill: #9ca3af; -fx-wrap-text: true;" maxWidth="400"/>
+            <Region VBox.vgrow="ALWAYS" />
 
-            <HBox spacing="30" alignment="CENTER_LEFT" style="-fx-padding: 40 0 0 0;">
-                <VBox spacing="5">
-                    <Label text="50K+" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                    <Label text="Người dùng" style="-fx-font-size: 14; -fx-text-fill: #6b7280;"/>
+            <HBox spacing="32" alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <Label text="50K+" styleClass="stat-number"/>
+                    <Label text="Users" styleClass="stat-label"/>
                 </VBox>
-                <Separator orientation="VERTICAL" style="-fx-background-color: #374151;" prefHeight="60"/>
-                <VBox spacing="5">
-                    <Label text="10K+" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                    <Label text="Sản phẩm" style="-fx-font-size: 14; -fx-text-fill: #6b7280;"/>
+                <Separator orientation="VERTICAL" styleClass="stat-sep"/>
+                <VBox spacing="4">
+                    <Label text="10K+" styleClass="stat-number"/>
+                    <Label text="Items" styleClass="stat-label"/>
                 </VBox>
-                <Separator orientation="VERTICAL" style="-fx-background-color: #374151;" prefHeight="60"/>
-                <VBox spacing="5">
-                    <Label text="99%" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;"/>
-                    <Label text="Uy tín" style="-fx-font-size: 14; -fx-text-fill: #6b7280;"/>
+                <Separator orientation="VERTICAL" styleClass="stat-sep"/>
+                <VBox spacing="4">
+                    <Label text="99%" styleClass="stat-number"/>
+                    <Label text="Trust Rate" styleClass="stat-label"/>
                 </VBox>
+            </HBox>
+
+            <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 20 0 0 0;">
+                <Label text="UET-VNU" style="-fx-text-fill: #722F37; -fx-font-size: 12; -fx-font-weight: bold;"/>
+                <Label text="•" style="-fx-text-fill: #9CA3AF;"/>
+                <Label text="K70I - IT6" style="-fx-text-fill: #555555; -fx-font-size: 12;"/>
+                <Label text="•" style="-fx-text-fill: #9CA3AF;"/>
+                <Label text="Group 4" style="-fx-text-fill: #555555; -fx-font-size: 12;"/>
             </HBox>
         </VBox>
 
-        <ScrollPane fitToWidth="true" fitToHeight="true" HBox.hgrow="ALWAYS" maxWidth="Infinity" style="-fx-background: #0a0a0f; -fx-background-color: transparent; -fx-border-color: transparent;">
-            <VBox fx:id="rightPanel" alignment="CENTER" spacing="25" style="-fx-background-color: #0a0a0f; -fx-padding: 60;">
+        <VBox id="rightPanel"
+              prefWidth="480" minWidth="380" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS"
+              alignment="CENTER"
+              spacing="24"
+              style="-fx-background-color: #FFFFFF;">
+            <padding>
+                <Insets top="48" right="56" bottom="48" left="56"/>
+            </padding>
 
-                <HBox spacing="5" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 12; -fx-padding: 5;" maxWidth="350">
-                    <Button fx:id="loginTab" text="Đăng nhập" style="-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 30;" onAction="#handleLoginTab"/>
-                    <Button fx:id="registerTab" text="Đăng ký" style="-fx-background-color: transparent; -fx-text-fill: #9ca3af; -fx-font-weight: bold; -fx-background-radius: 10; -fx-padding: 12 30;" onAction="#handleRegisterTab"/>
-                </HBox>
+            <HBox id="mobileLogo" spacing="10" alignment="CENTER" managed="false" visible="false">
+                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 14;"
+                           prefWidth="40" prefHeight="40">
+                    <Label text="⚡" style="-fx-font-size: 20; -fx-text-fill: white;" />
+                </StackPane>
+                <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            </HBox>
 
-                <VBox fx:id="loginForm" spacing="20" visible="true" managed="true" maxWidth="350">
-                    <VBox spacing="8">
-                        <Label text="Tên đăng nhập" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <TextField fx:id="usernameField" promptText="Nhập tên đăng nhập" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <VBox spacing="8">
-                        <Label text="Mật khẩu" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <PasswordField fx:id="passwordField" promptText="Nhập mật khẩu" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <Label fx:id="errorLabel" text="" style="-fx-text-fill: #ef4444; -fx-font-size: 14;" visible="false"/>
-                    <Button text="Đăng nhập" onAction="#handleLogin" style="-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 15; -fx-cursor: hand;" maxWidth="Infinity">
-                        <effect><DropShadow color="#8b5cf6" radius="10" spread="0.2"/></effect>
-                    </Button>
+            <HBox id="tabSwitcher" spacing="6"
+                  style="-fx-background-color: #F3F4F6; -fx-background-radius: 14; -fx-padding: 5;">
+                <Button fx:id="loginTab" text="Login"
+                        HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                        onAction="#onLoginTabClicked"
+                        styleClass="tab-active"/>
+                <Button fx:id="registerTab" text="Register"
+                        HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                        onAction="#onRegisterTabClicked"
+                        styleClass="tab-inactive"/>
+            </HBox>
+
+            <VBox fx:id="loginForm" spacing="18" managed="true" visible="true">
+
+                <VBox spacing="6">
+                    <Label text="Username" styleClass="form-label"/>
+                    <TextField fx:id="loginUsername"
+                               promptText="Enter username"
+                               styleClass="input-field"/>
                 </VBox>
 
-                <VBox fx:id="registerForm" spacing="20" visible="false" managed="false" maxWidth="350">
-                    <VBox spacing="8">
-                        <Label text="Bạn muốn tham gia với tư cách" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <HBox spacing="10">
-                            <ToggleButton fx:id="bidderRole" text="Người mua" style="-fx-background-color: rgba(139, 92, 246, 0.2); -fx-border-color: #8b5cf6; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: white; -fx-padding: 15; -fx-cursor: hand;" selected="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                            <ToggleButton fx:id="sellerRole" text="Người bán" style="-fx-background-color: transparent; -fx-border-color: #374151; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: #9ca3af; -fx-padding: 15; -fx-cursor: hand;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                        </HBox>
-                    </VBox>
-                    <VBox spacing="8">
-                        <Label text="Tên đăng nhập" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <TextField fx:id="regUsernameField" promptText="Nhập tên đăng nhập" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <VBox spacing="8">
-                        <Label text="Email" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <TextField fx:id="emailField" promptText="Nhập email của bạn" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <VBox fx:id="storeNameContainer" spacing="8" visible="false" managed="false">
-                        <Label text="Tên cửa hàng" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <TextField fx:id="storeNameField" promptText="Nhập tên cửa hàng" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <VBox spacing="8">
-                        <Label text="Mật khẩu" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <PasswordField fx:id="regPasswordField" promptText="Nhập mật khẩu" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <VBox spacing="8">
-                        <Label text="Xác nhận mật khẩu" style="-fx-font-size: 14; -fx-text-fill: #9ca3af;"/>
-                        <PasswordField fx:id="confirmPasswordField" promptText="Nhập lại mật khẩu" style="-fx-background-color: rgba(255,255,255,0.05); -fx-border-color: #374151; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: white; -fx-padding: 15; -fx-prompt-text-fill: #6b7280;"/>
-                    </VBox>
-                    <Button text="Tạo tài khoản" onAction="#handleRegister" style="-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 12; -fx-padding: 15; -fx-cursor: hand;" maxWidth="Infinity">
-                        <effect><DropShadow color="#8b5cf6" radius="10" spread="0.2"/></effect>
-                    </Button>
-                    <Label text="Bằng cách đăng ký, bạn đồng ý với Điều khoản và Chính sách bảo mật" style="-fx-font-size: 12; -fx-text-fill: #6b7280; -fx-wrap-text: true;" textAlignment="CENTER"/>
+                <VBox spacing="6">
+                    <Label text="Password" styleClass="form-label"/>
+                    <PasswordField fx:id="loginPassword"
+                                   promptText="Enter password"
+                                   styleClass="input-field"/>
                 </VBox>
+
+                <Label fx:id="loginError" text="" managed="false" visible="false"
+                       styleClass="error-message"/>
+
+                <Button fx:id="loginBtn" text="Login"
+                        maxWidth="Infinity"
+                        onAction="#onLoginSubmit"
+                        defaultButton="true"
+                        styleClass="btn-primary">
+                    <graphic>
+                        <Region prefWidth="0" />
+                    </graphic>
+                </Button>
             </VBox>
-        </ScrollPane>
+
+            <VBox fx:id="registerForm" spacing="14" managed="false" visible="false">
+
+                <VBox spacing="6">
+                    <Label text="Join as" styleClass="form-label"/>
+                    <fx:define>
+                        <ToggleGroup fx:id="roleGroup"/>
+                    </fx:define>
+
+                    <HBox spacing="8">
+                        <ToggleButton fx:id="roleBidder" text="⚡ Bidder"
+                                      toggleGroup="$roleGroup"
+                                      HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                      selected="true"
+                                      onAction="#onRoleChanged"
+                                      styleClass="role-btn-active"/>
+                        <ToggleButton fx:id="roleSeller" text="🏪 Seller"
+                                      toggleGroup="$roleGroup"
+                                      HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                      onAction="#onRoleChanged"
+                                      styleClass="role-btn-inactive"/>
+                    </HBox>
+                </VBox>
+
+                <VBox fx:id="storeNameBox" spacing="6" managed="false" visible="false">
+                    <Label text="Store Name" styleClass="form-label"/>
+                    <TextField fx:id="regStoreName"
+                               promptText="Enter store name"
+                               styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Username" styleClass="form-label"/>
+                    <TextField fx:id="regUsername"
+                               promptText="Enter username"
+                               styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Email" styleClass="form-label"/>
+                    <TextField fx:id="regEmail"
+                               promptText="Enter email"
+                               styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Password" styleClass="form-label"/>
+                    <PasswordField fx:id="regPassword"
+                                   promptText="Enter password"
+                                   styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Confirm Password" styleClass="form-label"/>
+                    <PasswordField fx:id="regConfirmPassword"
+                                   promptText="Confirm password"
+                                   styleClass="input-field"/>
+                </VBox>
+
+                <Label fx:id="regError" text="" managed="false" visible="false"
+                       styleClass="error-message"/>
+
+                <Button fx:id="regBtn" text="Create Account"
+                        maxWidth="Infinity"
+                        onAction="#onRegisterSubmit"
+                        styleClass="btn-primary"/>
+
+                <TextFlow textAlignment="CENTER">
+                    <Text text="By registering, you agree to our "
+                          style="-fx-font-size: 11; -fx-fill: #555555;"/>
+                    <Hyperlink fx:id="termsLink" text="Terms and Privacy Policy"
+                               onAction="#onTermsClicked"
+                               style="-fx-font-size: 11; -fx-text-fill: #722F37;
+                      -fx-border-color: transparent; -fx-padding: 0;
+                      -fx-underline: true;"/>
+                </TextFlow>
+            </VBox>
+        </VBox>
     </HBox>
 </StackPane>

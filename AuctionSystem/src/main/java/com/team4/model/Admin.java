@@ -1,36 +1,78 @@
 package com.team4.model;
 
-import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 
-public class Admin extends User implements Serializable {
-    private int accessLevel; // Cấp độ truy cập (Ví dụ: 1 - Mod, 2 - Super Admin)
-    private String adminCode; // Mã định danh riêng của quản trị viên
+/**
+ * Lớp Admin - Quản trị viên hệ thống.
+ * Kế thừa từ User
+ */
+public class Admin extends User {
+    // Dùng enum cho 2 kiểu Admin
+    public enum AccessLevel {
+        MODERATOR(1),
+        SUPER_ADMIN(2);
 
-    public Admin(String id, String username, String password, int accessLevel, String adminCode) {
-        super(id, username, password, "ADMIN");
+        private final int level;
+
+        AccessLevel(int level) {
+            this.level = level;
+        }
+        // Getter để lấy giá trị số của cấp độ
+        public int getLevel() {
+            return level;
+        }
+    }
+
+    public static AccessLevel fromInt(int code) {
+        return AccessLevel.values()[code-1];
+    }
+    private static final Pattern ADMIN_CODE_PATTERN = Pattern.compile("^(?=.{8,128}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])\\S+$");
+    private AccessLevel accessLevel;
+    private String adminCodeHash; // Mã định danh bảo mật riêng
+
+    // Constructor 1: Dùng khi tạo Admin mới trong hệ thống
+    public Admin(String username, String passwordHash, String fullName, String email, AccessLevel accessLevel, String adminCodeHash) {
+        super(username, passwordHash, fullName, email, Role.ADMIN );
         this.accessLevel = accessLevel;
-        this.adminCode = adminCode;
+        this.adminCodeHash = adminCodeHash;
+        validateAdminInfo();
+        // Tự động dùng constructor mặc định của Entity để sinh UUID và creatAt
     }
 
-    public int getAccessLevel() { return accessLevel; }
-    public void setAccessLevel(int accessLevel) { this.accessLevel = accessLevel; }
-
-    public String getAdminCode() { return adminCode; }
-
-    // Các phương thức nghiệp vụ của Admin (Chỉ mô phỏng bằng in ra màn hình)
-    public void banUser(User user) {
-        System.out.println("Admin " + username + " đã khóa tài khoản: " + user.getUsername());
+    // Constructor 2: Dùng khi nạp Admin từ database (đã có ID và balance)
+    public Admin(String id, LocalDateTime creatAt, String username, String passwordHash, String fullName,
+                 String email, BigDecimal balance, AccessLevel accessLevel, String adminCodeHash) {
+        super(id, creatAt, username, passwordHash, fullName, email, Role.ADMIN, balance);
+        this.accessLevel = accessLevel;
+        this.adminCodeHash = adminCodeHash;
+        validateAdminInfo();
     }
 
-    public void removeInvalidItem(Item item) {
-        System.out.println("Admin " + username + " đã xóa sản phẩm vi phạm: " + item.getName());
+    // Kiểm tra định dạng của accessLevel và adminCode
+    private void validateAdminInfo() {
+        if (accessLevel == null) {
+            throw new IllegalArgumentException("accessLevel không được null.");
+        }
+        // Admincode phải có ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số, 1 ký tự đặc biệt; không chứa khoảng trắng
+        if (adminCodeHash == null || !ADMIN_CODE_PATTERN.matcher(adminCodeHash.trim()).matches()) {
+            throw new IllegalArgumentException("adminCode phải gồm 8-128 kí tự, chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt; không chứa khoảng trắng.");
+        }
     }
-
+    // Những quyền của Admin sẽ do Service quản lý
+    // Hiển thị thông tin của Admin và quyền hạn của họ (Dùng Polymorphism để hiển thị khác nhau giữa các loại User)
     @Override
-    public void displayRolePermissions() {
-        System.out.println("--- [QUYỀN HẠN ADMIN] ---");
-        System.out.println("Quản trị viên: " + username + " | Cấp độ: " + accessLevel);
-        System.out.println("- Quyền hệ thống: Quản lý người dùng, Kiểm duyệt sản phẩm.");
-        System.out.println("- Quyền dữ liệu: Xem toàn bộ lịch sử đấu giá và giao dịch.");
+    public String toString() {
+        return super.toString() + " | accessLevel: " + accessLevel ;
+    }
+
+    // Setter/Getter. Việc điều chỉnh Access Level và Admin Code sẽ để cho service
+    public AccessLevel getAccessLevel() { return accessLevel; }
+    /**
+     * Chỉ dùng cho DAO - không expose ra ngoài
+     */
+    public String getAdminCodeHash() {
+        return adminCodeHash;
     }
 }

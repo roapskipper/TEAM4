@@ -1,112 +1,276 @@
 package com.team4.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import java.io.IOException;
+import com.team4.client.ApiClient;
 
 public class LoginController {
 
-    @FXML private VBox loginForm, registerForm;
-    @FXML private Button loginTab, registerTab;
-    @FXML private TextField usernameField, registerUsernameField;
-    @FXML private PasswordField passwordField, registerPasswordField;
-    @FXML private Label errorLabel;
+    @FXML private VBox loginForm;
+    @FXML private TextField loginUsername;
+    @FXML private PasswordField loginPassword;
+    @FXML private Label loginError;
+
+    @FXML private javafx.scene.control.Button loginTab;
+    @FXML private javafx.scene.control.Button registerTab;
+    @FXML private ToggleButton roleBidder;
+    @FXML private ToggleButton roleSeller;
+    @FXML private VBox registerForm;
+    @FXML private VBox storeNameBox;
+    @FXML private TextField regStoreName;
+    @FXML private TextField regUsername;
+    @FXML private TextField regEmail;
+    @FXML private PasswordField regPassword;
+    @FXML private PasswordField regConfirmPassword;
+    @FXML private Label regError;
+    @FXML private javafx.scene.control.Button loginBtn;
+    @FXML private javafx.scene.control.Button regBtn;
+
+    // ✅ Fix: khai báo roleGroup là field, không phải local variable
+    private ToggleGroup roleGroup;
 
     @FXML
-    public void handleLoginTab(ActionEvent event) {
-        registerForm.setVisible(false);
-        registerForm.setManaged(false);
-        loginForm.setVisible(true);
-        loginForm.setManaged(true);
+    public void initialize() {
+        roleGroup = new ToggleGroup();
 
-        loginTab.setStyle("-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;");
-        registerTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #9ca3af; -fx-font-weight: bold; -fx-background-radius: 10;");
+        if (roleBidder != null) {
+            roleBidder.setToggleGroup(roleGroup);
+            roleBidder.setFocusTraversable(false);
+        }
+        if (roleSeller != null) {
+            roleSeller.setToggleGroup(roleGroup);
+            roleSeller.setFocusTraversable(false);
+        }
+
+        if (roleBidder != null) {
+            roleBidder.setSelected(true);
+        }
+
+        // ✅ Fix: chặn deselect trong listener
+        roleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            if (newToggle == null) {
+                oldToggle.setSelected(true);
+            } else {
+                updateRoleStyle();
+            }
+        });
+
+        updateRoleStyle();
+    }
+
+    // ✅ Fix: FXML gọi method này (có ActionEvent), chỉ delegate sang updateRoleStyle()
+    @FXML
+    private void onRoleChanged(ActionEvent event) {
+        updateRoleStyle();
+    }
+
+    // Logic thực sự - tách riêng để initialize() cũng gọi được
+    private void updateRoleStyle() {
+        if (roleGroup == null || roleBidder == null || roleSeller == null) return;
+
+        Toggle selected = roleGroup.getSelectedToggle();
+
+        roleBidder.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+        roleSeller.getStyleClass().removeAll("role-btn-active", "role-btn-inactive");
+
+        if (selected == roleBidder) {
+            roleBidder.getStyleClass().add("role-btn-active");
+            roleSeller.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(false);
+                storeNameBox.setManaged(false);
+            }
+        } else {
+            roleSeller.getStyleClass().add("role-btn-active");
+            roleBidder.getStyleClass().add("role-btn-inactive");
+            if (storeNameBox != null) {
+                storeNameBox.setVisible(true);
+                storeNameBox.setManaged(true);
+            }
+        }
     }
 
     @FXML
-    public void handleRegisterTab(ActionEvent event) {
+    private void onLoginTabClicked() {
+        loginForm.setVisible(true);
+        loginForm.setManaged(true);
+        registerForm.setVisible(false);
+        registerForm.setManaged(false);
+        hideErrors();
+        if (loginTab != null && registerTab != null) {
+            loginTab.getStyleClass().removeAll("tab-inactive");
+            loginTab.getStyleClass().add("tab-active");
+            registerTab.getStyleClass().removeAll("tab-active");
+            registerTab.getStyleClass().add("tab-inactive");
+        }
+        if (loginBtn != null) loginBtn.setDefaultButton(true);
+        if (regBtn != null) regBtn.setDefaultButton(false);
+    }
+
+    @FXML
+    private void onRegisterTabClicked() {
         loginForm.setVisible(false);
         loginForm.setManaged(false);
         registerForm.setVisible(true);
         registerForm.setManaged(true);
-
-        registerTab.setStyle("-fx-background-color: linear-gradient(to right, #8b5cf6, #ec4899); -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 10;");
-        loginTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #9ca3af; -fx-font-weight: bold; -fx-background-radius: 10;");
-    }
-
-    @FXML
-    private void handleLogin() {
-        String user = usernameField.getText();
-        String pass = passwordField.getText();
-
-        String jsonResponse = mockSocketServer("LOGIN", user, pass);
-
-        Gson gson = new Gson();
-        JsonObject response = gson.fromJson(jsonResponse, JsonObject.class);
-
-        if (response.get("status").getAsString().equals("SUCCESS")) {
-            switchToDashboard();
-        } else {
-            errorLabel.setText(response.get("message").getAsString());
-            errorLabel.setStyle("-fx-text-fill: #ef4444;");
-            errorLabel.setVisible(true);
+        hideErrors();
+        if (loginTab != null && registerTab != null) {
+            registerTab.getStyleClass().removeAll("tab-inactive");
+            registerTab.getStyleClass().add("tab-active");
+            loginTab.getStyleClass().removeAll("tab-active");
+            loginTab.getStyleClass().add("tab-inactive");
         }
+        if (loginBtn != null) loginBtn.setDefaultButton(false);
+        if (regBtn != null) regBtn.setDefaultButton(true);
     }
 
     @FXML
-    private void handleRegister() {
-        String newUser = registerUsernameField.getText();
-        String newPass = registerPasswordField.getText();
+    private void onLoginSubmit() {
+        String username = loginUsername.getText();
+        String password = loginPassword.getText();
 
-        if (newUser.isEmpty() || newPass.isEmpty()) {
-            errorLabel.setText("Vui lòng không để trống thông tin đăng ký!");
-            errorLabel.setStyle("-fx-text-fill: #ef4444;");
-            errorLabel.setVisible(true);
+        if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            showError(loginError, "Please enter your username and password!");
             return;
         }
 
-        System.out.println("Giả lập đăng ký: " + newUser);
-        errorLabel.setText("Mô phỏng Đăng ký thành công!");
-        errorLabel.setStyle("-fx-text-fill: #10b981;");
-        errorLabel.setVisible(true);
-    }
-
-    private String mockSocketServer(String action, String u, String p) {
-        JsonObject response = new JsonObject();
-
-        if (action.equals("LOGIN")) {
-            if (u.equals("tester_bidder") && p.equals("123456")) {
-                response.addProperty("status", "SUCCESS");
-                response.addProperty("message", "Đăng nhập thành công!");
-
-                JsonObject data = new JsonObject();
-                data.addProperty("username", u);
-                response.add("data", data);
-            } else {
-                response.addProperty("status", "ERROR");
-                response.addProperty("message", "Tài khoản hoặc mật khẩu không chính xác.");
-            }
-        }
-        return new Gson().toJson(response);
-    }
-
-    private void switchToDashboard() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) usernameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setTitle("AuctionSpace - Trang chủ");
-        } catch (IOException e) {
+            ApiClient apiClient = new ApiClient();
+            String response = apiClient.login(username, password);
+            if (response != null) {
+                showError(loginError, "Login successful!");
+                loginError.setStyle("-fx-text-fill: #10b981;");
+                System.out.println("Server response: " + response);
+
+                try {
+                    javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
+                    javafx.scene.Parent root = loader.load();
+
+                    MainController mainController = loader.getController();
+
+                    String role = "bidder";
+                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
+                        role = "seller";
+                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
+                        role = "admin";
+                    }
+
+                    mainController.setUserRole(role);
+
+                    javafx.scene.Scene scene = new javafx.scene.Scene(root);
+                    String cssPath = getClass().getResource("/com/team4/view/style.css").toExternalForm();
+                    scene.getStylesheets().add(cssPath);
+
+                    stage.setScene(scene);
+                    stage.setTitle("Dashboard - AuctionSpace");
+                    stage.setWidth(1200);
+                    stage.setHeight(800);
+                    stage.centerOnScreen();
+                    stage.show();
+
+                } catch (Exception ex) {
+                    System.out.println("Scene transition error: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+
+            } else {
+                showError(loginError, "Invalid username or password!");
+                loginError.setStyle("-fx-text-fill: #ef4444;");
+            }
+
+        } catch (Exception e) {
+            showError(loginError, "Server connection error: " + e.getMessage());
+            loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onTermsClicked() {
+        try {
+            java.awt.Desktop.getDesktop().browse(
+                    new java.net.URI("https://docs.google.com/document/d/1NeyQwm6vGFmt-QHZG8rcC1JXk22AHrWb7CUSLj8QLqM/edit?usp=sharing")
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onRegisterSubmit() {
+        String username = regUsername.getText();
+        String email = regEmail.getText();
+        String password = regPassword.getText();
+        String confirmPass = regConfirmPassword.getText();
+
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
+            showError(regError, "Please fill in all required fields!");
+            return;
+        }
+        if (!password.equals(confirmPass)) {
+            showError(regError, "Passwords do not match!");
+            return;
+        }
+
+        boolean isSeller = roleSeller.isSelected();
+        String storeName = regStoreName.getText();
+
+        if (isSeller && storeName.isEmpty()) {
+            showError(regError, "Please enter your store name!");
+            return;
+        }
+
+        try {
+            ApiClient client = new ApiClient();
+            String response;
+            if (isSeller) {
+                response = client.registerSeller(username, password, username, email, storeName);
+            } else {
+                response = client.registerBidder(username, password, username, email, "Not updated", "09673761411");
+            }
+
+            if (response != null) {
+                showError(regError, "Registration successful! Please switch to the Login tab.");
+                regError.setStyle("-fx-text-fill: #10b981;");
+                loginUsername.setText(username);
+                loginPassword.setText(password);
+            } else {
+                showError(regError, "Registration failed! Username may already exist.");
+                regError.setStyle("-fx-text-fill: #ef4444;");
+            }
+
+        } catch (Exception e) {
+            showError(regError, "Server connection error: " + e.getMessage());
+            regError.setStyle("-fx-text-fill: #ef4444;");
+            e.printStackTrace();
+        }
+    }
+
+    private void showError(Label errorLabel, String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+            errorLabel.setManaged(true);
+        }
+    }
+
+    private void hideErrors() {
+        if (loginError != null) {
+            loginError.setVisible(false);
+            loginError.setManaged(false);
+            loginError.setStyle("-fx-text-fill: #ef4444;");
+        }
+        if (regError != null) {
+            regError.setVisible(false);
+            regError.setManaged(false);
         }
     }
 }
