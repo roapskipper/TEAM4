@@ -35,27 +35,27 @@ public class MainController implements Initializable {
         setupSidebar();
         updateUserInfo();
 
-        if ("admin".equals(role)) loadPage("admin_dashboard", "Tong quan", "Theo doi va dieu hanh toan bo he thong");
-        else if ("seller".equals(role)) loadPage("seller_products", "San pham", "Quan ly san pham dau gia");
-        else loadPage("bidder_auctions", "Dau gia", "Kham pha va tham gia dau gia");
+        if ("admin".equals(role)) loadPage("admin_dashboard", "Dashboard", "Monitor and manage the entire system");
+        else if ("seller".equals(role)) loadPage("seller_products", "Products", "Manage auction products");
+        else loadPage("bidder_auctions", "Auctions", "Explore and join auctions");
     }
 
     private void setupSidebar() {
         navContainer.getChildren().clear();
 
         if ("admin".equals(userRole)) {
-            addNavItem("📊", "Tong quan", "admin_dashboard", "Theo doi va dieu hanh he thong");
-            addNavItem("👥", "Nguoi dung", "admin_users", "Khoa/mo tai khoan");
-            addNavItem("🔨", "Dau gia", "admin_auctions", "Duyet va quan ly phien dau gia");
-            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
+            addNavItem("📊", "Dashboard", "admin_dashboard", "Monitor and manage the system");
+            addNavItem("👥", "Users", "admin_users", "Lock/unlock accounts");
+            addNavItem("🔨", "Auctions", "admin_auctions", "Approve and manage auctions");
+            addNavItem("👤", "Profile", "profile", "Update your information");
         } else if ("seller".equals(userRole)) {
-            addNavItem("📦", "San pham", "seller_products", "Quan ly san pham");
-            addNavItem("📋", "Dau gia cua toi", "bidder_auctions", "Cac phien da tao");
-            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
+            addNavItem("📦", "Products", "seller_products", "Manage your products");
+            addNavItem("📋", "My Auctions", "bidder_auctions", "Sessions you created");
+            addNavItem("👤", "Profile", "profile", "Update your information");
         } else {
-            addNavItem("🔨", "Dau gia", "bidder_auctions", "Kham pha phien dau gia");
-            addNavItem("📋", "Dau gia cua toi", "bidding_room", "Cac phien da tham gia");
-            addNavItem("👤", "Ca nhan", "profile", "Cap nhat thong tin");
+            addNavItem("🔨", "Auctions", "bidder_auctions", "Explore auction sessions");
+            addNavItem("📋", "My Auctions", "bidding_room", "Sessions you joined");
+            addNavItem("👤", "Profile", "profile", "Update your information");
         }
     }
 
@@ -84,7 +84,7 @@ public class MainController implements Initializable {
 
     private void updateUserInfo() {
         String name = userRole.equals("admin") ? "Admin" :
-                      userRole.equals("seller") ? "Nguoi ban" : "Nguoi mua";
+                userRole.equals("seller") ? "Seller" : "Buyer";
         userNameLabel.setText(name);
 
         if ("admin".equals(userRole)) {
@@ -112,7 +112,7 @@ public class MainController implements Initializable {
             contentArea.getChildren().clear();
             contentArea.getChildren().add(page);
         } catch (Exception ex) {
-            Label placeholder = new Label("Trang " + title + " (dang phat trien)");
+            Label placeholder = new Label("Page " + title + " (under development)");
             placeholder.setStyle("-fx-text-fill: #4b5563; -fx-font-size: 16;");
             contentArea.getChildren().clear();
             contentArea.getChildren().add(placeholder);
@@ -126,7 +126,7 @@ public class MainController implements Initializable {
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
             stage.setScene(scene);
-            stage.setTitle("AuctionSpace - Dang nhap");
+            stage.setTitle("AuctionSpace - Login");
             stage.setMaximized(false);
             stage.setWidth(1200);
             stage.setHeight(800);

@@ -33,33 +33,33 @@ public class AdminDashboardController implements Initializable {
 
     private void loadChart() {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Nguoi dung moi");
-        series.getData().add(new XYChart.Data<>("T1", 120));
-        series.getData().add(new XYChart.Data<>("T2", 180));
-        series.getData().add(new XYChart.Data<>("T3", 240));
-        series.getData().add(new XYChart.Data<>("T4", 310));
+        series.setName("New Users");
+        series.getData().add(new XYChart.Data<>("Jan", 120));
+        series.getData().add(new XYChart.Data<>("Feb", 180));
+        series.getData().add(new XYChart.Data<>("Mar", 240));
+        series.getData().add(new XYChart.Data<>("Apr", 310));
         regChart.getData().add(series);
     }
 
     private void loadAlerts() {
         alertsContainer.getChildren().clear();
-        alertsContainer.getChildren().add(createAlert("🔴", "3 phien dau gia bi bao cao", "Can xem xet va xu ly", "alert-red"));
-        alertsContainer.getChildren().add(createAlert("🟡", "8 phien cho duyet", "Can phe duyet de bat dau", "alert-yellow"));
-        alertsContainer.getChildren().add(createAlert("🟣", "12 tai khoan bi khoa", "Dang bi han che hoat dong", "alert-purple"));
+        alertsContainer.getChildren().add(createAlert("🔴", "3 auctions reported", "Needs review and action", "alert-red"));
+        alertsContainer.getChildren().add(createAlert("🟡", "8 auctions pending approval", "Need approval to start", "alert-yellow"));
+        alertsContainer.getChildren().add(createAlert("🟣", "12 accounts locked", "Currently restricted", "alert-purple"));
     }
 
     private HBox createAlert(String icon, String title, String desc, String styleClass) {
         HBox box = new HBox(12);
         box.getStyleClass().add(styleClass);
         box.setStyle("-fx-padding: 14; -fx-background-radius: 12; -fx-spacing: 12;");
-        
+
         Label iconLbl = new Label(icon);
         iconLbl.setStyle("-fx-font-size: 20;");
-        
+
         VBox text = new VBox(4);
         text.getChildren().add(new Label(title) {{ setStyle("-fx-font-weight: bold; -fx-text-fill: white;"); }});
         text.getChildren().add(new Label(desc) {{ setStyle("-fx-font-size: 12; -fx-text-fill: #9ca3af;"); }});
-        
+
         box.getChildren().addAll(iconLbl, text);
         return box;
     }
