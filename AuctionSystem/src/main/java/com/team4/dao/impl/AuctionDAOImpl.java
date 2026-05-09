@@ -74,6 +74,21 @@ public class AuctionDAOImpl implements AuctionDAO {
     }
 
     @Override
+    public Auction findById(Connection conn, String id) {
+        String sql = "SELECT * FROM auctions WHERE id = ? FOR UPDATE";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRowToAuction(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    @Override
     /**
      * 2. findByItemId() - tìm theo item
      * Dùng khi: kiểm tra item đã có phiên đấu giá chưa
@@ -201,6 +216,22 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
+
+    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
+        String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1,currentPrice);
+            stmt.setString(2,highestBidderId);
+            stmt.setString(3,id);
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();

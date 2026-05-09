@@ -206,7 +206,6 @@ CREATE TABLE IF NOT EXISTS auto_biddings (
     auction_id VARCHAR(36) NOT NULL,
     bidder_id VARCHAR(36) NOT NULL,
     max_limit DECIMAL(19,2) NOT NULL,
-    increment_amount DECIMAL(19,2) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_auto_biddings_auction
@@ -220,8 +219,7 @@ CREATE TABLE IF NOT EXISTS auto_biddings (
     ON UPDATE CASCADE,
 
     CONSTRAINT uq_auto_biddings_auction_bidder UNIQUE (auction_id, bidder_id),
-    CONSTRAINT chk_auto_biddings_max_limit_positive CHECK (max_limit > 0),
-    CONSTRAINT chk_auto_biddings_increment_positive CHECK (increment_amount > 0)
+    CONSTRAINT chk_auto_biddings_max_limit_positive CHECK (max_limit > 0)
     );
 
 CREATE INDEX idx_auto_biddings_active ON auto_biddings(is_active);

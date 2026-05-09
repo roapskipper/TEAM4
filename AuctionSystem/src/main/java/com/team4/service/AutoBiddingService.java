@@ -5,6 +5,7 @@ import com.team4.dao.AuctionDAO;
 import com.team4.dao.UserDAO;
 import com.team4.model.Auction;
 import com.team4.model.AutoBidding;
+import com.team4.model.User;
 import com.team4.util.BusinessException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,7 +18,6 @@ public class AutoBiddingService {
     private AutoBiddingDAO autoBiddingDAO;
     private AuctionDAO auctionDAO;
     private UserDAO userDAO;
-
     public AutoBiddingService(AutoBiddingDAO autoBiddingDAO, AuctionDAO auctionDAO, UserDAO userDAO) {
         this.autoBiddingDAO = autoBiddingDAO;
         this.auctionDAO = auctionDAO;
@@ -26,7 +26,7 @@ public class AutoBiddingService {
     /**
      * Bật tính năng auto-bid: kiểm tra config chưa tồn tại, validate maxLimit > currentPrice, tạo và lưu config
      */
-    public AutoBidding enableAutoBidding(String bidderId, String auctionId, BigDecimal maxLimit, BigDecimal increment) {
+    public AutoBidding enableAutoBidding(String bidderId, String auctionId, BigDecimal maxLimit) {
         Auction auction = auctionDAO.findById(auctionId);
         // Validate phiên đáu giá
         if (auction == null || auction.getStatus() != Auction.AuctionStatus.RUNNING) {
@@ -35,9 +35,11 @@ public class AutoBiddingService {
         if (auction.getSellerId().equals(bidderId)) {
             throw new BusinessException("Người bán không được dùng Auto-bid.");
         }
-        // Validate maxLimit
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
-            throw new BusinessException("maxLimit phải lớn hơn giá hiện tại.");
+            throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại của phiên đấu giá.");
+        }
+        if (userDAO.findById(bidderId) == null || userDAO.findById(bidderId).getRole()!= User.Role.BIDDER) {
+            throw new BusinessException("Bidder không hợp lệ.");
         }
         // Kiểm tra config đã tồn tại chưa
         AutoBidding existingConfig = autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId);
@@ -49,26 +51,39 @@ public class AutoBiddingService {
             } else {
                 // Chưa thì bật
                 existingConfig.setMaxLimit(maxLimit);
-                existingConfig.setIncrementAmount(increment);
                 existingConfig.activate();
-                autoBiddingDAO.update(existingConfig);
+                if (!autoBiddingDAO.update(existingConfig)) {
+                    throw new BusinessException("Không thể bật lại cấu hình auto-bid.");
+                }
                 return existingConfig;
             }
         }
         // Nếu chưa có thì tạo mới
-        AutoBidding newAutoBidding = new AutoBidding(auctionId, bidderId, maxLimit, increment);
-        autoBiddingDAO.insert(newAutoBidding);
+        AutoBidding newAutoBidding = new AutoBidding(auctionId, bidderId, maxLimit);
+        if (!autoBiddingDAO.insert(newAutoBidding)) {
+            throw new BusinessException("Không thể tạo cấu hình auto-bid.");
+        }
         return newAutoBidding;
     }
 
     /**
      * Cập nhật cấu hình auto-bid: đổi giới hạn tối đa hoặc bước tăng giá
      */
-    public boolean updateAutoBidding(String configId, BigDecimal maxLimit, BigDecimal increment) {
+    public boolean updateAutoBidding(String configId, BigDecimal maxLimit) {
         AutoBidding autoBidding = autoBiddingDAO.findById(configId);
         if (autoBidding == null) {
             throw new BusinessException("Cấu hình Auto-bid không tồn tại.");
         }
+        Auction auction = auctionDAO.findById(autoBidding.getAuctionId());
+        if (auction == null || auction.getStatus() != Auction.AuctionStatus.RUNNING) {
+            throw new BusinessException("Phiên đấu giá không hợp lệ.");
+        }
+
+        if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
+            throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại.");
+        }
+
+        autoBidding.setMaxLimit(maxLimit);
         return autoBiddingDAO.update(autoBidding);
     }
 
@@ -104,11 +119,5 @@ public class AutoBiddingService {
     public List<AutoBidding> findActiveConfigs(String auctionId) {
         return autoBiddingDAO.findActiveByAuctionId(auctionId);
     }
-
-    /**
-     * Thực thi AutoBidding
-     * Sử dụng Proxy Bidding để tránh sập chương trình
-     */
-    public void processAutoBidding(String auctionId, BigDecimal currentPrice) {}
 }
 

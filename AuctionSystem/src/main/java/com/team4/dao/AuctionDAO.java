@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 
 public interface AuctionDAO {
     Auction findById(String id);
+    Auction findById(Connection conn, String id);
     Auction findByItemId(String itemId);
     List<Auction> findAll();
 
