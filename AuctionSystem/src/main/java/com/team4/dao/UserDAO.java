@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 
 public interface UserDAO {
-    User findById(String id); // tìm theo id
+    User findById(String id);// tìm theo id
+    User findById(Connection conn, String id);
     User findByUsername(String username); // tìm khi login
     List<User> findAll();
     boolean insert(User user); // đăng kí tài khoản mới

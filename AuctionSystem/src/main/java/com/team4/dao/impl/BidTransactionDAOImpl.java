@@ -24,11 +24,10 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
     }
 
     @Override
-    public boolean insert(BidTransaction transaction) {
+    public boolean insert(Connection conn, BidTransaction transaction) {
         String sql = "INSERT INTO bid_transactions (id, created_at, auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, transaction.getId());
             stmt.setTimestamp(2, Timestamp.valueOf(transaction.getCreatedAt()));
@@ -88,8 +87,8 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
     @Override
     public BidTransaction getHighestBid(String auctionId) {
         // Sắp xếp giá giảm dần và lấy 1 dòng đầu tiên (LIMIT 1)
-        // Dùng bid_time DESC để xử lý 2 bid cùng giá
-        String sql = "SELECT * FROM bid_transactions WHERE auction_id = ? ORDER BY bid_amount DESC, bid_time DESC LIMIT 1";
+        // Dùng bid_time ASC để xử lý 2 bid cùng giá
+        String sql = "SELECT * FROM bid_transactions WHERE auction_id = ? ORDER BY bid_amount DESC, bid_time ASC LIMIT 1";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
