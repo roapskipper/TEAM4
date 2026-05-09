@@ -14,4 +14,5 @@ public interface AuctionDAO {
     boolean insert(Auction auction);
     boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus);
     boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId);
+    boolean updateEndTime(String id, java.time.LocalDateTime newEndTime);
 }

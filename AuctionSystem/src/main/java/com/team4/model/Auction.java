@@ -149,6 +149,9 @@ public class Auction extends Entity {
     public LocalDateTime getEndTime() {
         return endTime;
     }
+    public void extendEndTime(long seconds) {
+        this.endTime = this.endTime.plusSeconds(seconds);
+    }
     public AuctionStatus getStatus() {
         return status;
     }

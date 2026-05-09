@@ -202,6 +202,20 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
+    
+    @Override
+    public boolean updateEndTime(String id, LocalDateTime newEndTime) {
+        String sql = "UPDATE auctions SET end_time = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setTimestamp(1, Timestamp.valueOf(newEndTime));
+            stmt.setString(2, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
