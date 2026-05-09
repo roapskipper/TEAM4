@@ -9,6 +9,14 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import javafx.application.Platform;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class BiddingRoomController implements Initializable {
 
@@ -27,6 +35,8 @@ public class BiddingRoomController implements Initializable {
     @FXML private TextField chatInput;
 
     private double currentBid = 28500000;
+    private LocalDateTime auctionEndTime = LocalDateTime.now().plusMinutes(5);
+    private Timeline countdownTimeline;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -34,6 +44,56 @@ public class BiddingRoomController implements Initializable {
         loadBidHistory();
         loadChat();
         updateBidInfo();
+        startCountdown();
+    }
+
+    private void startCountdown() {
+        KeyFrame frame = new KeyFrame(Duration.seconds(1), event -> {
+            long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
+            if (secondsBetween <= 0) {
+                timeLeft.setText("00:00:00 (Ended)");
+            } else {
+                long h = secondsBetween / 3600;
+                long m = (secondsBetween % 3600) / 60;
+                long s = secondsBetween % 60;
+                timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+            }
+        });
+        countdownTimeline = new Timeline(frame);
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    public void startNetworkListener(com.team4.client.Client client) {
+        client.startListening(message -> {
+            Platform.runLater(() -> {
+                try {
+                    JsonObject json = JsonParser.parseString(message).getAsJsonObject();
+                    if (json.has("action") && "BID_UPDATE".equals(json.get("action").getAsString())) {
+                        if (json.has("data")) {
+                            JsonObject data = json.getAsJsonObject("data");
+                            
+                            // Cập nhật giá mới
+                            if (data.has("amount")) {
+                                double newAmount = data.get("amount").getAsDouble();
+                                currentBid = newAmount;
+                                updateBidInfo();
+                                addBidToHistory(data.has("bidderId") ? data.get("bidderId").getAsString() : "Unknown", newAmount);
+                                addChartPoint(newAmount);
+                            }
+                            
+                            // Anti-sniping: Cập nhật thời gian kết thúc mới
+                            if (data.has("endTime")) {
+                                String endTimeStr = data.get("endTime").getAsString();
+                                auctionEndTime = LocalDateTime.parse(endTimeStr);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     private void updateBidInfo() {
