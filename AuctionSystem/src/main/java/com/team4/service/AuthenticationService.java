@@ -18,7 +18,8 @@ public class AuthenticationService {
     }
 
     // Tạo tài khoản Bidder mới
-    public void registerBidder(String username, String rawPassword, String fullName, String email, String shippingAddress, String phoneNumber) {
+    public void registerBidder(String username, String rawPassword, String fullName, String email,
+            String shippingAddress, String phoneNumber) {
         // Kiểm tra xem username đã tồn tại chưa
         if (userDAO.findByUsername(username) != null) {
             throw new BusinessException("Tên đăng nhập đã tồn tại");
