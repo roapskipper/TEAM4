@@ -101,7 +101,7 @@ public class AuctionService {
         List<Auction> activeAuctions = auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING);
         LocalDateTime now = LocalDateTime.now();
         for (Auction auction : activeAuctions) {
-            if (auction.getEndTime().isBefore(now)) {
+            if (!auction.getEndTime().isAfter(now)) {
                 auction.close();
                 auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED);
             }
