@@ -125,6 +125,18 @@
                                    styleClass="input-field"/>
                 </VBox>
 
+                <Hyperlink fx:id="toggleAdminCodeLink"
+                           text="Login as admin?"
+                           onAction="#onToggleAdminCode"
+                           styleClass="admin-toggle-link"/>
+
+                <VBox fx:id="adminCodeBox" spacing="6" managed="false" visible="false">
+                    <Label text="Enter Admin Code" styleClass="form-label"/>
+                    <PasswordField fx:id="loginAdminCode"
+                                   promptText="Required for admin staff only"
+                                   styleClass="input-field"/>
+                </VBox>
+
                 <Label fx:id="loginError" text="" managed="false" visible="false"
                        styleClass="error-message"/>
 
