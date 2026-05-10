@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 package com.team4;
 
 import javafx.application.Application;
@@ -75,11 +74,3 @@ public class Main extends Application {
         launch(args);
     }
 }
-=======
-import com.team4.util.DatabaseSetup;
-
-public static void main(String[] args) {
-    DatabaseSetup.initDatabase(); // Khởi tạo pool kết nối
-    System.out.println("Setup thành công!");
-}
->>>>>>> DAO-minhtrung

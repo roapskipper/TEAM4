@@ -148,13 +148,13 @@
                     </fx:define>
 
                     <HBox spacing="8">
-                        <ToggleButton fx:id="roleBidder" text="⚡ Bidder"
+                        <ToggleButton fx:id="roleBidder" text="Bidder"
                                       toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       selected="true"
                                       onAction="#onRoleChanged"
                                       styleClass="role-btn-active"/>
-                        <ToggleButton fx:id="roleSeller" text="🏪 Seller"
+                        <ToggleButton fx:id="roleSeller" text="Seller"
                                       toggleGroup="$roleGroup"
                                       HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                       onAction="#onRoleChanged"
@@ -180,6 +180,13 @@
                     <Label text="Email" styleClass="form-label"/>
                     <TextField fx:id="regEmail"
                                promptText="Enter email"
+                               styleClass="input-field"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text="Phone Number" styleClass="form-label"/>
+                    <TextField fx:id="regPhone"
+                               promptText="Enter phone number (e.g. 0987654321)"
                                styleClass="input-field"/>
                 </VBox>
 

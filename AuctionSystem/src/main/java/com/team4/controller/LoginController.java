@@ -27,6 +27,7 @@ public class LoginController {
     @FXML private TextField regStoreName;
     @FXML private TextField regUsername;
     @FXML private TextField regEmail;
+    @FXML private TextField regPhone;
     @FXML private PasswordField regPassword;
     @FXML private PasswordField regConfirmPassword;
     @FXML private Label regError;
@@ -208,11 +209,18 @@ public class LoginController {
     private void onRegisterSubmit() {
         String username = regUsername.getText();
         String email = regEmail.getText();
+        String phone = regPhone.getText() == null ? "" : regPhone.getText().trim();
         String password = regPassword.getText();
         String confirmPass = regConfirmPassword.getText();
 
-        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
+        if (username.isEmpty() || email.isEmpty() || phone.isEmpty()
+                || password.isEmpty() || confirmPass.isEmpty()) {
             showError(regError, "Please fill in all required fields!");
+            return;
+        }
+        // Vietnamese phone: starts with 0 (10 digits) or +84 (followed by 9 digits)
+        if (!phone.matches("^(0\\d{9}|\\+84\\d{9})$")) {
+            showError(regError, "Invalid phone number! Use format 0xxxxxxxxx or +84xxxxxxxxx.");
             return;
         }
         if (!password.equals(confirmPass)) {
@@ -234,7 +242,7 @@ public class LoginController {
             if (isSeller) {
                 response = client.registerSeller(username, password, username, email, storeName);
             } else {
-                response = client.registerBidder(username, password, username, email, "Not updated", "09673761411");
+                response = client.registerBidder(username, password, username, email, "Not updated", phone);
             }
 
             if (response != null) {
