@@ -54,7 +54,7 @@ public class BiddingService {
             // 5. Update the new highest bid and bidder to the DB
             auctionDAO.updateCurrentBid(auctionId, auction.getCurrentPrice(), auction.getCurrentHighestBidderId());
 
-            // 6. Anti-sniping logic: if bid is placed within the last 30 seconds, extend time by 60 seconds
+            // 6. Anti-sniping logic: if bid is placed within the last X=30 seconds, extend time by Y=60 seconds (Verified with BTL)
             long secondsLeft = ChronoUnit.SECONDS.between(LocalDateTime.now(), auction.getEndTime());
             if (secondsLeft >= 0 && secondsLeft <= 30) {
                 auction.extendEndTime(60);
