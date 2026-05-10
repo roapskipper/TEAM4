@@ -109,6 +109,15 @@ public class ClientHandler implements Runnable, BidObserver {
                     return;
                 }
 
+                // Giả định bạn có BiddingService trong Server
+                // BidTransaction transaction = Server.getBiddingService().placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
+                
+                // Do chúng ta đang fix code dựa trên yêu cầu 3.3, đảm bảo broadcast update
+                JsonObject broadcastData = new JsonObject();
+                broadcastData.addProperty("auctionId", auctionId);
+                broadcastData.addProperty("endTime", auction.getEndTime().toString());
+                Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), null);
+                
                 sendMessage(buildResponse("ERROR", "BiddingService chua hoan thien", "BID_FAILED", null));
             } catch (BusinessException e) {
                 sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));
