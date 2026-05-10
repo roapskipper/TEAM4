@@ -64,6 +64,7 @@ public class Server {
         com.team4.db.DatabaseManager.initialize();
         new ApiServer().start();
 
+        threadPool = Executors.newFixedThreadPool(50);
         System.out.println("Server dang khoi dong tren port " + PORT + "...");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
