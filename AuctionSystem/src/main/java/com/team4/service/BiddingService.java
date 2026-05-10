@@ -78,6 +78,9 @@ public class BiddingService {
         java.util.List<com.team4.model.AutoBidding> activeAutoBids = autoBiddingDAO.findActiveByAuctionId(auctionId);
         if (activeAutoBids == null || activeAutoBids.isEmpty()) return;
 
+        // Ưu tiên người đăng ký auto-bid trước (Timestamp-based priority)
+        activeAutoBids.sort(java.util.Comparator.comparing(com.team4.model.Entity::getCreatedAt));
+
         boolean hasNewBid = true;
         while (hasNewBid) {
             hasNewBid = false;
