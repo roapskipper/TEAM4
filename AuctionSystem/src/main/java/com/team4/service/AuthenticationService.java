@@ -4,6 +4,7 @@ import com.team4.dao.UserDAO;
 import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.model.Seller;
+import com.team4.model.Admin;
 import com.team4.util.PasswordHasher;
 import com.team4.util.BusinessException;
 
@@ -42,7 +43,7 @@ public class AuthenticationService {
     }
 
     // Đăng nhập
-    public User login(String username, String rawPassword) {
+    public User login(String username, String rawPassword, String adminCode) {
         User user = userDAO.findByUsername(username);
         if (user == null) {
             throw new BusinessException("Tên đăng nhập không tồn tại");
@@ -50,6 +51,17 @@ public class AuthenticationService {
         if (!user.verifyPassword(rawPassword)) {
             throw new BusinessException("Mật khẩu không đúng");
         }
+        
+        if (user.getRole() == User.Role.ADMIN) {
+            if (adminCode == null || adminCode.trim().isEmpty()) {
+                throw new BusinessException("Vui lòng nhập mã Admin");
+            }
+            Admin admin = (Admin) user;
+            if (!adminCode.equals(admin.getAdminCodeHash())) {
+                throw new BusinessException("Mã Admin không hợp lệ");
+            }
+        }
+        
         return user;
     }
 
