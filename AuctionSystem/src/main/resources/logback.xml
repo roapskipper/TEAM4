@@ -1,0 +1,45 @@
+<configuration>
+    <!-- 1. Ghi ra màn hình -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- %d{HH:mm:ss}   // thời gian (giờ:phút:giây)
+            %-5level       // level log (INFO, ERROR...)
+            [%thread]      // tên thread đang chạy
+            %logger{36}    // tên class logger (tối đa 36 ký tự)
+            %msg           // nội dung log
+            %n             // xuống dòng -->
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 2. Ghi ra File Vật Lý (Kèm cơ chế cắt file tự động) để chống sập Server -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/auction_system.log</file> <!-- File log hiện tại -->
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Tự động đóng gói file theo ngày, thêm số thứ tự (%i) nếu file quá to -->
+            <fileNamePattern>logs/archive/auction_system_%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>      <!-- Cắt file mới khi đạt 10MB -->
+            <maxHistory>10</maxHistory>          <!-- Chỉ giữ log của 10 ngày gần nhất -->
+            <totalSizeCap>1GB</totalSizeCap>     <!-- Tổng dung lượng thư mục log không vượt quá 1GB -->
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 3. Bọc File Appender bằng cơ chế Bất đồng bộ (Chống nghẽn I/O) để bảo vệ hiệu năng -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <!-- Đẩy log vào hàng đợi RAM, từ từ ghi xuống đĩa -->
+        <appender-ref ref="FILE" />
+        <queueSize>512</queueSize>               <!-- Kích thước hàng đợi -->
+        <discardingThreshold>0</discardingThreshold> <!-- 0 = Tuyệt đối không vứt bỏ log kể cả khi hàng đợi đầy -->
+    </appender>
+
+    <!-- 4. Nạp cấu hình vào Root -->
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" /> <!-- Dùng bản Async thay vì bản File gốc -->
+    </root>
+</configuration>

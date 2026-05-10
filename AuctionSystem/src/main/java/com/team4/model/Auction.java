@@ -5,6 +5,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 public class Auction extends Entity {
+    // Giả sử luật: Nếu bid trong 1 phút cuối -> Cộng thêm 1 phút
+    private static final int SNIPING_THRESHOLD_MINUTES = 1;
+    private static final int EXTENSION_MINUTES = 1;
     // enum các trạng thái của phiên đấu giá
     public enum AuctionStatus {
         PENDING, RUNNING, FINISHED, PAID ,CANCELLED
@@ -121,6 +124,18 @@ public class Auction extends Entity {
     // Chuyển từ PENDING sang ACTIVE
     public void approve() {
         this.status = AuctionStatus.RUNNING;
+    }
+
+    public boolean applyAntiSniping() {
+        LocalDateTime now = LocalDateTime.now();
+        // Nếu thời gian hiện tại cộng thêm THRESHOLD mà vượt quá endTime
+        if (now.plusMinutes(SNIPING_THRESHOLD_MINUTES).isAfter(this.endTime)
+                && now.isBefore(this.endTime)) {
+            // Dời endTime lên thêm EXTENSION_MINUTES
+            this.endTime = this.endTime.plusMinutes(EXTENSION_MINUTES);
+            return true;
+        }
+        return false;
     }
 
     // Getter/ Setter

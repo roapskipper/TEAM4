@@ -3,6 +3,8 @@ package com.team4.dao.impl;
 import com.team4.model.AutoBidding;
 import com.team4.db.DatabaseManager;
 import com.team4.dao.AutoBiddingDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -11,15 +13,18 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 public class AutoBiddingDAOImpl implements AutoBiddingDAO {
+    private static final Logger logger = LoggerFactory.getLogger(AutoBiddingDAOImpl.class);
+
     private AutoBidding mapRowToAutoBidding(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         LocalDateTime createdAt = rs.getTimestamp("created_at").toLocalDateTime();
         String auctionId = rs.getString("auction_id");
         String bidderId = rs.getString("bidder_id");
         BigDecimal maxLimit = rs.getBigDecimal("max_limit");
+        BigDecimal increment = rs.getBigDecimal("increment_amount");
         Boolean isActive = rs.getBoolean("is_active");
 
-        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, isActive);
+        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, increment, isActive);
     }
     @Override
     public AutoBidding findById(String id) {
@@ -31,7 +36,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace(); }
+            logger.error("Không thể tìm cấu hình có id={}", id, e); }
     return null;}
     @Override
     public AutoBidding findByAuctionAndBidder(String auctionId, String bidderId) {
@@ -44,7 +49,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm cấu hình với auctionId={} bidderId={}", auctionId, bidderId, e);
         }
         return null;
     }
@@ -59,7 +64,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm cấu hình với auctionId={} bidderId={} trong transaction", auctionId, bidderId, e);
         }
         return null;
     }
@@ -78,7 +83,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm danh sách cấu hình với auctionId={} trong transaction", auctionId, e);
         }
         return list;
     }
@@ -98,7 +103,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm danh sách cấu hình với auctionId={}", auctionId, e);
         }
         return list;
     }
@@ -117,7 +122,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo cấu hình có id={}", autoBidding.getId(), e);
             return false;
         }
     }
@@ -135,7 +140,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo cấu hình có id={} trong transaction", autoBidding.getId(), e);
             return false;
         }
     }
@@ -150,7 +155,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Khong thể update auto-bid id={} trong transaction", autoBidding.getId(), e);
             return false;
         }
     }
@@ -166,7 +171,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update auto-bid id={}", autoBidding.getId(), e);
             return false;
         }
     }
@@ -180,7 +185,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
             stmt.setString(2,id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update trạng thái auto-bid id={} isActive={}", id, isActive, e);
             return false;
         }
     }
@@ -193,7 +198,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
             stmt.setString(2,id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update trạng thái auto-bid id={} isActive={} trong transaction", id, isActive, e);
             return false;
         }
     }
