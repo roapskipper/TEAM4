@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 public class Server {
     private static final int PORT = 18368;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
+    private static ExecutorService threadPool;
 
     private static final AuctionService auctionService = new AuctionService(
             new AuctionDAOImpl(),
