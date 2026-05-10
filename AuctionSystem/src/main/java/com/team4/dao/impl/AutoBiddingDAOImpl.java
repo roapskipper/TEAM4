@@ -21,9 +21,10 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
         String auctionId = rs.getString("auction_id");
         String bidderId = rs.getString("bidder_id");
         BigDecimal maxLimit = rs.getBigDecimal("max_limit");
+        BigDecimal increment = rs.getBigDecimal("increment_amount");
         Boolean isActive = rs.getBoolean("is_active");
 
-        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, isActive);
+        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, increment, isActive);
     }
     @Override
     public AutoBidding findById(String id) {

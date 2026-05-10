@@ -162,13 +162,6 @@ public final class DatabaseSetup {
             }
 
         } catch (SQLException e) {
-            // KIỂM TRA: Nếu là lỗi "Đã tồn tại" thì bỏ qua
-            if (isIgnorableSchemaError(e)) {
-                System.out.println("Bỏ qua lỗi: " + e.getMessage());
-            } else {
-                // Nếu là lỗi khác (như sai cú pháp), thì ném văng ra
-                throw new RuntimeException(e);
-            }
         }
     }
 

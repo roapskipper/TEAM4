@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefWidth="1100" spacing="24" style="-fx-background-color: transparent;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.AdminDashboardController">
+
+    <HBox spacing="16">
+        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <StackPane prefHeight="44" prefWidth="44" style="-fx-background-color: rgba(59,130,246,0.15); -fx-background-radius: 12;">
+                    <Label style="-fx-font-size: 20;" text="0" />
+                </StackPane>
+                <VBox spacing="2">
+                    <Label fx:id="totalUsersLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="1,245" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Total Users" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <StackPane prefHeight="44" prefWidth="44" style="-fx-background-color: rgba(239,68,68,0.15); -fx-background-radius: 12;">
+                    <Label style="-fx-font-size: 20;" text="1" />
+                </StackPane>
+                <VBox spacing="2">
+                    <Label fx:id="lockedUsersLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="12" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Locked Accounts" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <StackPane prefHeight="44" prefWidth="44" style="-fx-background-color: rgba(234,179,8,0.15); -fx-background-radius: 12;">
+                    <Label style="-fx-font-size: 20;" text="2" />
+                </StackPane>
+                <VBox spacing="2">
+                    <Label fx:id="pendingAuctionsLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="8" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Pending Auctions" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <StackPane prefHeight="44" prefWidth="44" style="-fx-background-color: rgba(34,197,94,0.15); -fx-background-radius: 12;">
+                    <Label style="-fx-font-size: 20;" text="3" />
+                </StackPane>
+                <VBox spacing="2">
+                    <Label fx:id="liveAuctionsLabel" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;" text="24" />
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Live Auctions" />
+                </VBox>
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <HBox spacing="16" VBox.vgrow="ALWAYS">
+        <VBox prefWidth="500" styleClass="admin-card" HBox.hgrow="ALWAYS">
+            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 16 0;" text="Registration Statistics" />
+            <BarChart fx:id="regChart" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                <xAxis><CategoryAxis label="Month" style="-fx-tick-label-fill: #6b7280;" /></xAxis>
+                <yAxis><NumberAxis label="Users" style="-fx-tick-label-fill: #6b7280;" /></yAxis>
+            </BarChart>
+        </VBox>
+
+        <VBox prefWidth="500" spacing="12" styleClass="admin-card" HBox.hgrow="ALWAYS">
+            <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 4 0;" text="System Alerts" />
+
+            <VBox fx:id="alertsContainer" spacing="8" VBox.vgrow="ALWAYS">
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>

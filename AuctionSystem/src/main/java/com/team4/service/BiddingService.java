@@ -67,7 +67,7 @@ public class BiddingService {
                 }
 
                 if (maxAmount == null || maxAmount.compareTo(auction.getCurrentPrice().add(auction.getBidIncrement())) < 0) {
-                    logger.warn("Đặt giá thất bại: Giá đặt ({}) không cao hơn giá hiện tại ({}) ít nhất một bước giá ({}).", 
+                    logger.warn("Đặt giá thất bại: Giá đặt ({}) không cao hơn giá hiện tại ({}) ít nhất một bước giá ({}).",
                             maxAmount, auction.getCurrentPrice(), auction.getBidIncrement());
                     throw new BusinessException("Mức giá tối đa phải cao hơn giá hiện tại ít nhất một bước giá.");
                 }
@@ -90,7 +90,7 @@ public class BiddingService {
 
                     // Nếu đã có config rồi thì cập nhật maxLimit và bật nếu đang tắt
                 } else {
-                    logger.debug("Cập nhật giới hạn Auto-bid hiện tại cho bidderId={}, oldMax={}, newMax={}", 
+                    logger.debug("Cập nhật giới hạn Auto-bid hiện tại cho bidderId={}, oldMax={}, newMax={}",
                             bidderId, existing.getMaxLimit(), maxAmount);
                     existing.setMaxLimit(maxAmount);
                     if (!existing.isActive()) {
@@ -206,7 +206,7 @@ public class BiddingService {
             displayPrice = runnerUp.getMaxLimit()
                     .add(increment)
                     .min(winner.getMaxLimit());
-            logger.debug("Tính toán Proxy Bid: winner={}, runnerUp={}, calculatedPrice={}", 
+            logger.debug("Tính toán Proxy Bid: winner={}, runnerUp={}, calculatedPrice={}",
                     winner.getBidderId(), runnerUp.getBidderId(), displayPrice);
         } else {
             logger.debug("Chỉ có một ứng cử viên dẫn đầu: bidderId={}, currentPrice={}", winner.getBidderId(), displayPrice);

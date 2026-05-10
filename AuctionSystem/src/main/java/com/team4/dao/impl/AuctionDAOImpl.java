@@ -141,7 +141,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm auctions với status={}", status, e);
+            e.printStackTrace();
         }
         return list;
     }
