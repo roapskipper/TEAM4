@@ -79,7 +79,8 @@ public class AuctionService {
     }
 
     /**
-     * Hủy phiên đấu giá: chuyển status → CANCELLED
+     * Hủy phiên đấu giá: chuyển status -> CANCELLED
+     * Dành riêng cho Super Admin
      */
     public Auction cancelAuction(String auctionId) {
         Auction auction = auctionDAO.findById(auctionId);
@@ -92,6 +93,21 @@ public class AuctionService {
         auction.cancel();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
         return auction;
+    }
+
+    /**
+     * Từ chối duyệt phiên đấu giá: chuyển status từ PENDING -> CANCELLED
+     */
+    public void rejectAuction(String auctionId) {
+        Auction auction = auctionDAO.findById(auctionId);
+        if (auction == null) {
+            throw new BusinessException("Cuộc đấu giá không tồn tại");
+        }
+        if (auction.getStatus() != Auction.AuctionStatus.PENDING) {
+            throw new BusinessException("Chỉ có thể từ chối cuộc đấu giá đang chờ duyệt");
+        }
+        auction.cancel();
+        auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
     }
 
     /**

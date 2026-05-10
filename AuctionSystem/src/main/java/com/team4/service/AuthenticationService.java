@@ -1,6 +1,7 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.model.Admin;
 import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.model.Seller;
@@ -41,7 +42,7 @@ public class AuthenticationService {
         userDAO.insert(seller);
     }
 
-    // Đăng nhập
+    // Đăng nhập cho Bidder & Seller
     public User login(String username, String rawPassword) {
         User user = userDAO.findByUsername(username);
         if (user == null) {
@@ -51,6 +52,25 @@ public class AuthenticationService {
             throw new BusinessException("Mật khẩu không đúng");
         }
         return user;
+    }
+
+    // Đăng nhập cho Admin
+    public Admin loginAdmin(String username, String rawPassword, String rawAdminCode) {
+        User user = userDAO.findByUsername(username);
+
+        if (user == null)
+            throw new BusinessException("Tên đăng nhập không tồn tại");
+
+        if (!(user instanceof Admin admin))
+            throw new BusinessException("Tài khoản không có quyền admin");
+
+        if (!admin.verifyPassword(rawPassword))
+            throw new BusinessException("Mật khẩu không đúng");
+
+        if (!admin.verifyAdminCode(rawAdminCode))
+            throw new BusinessException("Mã admin không đúng");
+
+        return admin;
     }
 
     // Đỏi mật khẩu

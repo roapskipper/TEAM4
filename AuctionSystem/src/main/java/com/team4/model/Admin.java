@@ -1,5 +1,7 @@
 package com.team4.model;
 
+import com.team4.util.PasswordHasher;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
@@ -60,6 +62,12 @@ public class Admin extends User {
             throw new IllegalArgumentException("adminCode phải gồm 8-128 kí tự, chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt; không chứa khoảng trắng.");
         }
     }
+
+    public boolean verifyAdminCode(String rawAdminCode) {
+        // Gọi class tiện ích PasswordHasher để kiểm tra
+        return PasswordHasher.checkPassword(rawAdminCode, this.adminCodeHash);
+    }
+
     // Những quyền của Admin sẽ do Service quản lý
     // Hiển thị thông tin của Admin và quyền hạn của họ (Dùng Polymorphism để hiển thị khác nhau giữa các loại User)
     @Override
