@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
  * Kế thừa từ User
  */
 public class Bidder extends User {
+    private static final long serialVersionUID = 1L;
     private String shippingAddress;
     private String phoneNumber;
     private static final Pattern PHONE_PATTERN = Pattern.compile(

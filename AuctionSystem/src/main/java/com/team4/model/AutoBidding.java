@@ -9,6 +9,7 @@ import java.util.Optional;
  *
  */
 public class AutoBidding extends Entity {
+    private static final long serialVersionUID = 1L;
     private final String auctionId;
     private final String bidderId;
     private BigDecimal maxLimit;        // giới hạn cao nhất bidder chấp nhận trả

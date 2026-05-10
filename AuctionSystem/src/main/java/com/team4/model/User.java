@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 public abstract class User extends Entity {
+    private static final long serialVersionUID = 1L;
 
     // Dùng enum
     public enum Role {
@@ -221,3 +222,4 @@ public abstract class User extends Entity {
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
 }
+

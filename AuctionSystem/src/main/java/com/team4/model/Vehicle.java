@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
  * Vehicle: model cho nhóm hàng phương tiện.
  */
 public class Vehicle extends Item {
+    private static final long serialVersionUID = 1L;
     // enum cho hộp số
     public enum Transmission {
         MANUAL,      // Số sàn

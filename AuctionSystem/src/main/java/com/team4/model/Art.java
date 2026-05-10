@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 /** Art: Đại diện cho các sản phẩm nghệ thuật */
 public class Art extends Item {
+    private static final long serialVersionUID = 1L;
     // enum Medium (cho nó chất)
     public enum Medium {
         OIL_PAINT,          // Sơn dầu
@@ -147,4 +148,5 @@ public class Art extends Item {
     public void setDimensions(String dimensions) { this.dimensions = normalizeOptional(dimensions);
     validateDimensions(this.dimensions);}
 }
+
 

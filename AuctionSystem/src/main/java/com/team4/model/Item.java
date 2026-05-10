@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
  * - Không chứa nghiệp vụ cập nhật nhiều bảng (AuctionService chịu trách nhiệm đó)
  */
 public abstract class Item extends Entity {
+    private static final long serialVersionUID = 1L;
     // Dùng enum cho category
     public enum ItemCategory {
         ART,

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
  * Kế thừa từ User
  */
 public class Admin extends User {
+    private static final long serialVersionUID = 1L;
     // Dùng enum cho 2 kiểu Admin
     public enum AccessLevel {
         MODERATOR(1),

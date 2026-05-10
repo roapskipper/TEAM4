@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.Objects;
 
 public abstract class Entity {
+    private static final long serialVersionUID = 1L;
     private final String id;
     private final LocalDateTime createdAt;
 
@@ -45,3 +46,4 @@ public abstract class Entity {
         return createdAt;
     }
 }
+

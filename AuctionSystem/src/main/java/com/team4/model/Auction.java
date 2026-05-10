@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 public class Auction extends Entity {
+    private static final long serialVersionUID = 1L;
     // enum các trạng thái của phiên đấu giá
     public enum AuctionStatus {
         PENDING, RUNNING, FINISHED, PAID ,CANCELLED
