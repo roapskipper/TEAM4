@@ -73,7 +73,7 @@ public class Server {
 
                 ClientHandler handler = new ClientHandler(socket);
                 clientHandlers.add(handler);
-                new Thread(handler).start();
+                threadPool.execute(handler);
             }
         } catch (IOException e) {
             e.printStackTrace();
