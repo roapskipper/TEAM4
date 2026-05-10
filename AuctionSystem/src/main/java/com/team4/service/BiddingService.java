@@ -58,6 +58,7 @@ public class BiddingService {
             long secondsLeft = ChronoUnit.SECONDS.between(LocalDateTime.now(), auction.getEndTime());
             if (secondsLeft >= 0 && secondsLeft <= 30) {
                 auction.extendEndTime(60);
+                // Đảm bảo sau khi gia hạn, endTime mới phải được update xuống database
                 auctionDAO.updateEndTime(auctionId, auction.getEndTime());
             }
 
