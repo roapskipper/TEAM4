@@ -123,4 +123,20 @@ public class AuctionService {
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.PAID);
         return auction;
     }
+
+    /**
+     * Hủy phiên đấu giá do người thắng không đủ tiền
+     */
+    public Auction cancelDueToInsufficientFunds(String auctionId) {
+        Auction auction = auctionDAO.findById(auctionId);
+        if (auction == null) {
+            throw new BusinessException("Cuộc đấu giá không tồn tại");
+        }
+        if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
+            throw new BusinessException("Chỉ có thể hủy cuộc đấu giá đã kết thúc");
+        }
+        auction.cancel();
+        auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
+        return auction;
+    }
 }
