@@ -90,7 +90,7 @@ public class BiddingService {
                 if (ab.getBidderId().equals(auction.getCurrentHighestBidderId())) continue;
 
                 java.util.Optional<BigDecimal> nextBidOpt = ab.calculateNextBid(auction.getCurrentPrice());
-                if (nextBidOpt.isPresent()) {
+                if (nextBidOpt.isPresent() && nextBidOpt.get().compareTo(ab.getMaxLimit()) <= 0) {
                     // Cập nhật giá mới theo increment
                     auction.applyBid(ab.getBidderId(), nextBidOpt.get());
                     bidTransactionDAO.insert(new BidTransaction(auctionId, ab.getBidderId(), nextBidOpt.get()));
