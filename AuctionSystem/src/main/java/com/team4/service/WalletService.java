@@ -72,4 +72,17 @@ public class WalletService {
         }
         return user;
     }
+
+    // Hoan tien cho nguoi thua cuoc
+    public User refund(String userId, BigDecimal amount) {
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            throw new BusinessException("Người dùng không tồn tại");
+        }
+        user.deposit(amount);
+        if (!userDAO.updateBalance(userId, user.getBalance())) {
+            throw new BusinessException("Hoàn tiền thất bại do lỗi cơ sở dữ liệu");
+        }
+        return user;
+    }
 }
