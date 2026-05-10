@@ -65,6 +65,13 @@ public class Server {
         new ApiServer().start();
 
         threadPool = Executors.newFixedThreadPool(50);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Dang tat server. Giai phong thread pool...");
+            if (threadPool != null && !threadPool.isShutdown()) {
+                threadPool.shutdown();
+            }
+        }));
+
         System.out.println("Server dang khoi dong tren port " + PORT + "...");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
