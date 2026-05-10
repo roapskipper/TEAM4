@@ -81,6 +81,11 @@ public class Server {
                 ClientHandler handler = new ClientHandler(socket);
                 clientHandlers.add(handler);
                 threadPool.execute(handler);
+
+                if (threadPool instanceof java.util.concurrent.ThreadPoolExecutor) {
+                    java.util.concurrent.ThreadPoolExecutor tpe = (java.util.concurrent.ThreadPoolExecutor) threadPool;
+                    System.out.println("Trang thai ThreadPool - Active: " + tpe.getActiveCount() + ", Pool Size: " + tpe.getPoolSize());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
