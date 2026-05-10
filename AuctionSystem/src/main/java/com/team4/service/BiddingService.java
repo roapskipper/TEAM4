@@ -120,6 +120,15 @@ public class BiddingService {
                 boolean samePrice = result.displayPrice().compareTo(auction.getCurrentPrice()) == 0;
 
                 if (!sameLeader || !samePrice) {
+                    boolean isExtended = auction.applyAntiSniping(); // Kiểm tra và dời giờ trong Model
+
+                    if (isExtended) {
+                        logger.info("Kích hoạt Anti-Sniping: Dời thời gian kết thúc phiên {} tới {}", auctionId, auction.getEndTime());
+                        // Cập nhật thời gian mới xuống Database
+                        if (!auctionDAO.updateEndTime(conn, auctionId, auction.getEndTime())) {
+                            throw new BusinessException("Lỗi hệ thống khi gia hạn thời gian Anti-Sniping.");
+                        }
+                    }
                     logger.info("Cập nhật người dẫn đầu mới: auctionId={}, oldLeader={}, newLeader={}, oldPrice={}, newPrice={}",
                             auctionId, auction.getCurrentHighestBidderId(), result.winnerBidderId(), auction.getCurrentPrice(), result.displayPrice());
                     if (!auctionDAO.updateCurrentBid(conn, auctionId, result.displayPrice(), result.winnerBidderId()) ||

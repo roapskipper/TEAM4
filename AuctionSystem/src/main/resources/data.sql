@@ -1,6 +1,5 @@
 -- =========================================================================
 -- PHẦN 1: TÀI KHOẢN ADMIN (1 Super Admin, 3 Moderator)
--- Tất cả Admin đều dùng chung Mật khẩu: admin123 | AdminCode: adminteam4
 -- =========================================================================
 
 -- Super Admin: admin123 & adminteam4

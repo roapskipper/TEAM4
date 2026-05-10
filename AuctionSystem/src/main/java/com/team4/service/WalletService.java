@@ -1,4 +1,6 @@
 package com.team4.service;
+import com.team4.dao.UserDAO;
+import com.team4.model.User;
 import com.team4.util.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

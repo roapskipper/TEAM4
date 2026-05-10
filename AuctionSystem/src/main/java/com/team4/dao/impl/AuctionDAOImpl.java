@@ -220,6 +220,20 @@ public class AuctionDAOImpl implements AuctionDAO {
         }
     }
 
+    @Override
+    // Trong AuctionDAOImpl
+    public boolean updateEndTime(Connection conn, String auctionId, LocalDateTime newEndTime){
+        String sql = "UPDATE auctions SET end_time = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setTimestamp(1, Timestamp.valueOf(newEndTime));
+            stmt.setString(2, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Không thể update endTime auctionId={} newEndTime={} trong transaction", auctionId, newEndTime, e);
+            return false;
+        }
+    }
+
     public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
         String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
         try (Connection conn = DatabaseManager.getConnection();
