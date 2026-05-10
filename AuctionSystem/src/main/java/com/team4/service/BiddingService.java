@@ -16,12 +16,15 @@ public class BiddingService {
     private final AuctionDAO auctionDAO;
     private final BidTransactionDAO bidTransactionDAO;
     
+    private final AutoBiddingDAO autoBiddingDAO;
+
     // Map to store locks per auction ID to ensure thread-safety without blocking other auctions
     private final ConcurrentHashMap<String, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
 
-    public BiddingService(AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO) {
+    public BiddingService(AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO, AutoBiddingDAO autoBiddingDAO) {
         this.auctionDAO = auctionDAO;
         this.bidTransactionDAO = bidTransactionDAO;
+        this.autoBiddingDAO = autoBiddingDAO;
     }
 
     private ReentrantLock getLockForAuction(String auctionId) {
@@ -58,6 +61,9 @@ public class BiddingService {
                 auctionDAO.updateEndTime(auctionId, auction.getEndTime());
             }
 
+            // 7. Kích hoạt auto-bidding
+            processAutoBids(auctionId, bidderId);
+
             return transaction;
         } catch (IllegalArgumentException | IllegalStateException e) {
             // Convert domain-specific exceptions to BusinessException
@@ -65,6 +71,34 @@ public class BiddingService {
         } finally {
             // Ensure the lock is ALWAYS released
             lock.unlock();
+        }
+    }
+
+    private void processAutoBids(String auctionId, String currentHighestBidderId) {
+        java.util.List<com.team4.model.AutoBidding> activeAutoBids = autoBiddingDAO.findActiveByAuctionId(auctionId);
+        if (activeAutoBids == null || activeAutoBids.isEmpty()) return;
+
+        boolean hasNewBid = true;
+        while (hasNewBid) {
+            hasNewBid = false;
+            Auction auction = auctionDAO.findById(auctionId);
+            
+            for (com.team4.model.AutoBidding ab : activeAutoBids) {
+                if (ab.getBidderId().equals(auction.getCurrentHighestBidderId())) continue;
+
+                java.util.Optional<BigDecimal> nextBidOpt = ab.calculateNextBid(auction.getCurrentPrice());
+                if (nextBidOpt.isPresent()) {
+                    // Cập nhật giá mới theo increment
+                    auction.applyBid(ab.getBidderId(), nextBidOpt.get());
+                    bidTransactionDAO.insert(new BidTransaction(auctionId, ab.getBidderId(), nextBidOpt.get()));
+                    auctionDAO.updateCurrentBid(auctionId, auction.getCurrentPrice(), auction.getCurrentHighestBidderId());
+                    hasNewBid = true;
+                } else {
+                    // Nếu không thể bid tiếp (ví dụ chạm max limit), tắt auto-bid này
+                    autoBiddingDAO.updateActive(ab.getId(), false);
+                    ab.deactivate();
+                }
+            }
         }
     }
 }
