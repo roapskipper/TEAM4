@@ -201,7 +201,7 @@
 }
 
 .nav-btn:hover {
-    -fx-background-color: #F3F4F6;
+    -fx-background-color: #FBF9F6;
     -fx-text-fill: #2C2C2C;
 }
 
@@ -412,12 +412,10 @@
     -fx-text-fill: #2C2C2C;
     -fx-font-family: "Lato";
     -fx-font-size: 12px;
-    -fx-padding: 10;
+    -fx-padding: 8 4;
     -fx-background-radius: 10;
     -fx-cursor: hand;
     -fx-font-weight: bold;
-    -fx-hgrow: ALWAYS;
-    -fx-max-width: Infinity;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
@@ -636,4 +634,259 @@
 
 .admin-toggle-link:focused {
     -fx-border-color: transparent;
+}
+
+.app-bg {
+    -fx-background-color: #FBF9F6;
+}
+
+.surface-sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent #E5E5E5 transparent transparent;
+}
+
+.surface-header {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent transparent #E5E5E5 transparent;
+}
+
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+    -fx-padding: 0 0 4 0;
+}
+
+.section-title-large {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.muted-text {
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+}
+
+.muted-text-sm {
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+}
+
+.brand-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.brand-tagline {
+    -fx-font-size: 11px;
+    -fx-font-family: "Lato";
+    -fx-text-fill: #555555;
+}
+
+.brand-icon-bg {
+    -fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A);
+    -fx-background-radius: 12;
+}
+
+.brand-icon-bg-circle {
+    -fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A);
+    -fx-background-radius: 50%;
+}
+
+.brand-icon-text {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.role-badge {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-text-fill: #722F37;
+    -fx-background-color: rgba(114, 47, 55, 0.12);
+    -fx-background-radius: 20;
+    -fx-padding: 3 12;
+}
+
+.user-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-text-fill: #2C2C2C;
+}
+
+.status-active {
+    -fx-font-size: 12px;
+    -fx-text-fill: #15803D;
+    -fx-font-family: "Lato";
+}
+
+.status-dot-active {
+    -fx-font-size: 8px;
+    -fx-text-fill: #15803D;
+}
+
+.icon-btn {
+    -fx-background-color: rgba(114, 47, 55, 0.06);
+    -fx-background-radius: 12;
+    -fx-padding: 10 12;
+    -fx-font-size: 16px;
+    -fx-text-fill: #2C2C2C;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.icon-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.14);
+}
+
+.logout-btn {
+    -fx-background-color: rgba(114, 47, 55, 0.06);
+    -fx-background-radius: 10;
+    -fx-text-fill: #2C2C2C;
+    -fx-font-size: 18px;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.logout-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.14);
+    -fx-text-fill: #722F37;
+}
+
+.noti-badge {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-text-fill: white;
+    -fx-padding: 2 6;
+    -fx-background-color: #B91C1C;
+    -fx-background-radius: 10;
+}
+
+.stat-number-accent {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #722F37;
+}
+
+.stat-number-neutral {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.stat-number-muted {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #9CA3AF;
+}
+
+.price-display {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #722F37;
+}
+
+.timer-urgent {
+    -fx-font-family: "Roboto Mono", "Consolas", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #B91C1C;
+}
+
+.dot-separator {
+    -fx-text-fill: #D1D5DB;
+}
+
+.rating-star {
+    -fx-font-size: 12px;
+    -fx-text-fill: #CA8A04;
+    -fx-font-family: "Lato";
+}
+
+.verified-mark {
+    -fx-font-size: 11px;
+    -fx-text-fill: #15803D;
+    -fx-font-family: "Lato";
+}
+
+.price-mini-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+}
+
+.price-mini-value {
+    -fx-font-size: 11px;
+    -fx-text-fill: #722F37;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+}
+
+.content-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.content-scroll-pane > .viewport {
+    -fx-background-color: #FBF9F6;
+}
+
+.content-scroll-pane .scroll-bar:vertical,
+.content-scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8px;
+}
+
+.content-scroll-pane .scroll-bar:horizontal {
+    -fx-pref-height: 8px;
+}
+
+.content-scroll-pane .scroll-bar .thumb {
+    -fx-background-color: #D1D5DB;
+    -fx-background-radius: 4px;
+}
+
+.content-scroll-pane .scroll-bar .thumb:hover {
+    -fx-background-color: #722F37;
+}
+
+.content-scroll-pane .corner {
+    -fx-background-color: transparent;
+}
+.stat-icon-primary {
+    -fx-background-color: rgba(114, 47, 55, 0.12);
+    -fx-background-radius: 12;
+}
+
+.stat-icon-success {
+    -fx-background-color: rgba(21, 128, 61, 0.15);
+    -fx-background-radius: 12;
+}
+
+.stat-icon-warning {
+    -fx-background-color: rgba(202, 138, 4, 0.15);
+    -fx-background-radius: 12;
+}
+
+.stat-icon-danger {
+    -fx-background-color: rgba(185, 28, 28, 0.15);
+    -fx-background-radius: 12;
 }

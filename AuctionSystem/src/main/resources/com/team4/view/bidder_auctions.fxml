@@ -13,26 +13,26 @@
 
     <HBox spacing="14">
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="liveCount" text="12" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #ef4444;"/>
-            <Label text="Live" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label fx:id="liveCount" text="12" styleClass="stat-number-accent"/>
+            <Label text="Live" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="upcomingCount" text="8" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #3b82f6;"/>
-            <Label text="Upcoming" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label fx:id="upcomingCount" text="8" styleClass="stat-number-neutral"/>
+            <Label text="Upcoming" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="endedCount" text="156" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #6b7280;"/>
-            <Label text="Ended" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label fx:id="endedCount" text="156" styleClass="stat-number-muted"/>
+            <Label text="Ended" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="totalBids" text="2.4K" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #8b5cf6;"/>
-            <Label text="Total Bids" style="-fx-font-size: 12; -fx-text-fill: #6b7280;"/>
+            <Label fx:id="totalBids" text="2.4K" styleClass="stat-number-accent"/>
+            <Label text="Total Bids" styleClass="muted-text"/>
         </VBox>
     </HBox>
 
     <VBox spacing="12" styleClass="filter-panel">
         <HBox spacing="12" alignment="CENTER_LEFT">
-            <TextField fx:id="searchField" promptText="🔍 Search auctions..." styleClass="admin-input" prefWidth="300"/>
+            <TextField fx:id="searchField" promptText="Search auctions..." styleClass="admin-input" prefWidth="300"/>
             <ComboBox fx:id="sortBox" promptText="Sort by" styleClass="admin-combo" prefWidth="160"/>
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
