@@ -101,24 +101,6 @@ public class UserDAOImpl implements UserDAO {
         return null; // Không tìm thấy
     }
 
-    public User findById(Connection conn, String id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
-        // Sử dụng try-with-resources để tự động đóng kết nối
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, id); // Chống SQL Injection
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapRowToUser(rs);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null; // Không tìm thấy
-    }
-
     @Override
     /**
      * 2. findByUsername() - tìm theo username
