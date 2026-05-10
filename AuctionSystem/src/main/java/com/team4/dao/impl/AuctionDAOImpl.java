@@ -3,6 +3,8 @@ package com.team4.dao.impl;
 import com.team4.dao.AuctionDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
  * Mấy thứ đó thuộc Service
  */
 public class AuctionDAOImpl implements AuctionDAO {
+    private static final Logger logger = LoggerFactory.getLogger(AuctionDAOImpl.class);
 
     /**
      * Chuyển đổi ResultSet thành Object Auction
@@ -68,7 +71,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auction với id={}", id, e);
         }
         return null;
     }
@@ -82,7 +85,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auction với id={} trong transaction", id, e);
         }
         return null;
     }
@@ -103,7 +106,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auction với itemId={}", itemId, e);
         }
         return null;
     }
@@ -138,7 +141,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auctions với status={}", status, e);
         }
         return list;
     }
@@ -175,7 +178,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo auction id={}", auction.getId(), e);
             return false;
         }
     }
@@ -193,7 +196,7 @@ public class AuctionDAOImpl implements AuctionDAO {
             stmt.setString(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update auction status auctionId={} newStatus={}", auctionId, newStatus, e);
             return false;
         }
     }
@@ -212,7 +215,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={} trong transaction", id, currentPrice, highestBidderId, e);
             return false;
         }
     }
@@ -227,7 +230,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
             return false;
         }
     }
@@ -241,7 +244,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 list.add(mapRowToAuction(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Cannot execute auction list query", e);
         }
         return list;
     }
