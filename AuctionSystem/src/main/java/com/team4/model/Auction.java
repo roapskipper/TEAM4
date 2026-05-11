@@ -8,6 +8,7 @@ public class Auction extends Entity {
     // Giả sử luật: Nếu bid trong 1 phút cuối -> Cộng thêm 1 phút
     private static final int SNIPING_THRESHOLD_MINUTES = 1;
     private static final int EXTENSION_MINUTES = 1;
+    private static final long serialVersionUID = 1L;
     // enum các trạng thái của phiên đấu giá
     public enum AuctionStatus {
         PENDING, RUNNING, FINISHED, PAID ,CANCELLED
@@ -163,6 +164,9 @@ public class Auction extends Entity {
     }
     public LocalDateTime getEndTime() {
         return endTime;
+    }
+    public void extendEndTime(long seconds) {
+        this.endTime = this.endTime.plusSeconds(seconds);
     }
     public AuctionStatus getStatus() {
         return status;

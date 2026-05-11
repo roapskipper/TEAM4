@@ -91,4 +91,32 @@ public class WalletService {
         }
         return user.getBalance();
     }
+    // Thanh toan cho phien dau gia
+    public User payForAuction(String userId, BigDecimal amount) {
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            throw new BusinessException("Người dùng không tồn tại");
+        }
+        if (!user.hasEnoughBalance(amount)) {
+            throw new BusinessException("Không đủ số dư để thanh toán");
+        }
+        user.withdraw(amount);
+        if (!userDAO.updateBalance(userId, user.getBalance())) {
+            throw new BusinessException("Thanh toán thất bại do lỗi cơ sở dữ liệu");
+        }
+        return user;
+    }
+
+    // Hoan tien cho nguoi thua cuoc
+    public User refund(String userId, BigDecimal amount) {
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            throw new BusinessException("Người dùng không tồn tại");
+        }
+        user.deposit(amount);
+        if (!userDAO.updateBalance(userId, user.getBalance())) {
+            throw new BusinessException("Hoàn tiền thất bại do lỗi cơ sở dữ liệu");
+        }
+        return user;
+    }
 }

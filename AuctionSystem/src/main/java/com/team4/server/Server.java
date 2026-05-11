@@ -24,10 +24,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
     private static final int PORT = 18368;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
+    private static ExecutorService threadPool;
 
     private static final AuctionService auctionService = new AuctionService(
             new AuctionDAOImpl(),
@@ -61,6 +64,14 @@ public class Server {
         com.team4.db.DatabaseManager.initialize();
         new ApiServer().start();
 
+        threadPool = Executors.newFixedThreadPool(50);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Dang tat server. Giai phong thread pool...");
+            if (threadPool != null && !threadPool.isShutdown()) {
+                threadPool.shutdown();
+            }
+        }));
+
         System.out.println("Server dang khoi dong tren port " + PORT + "...");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
@@ -69,7 +80,12 @@ public class Server {
 
                 ClientHandler handler = new ClientHandler(socket);
                 clientHandlers.add(handler);
-                new Thread(handler).start();
+                threadPool.execute(handler);
+
+                if (threadPool instanceof java.util.concurrent.ThreadPoolExecutor) {
+                    java.util.concurrent.ThreadPoolExecutor tpe = (java.util.concurrent.ThreadPoolExecutor) threadPool;
+                    System.out.println("Trang thai ThreadPool - Active: " + tpe.getActiveCount() + ", Pool Size: " + tpe.getPoolSize());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

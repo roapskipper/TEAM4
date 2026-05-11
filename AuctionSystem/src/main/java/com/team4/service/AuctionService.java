@@ -149,7 +149,7 @@ public class AuctionService {
         LocalDateTime now = LocalDateTime.now();
         int closedCount = 0;
         for (Auction auction : activeAuctions) {
-            if (auction.getEndTime().isBefore(now)) {
+            if (!auction.getEndTime().isAfter(now)) {
                 auction.close();
                 auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED);
                 closedCount++;
@@ -181,6 +181,22 @@ public class AuctionService {
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.PAID);
         logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {}",
                 auctionId, Auction.AuctionStatus.FINISHED, Auction.AuctionStatus.PAID);
+        return auction;
+    }
+
+    /**
+     * Hủy phiên đấu giá do người thắng không đủ tiền
+     */
+    public Auction cancelDueToInsufficientFunds(String auctionId) {
+        Auction auction = auctionDAO.findById(auctionId);
+        if (auction == null) {
+            throw new BusinessException("Cuộc đấu giá không tồn tại");
+        }
+        if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
+            throw new BusinessException("Chỉ có thể hủy cuộc đấu giá đã kết thúc");
+        }
+        auction.cancel();
+        auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
         return auction;
     }
 }
