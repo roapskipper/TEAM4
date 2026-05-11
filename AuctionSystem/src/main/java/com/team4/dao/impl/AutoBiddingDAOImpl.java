@@ -24,7 +24,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
         BigDecimal increment = rs.getBigDecimal("increment_amount");
         Boolean isActive = rs.getBoolean("is_active");
 
-        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, increment, isActive);
+        return new AutoBidding(id, createdAt, auctionId, bidderId, maxLimit, isActive);
     }
     @Override
     public AutoBidding findById(String id) {
