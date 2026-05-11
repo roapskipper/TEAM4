@@ -1,11 +1,13 @@
 package com.team4.dao;
 
 import com.team4.model.BidTransaction;
+
+import java.sql.Connection;
 import java.util.List;
 
 public interface BidTransactionDAO {
     // 1. Thêm một lượt đặt giá mới vào lịch sử
-    boolean insert(BidTransaction transaction);
+    boolean insert(Connection conn,BidTransaction transaction);
 
     // 2. Lấy toàn bộ lịch sử đặt giá của một phiên đấu giá (Phục vụ vẽ biểu đồ Line Chart)
     List<BidTransaction> findByAuctionId(String auctionId);

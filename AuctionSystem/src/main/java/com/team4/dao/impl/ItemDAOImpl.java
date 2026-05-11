@@ -3,6 +3,8 @@ package com.team4.dao.impl;
 import com.team4.dao.ItemDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 public class ItemDAOImpl implements ItemDAO {
+    private static final Logger logger = LoggerFactory.getLogger(ItemDAOImpl.class);
 
     /**
      * Hàm này đọc 1 dòng ResultSet và quyết định tạo ra Object gì.
@@ -78,7 +81,7 @@ public class ItemDAOImpl implements ItemDAO {
                 if (rs.next()) return mapRowToItem(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm item với id={}", id, e);
         }
         return null;
     }
@@ -195,7 +198,7 @@ public class ItemDAOImpl implements ItemDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo item id={}", item.getId(), e);
             return false;
         }
     }
@@ -213,7 +216,7 @@ public class ItemDAOImpl implements ItemDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update item id={}", item.getId(), e);
             return false;
         }
     }
@@ -226,7 +229,7 @@ public class ItemDAOImpl implements ItemDAO {
             stmt.setString(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể xóa item id={}", id, e);
             return false;
         }
     }
@@ -244,7 +247,7 @@ public class ItemDAOImpl implements ItemDAO {
                 items.add(mapRowToItem(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Cannot execute item list query", e);
         }
         return items;
     }
@@ -260,7 +263,7 @@ public class ItemDAOImpl implements ItemDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Cannot execute item list query with param={}", param, e);
         }
         return items;
     }
