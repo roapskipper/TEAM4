@@ -13,12 +13,12 @@
     <HBox spacing="16">
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
-                    <Label style="-fx-font-size: 20;" text="0" />
+                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
+                    <Label style="-fx-font-size: 20;" text="⏳" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="totalUsersLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="1,245" />
-                    <Label styleClass="muted-text" text="Total Users" />
+                    <Label fx:id="pendingApprovalsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="8" />
+                    <Label styleClass="muted-text" text="Pending Approvals" />
                 </VBox>
             </HBox>
         </VBox>
@@ -26,23 +26,23 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-danger">
-                    <Label style="-fx-font-size: 20;" text="1" />
+                    <Label style="-fx-font-size: 20;" text="🚩" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="lockedUsersLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="12" />
-                    <Label styleClass="muted-text" text="Locked Accounts" />
+                    <Label fx:id="openReportsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="5" />
+                    <Label styleClass="muted-text" text="Open Reports" />
                 </VBox>
             </HBox>
         </VBox>
 
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
-                    <Label style="-fx-font-size: 20;" text="2" />
+                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
+                    <Label style="-fx-font-size: 20;" text="👁" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="pendingAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="8" />
-                    <Label styleClass="muted-text" text="Pending Auctions" />
+                    <Label fx:id="suspiciousAccountsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="3" />
+                    <Label styleClass="muted-text" text="Suspicious Accounts" />
                 </VBox>
             </HBox>
         </VBox>
@@ -50,11 +50,11 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
-                    <Label style="-fx-font-size: 20;" text="3" />
+                    <Label style="-fx-font-size: 20;" text="⏱" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="liveAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="24" />
-                    <Label styleClass="muted-text" text="Live Auctions" />
+                    <Label fx:id="endingSoonLabel" styleClass="stat-number-neutral" style="-fx-font-size: 28;" text="6" />
+                    <Label styleClass="muted-text" text="Ending Soon (1h)" />
                 </VBox>
             </HBox>
         </VBox>
@@ -62,10 +62,10 @@
 
     <HBox spacing="16" VBox.vgrow="ALWAYS">
         <VBox prefWidth="500" styleClass="admin-card" HBox.hgrow="ALWAYS">
-            <Label styleClass="section-title" text="Registration Statistics" />
+            <Label styleClass="section-title" text="Reports Trend (Last 30 Days)" />
             <BarChart fx:id="regChart" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                <xAxis><CategoryAxis label="Month" style="-fx-tick-label-fill: #555555;" /></xAxis>
-                <yAxis><NumberAxis label="Users" style="-fx-tick-label-fill: #555555;" /></yAxis>
+                <xAxis><CategoryAxis label="Day" style="-fx-tick-label-fill: #555555;" /></xAxis>
+                <yAxis><NumberAxis label="Reports" style="-fx-tick-label-fill: #555555;" /></yAxis>
             </BarChart>
         </VBox>
 
