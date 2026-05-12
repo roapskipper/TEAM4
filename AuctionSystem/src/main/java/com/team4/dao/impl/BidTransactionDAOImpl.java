@@ -3,6 +3,8 @@ package com.team4.dao.impl;
 import com.team4.dao.BidTransactionDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.BidTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 public class BidTransactionDAOImpl implements BidTransactionDAO {
+    private static final Logger logger = LoggerFactory.getLogger(BidTransactionDAOImpl.class);
 
     private BidTransaction mapRowToTransaction(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
@@ -24,11 +27,10 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
     }
 
     @Override
-    public boolean insert(BidTransaction transaction) {
+    public boolean insert(Connection conn, BidTransaction transaction) {
         String sql = "INSERT INTO bid_transactions (id, created_at, auction_id, bidder_id, bid_amount, bid_time) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, transaction.getId());
             stmt.setTimestamp(2, Timestamp.valueOf(transaction.getCreatedAt()));
@@ -40,7 +42,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo bid transaction id={} trong transaction", transaction.getId(), e);
             return false;
         }
     }
@@ -60,7 +62,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm bid transactions với auctionId={}", auctionId, e);
         }
         return list;
     }
@@ -80,7 +82,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm bid transactions với bidderId={}", bidderId, e);
         }
         return list;
     }
@@ -88,8 +90,8 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
     @Override
     public BidTransaction getHighestBid(String auctionId) {
         // Sắp xếp giá giảm dần và lấy 1 dòng đầu tiên (LIMIT 1)
-        // Dùng bid_time DESC để xử lý 2 bid cùng giá
-        String sql = "SELECT * FROM bid_transactions WHERE auction_id = ? ORDER BY bid_amount DESC, bid_time DESC LIMIT 1";
+        // Dùng bid_time ASC để xử lý 2 bid cùng giá
+        String sql = "SELECT * FROM bid_transactions WHERE auction_id = ? ORDER BY bid_amount DESC, bid_time ASC LIMIT 1";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -101,7 +103,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể lấy highest bid cho auctionId={}", auctionId, e);
         }
         return null; // Trả về null nếu phiên này chưa có ai đặt giá
     }

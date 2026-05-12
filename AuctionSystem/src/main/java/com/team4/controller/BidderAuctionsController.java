@@ -31,7 +31,7 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private void setupSort() {
-        sortBox.getItems().addAll("Moi nhat", "Ket thuc som", "Gia tang dan", "Gia giam dan");
+        sortBox.getItems().addAll("Newest", "Ending soon", "Price: Low to High", "Price: High to Low");
         sortBox.getSelectionModel().selectFirst();
     }
 

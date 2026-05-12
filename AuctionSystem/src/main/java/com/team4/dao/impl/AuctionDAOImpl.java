@@ -3,6 +3,8 @@ package com.team4.dao.impl;
 import com.team4.dao.AuctionDAO;
 import com.team4.db.DatabaseManager;
 import com.team4.model.Auction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
  * Mấy thứ đó thuộc Service
  */
 public class AuctionDAOImpl implements AuctionDAO {
+    private static final Logger logger = LoggerFactory.getLogger(AuctionDAOImpl.class);
 
     /**
      * Chuyển đổi ResultSet thành Object Auction
@@ -68,10 +71,25 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auction với id={}", id, e);
         }
         return null;
     }
+
+    @Override
+    public Auction findById(Connection conn, String id) {
+        String sql = "SELECT * FROM auctions WHERE id = ? FOR UPDATE";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRowToAuction(rs);
+            }
+        } catch (SQLException e) {
+            logger.error("Không thể tìm auction với id={} trong transaction", id, e);
+        }
+        return null;
+    }
+
 
     @Override
     /**
@@ -88,7 +106,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tìm auction với itemId={}", itemId, e);
         }
         return null;
     }
@@ -160,7 +178,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể tạo auction id={}", auction.getId(), e);
             return false;
         }
     }
@@ -178,7 +196,7 @@ public class AuctionDAOImpl implements AuctionDAO {
             stmt.setString(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update auction status auctionId={} newStatus={}", auctionId, newStatus, e);
             return false;
         }
     }
@@ -188,20 +206,49 @@ public class AuctionDAOImpl implements AuctionDAO {
      * Dùng khi: có bid mới hợp lệ
      * Ví dụ: user bid 1500$ → cập nhật currentPrice + highestBidderId
      */
-    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
+    public boolean updateCurrentBid(Connection conn, String id, BigDecimal currentPrice, String highestBidderId) {
         String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1,currentPrice);
             stmt.setString(2,highestBidderId);
             stmt.setString(3,id);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={} trong transaction", id, currentPrice, highestBidderId, e);
             return false;
         }
     }
+
+    @Override
+    // Trong AuctionDAOImpl
+    public boolean updateEndTime(Connection conn, String auctionId, LocalDateTime newEndTime){
+        String sql = "UPDATE auctions SET end_time = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setTimestamp(1, Timestamp.valueOf(newEndTime));
+            stmt.setString(2, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Không thể update endTime auctionId={} newEndTime={} trong transaction", auctionId, newEndTime, e);
+            return false;
+        }
+    }
+
+    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
+        String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1,currentPrice);
+            stmt.setString(2,highestBidderId);
+            stmt.setString(3,id);
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
+            return false;
+        }
+    }
+
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();
@@ -211,7 +258,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 list.add(mapRowToAuction(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Cannot execute auction list query", e);
         }
         return list;
     }

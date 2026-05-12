@@ -75,7 +75,7 @@ public class AdminUsersController implements Initializable {
             return matchSearch && matchFilter;
         });
         usersTable.setItems(filtered);
-        resultCount.setText(filtered.size() + " nguoi dung");
+        resultCount.setText(filtered.size() + " users");
     }
 
     public static class UserRow {
@@ -84,11 +84,11 @@ public class AdminUsersController implements Initializable {
             username=u; email=e; role=r; statusRaw=s; joined=j; auctions=a;
         }
         public String getUserInfo() { return username + "\n" + email; }
-        public String getRole() { return "bidder".equals(role) ? "Nguoi mua" : "Nguoi ban"; }
-        public String getStatus() { return "active".equals(statusRaw) ? "🟢 Hoat dong" : "🔴 Da khoa"; }
+        public String getRole() { return "bidder".equals(role) ? "Buyer" : "Seller"; }
+        public String getStatus() { return "active".equals(statusRaw) ? "🟢 Active" : "🔴 Locked"; }
         public String getJoined() { return joined; }
         public String getAuctions() { return auctions; }
-        public String getAction() { return "active".equals(statusRaw) ? "🔒 Khoa" : "🔓 Mo khoa"; }
+        public String getAction() { return "active".equals(statusRaw) ? "🔒 Lock" : "🔓 Unlock"; }
         public String getStatusRaw() { return statusRaw; }
     }
 }

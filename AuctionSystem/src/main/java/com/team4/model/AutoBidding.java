@@ -9,21 +9,19 @@ import java.util.Optional;
  *
  */
 public class AutoBidding extends Entity {
+    private static final long serialVersionUID = 1L;
     private final String auctionId;
     private final String bidderId;
     private BigDecimal maxLimit;        // giới hạn cao nhất bidder chấp nhận trả
-    private BigDecimal incrementAmount; // bước giá tự động
     private boolean isActive;           // bật/tắt auto-bid
     // Tạo cấu hình mới
     public AutoBidding(String auctionId,
                        String bidderId,
-                       BigDecimal maxLimit,
-                       BigDecimal incrementAmount) {
+                       BigDecimal maxLimit) {
         super();
         this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
         this.bidderId = Objects.requireNonNull(bidderId, "bidderId không đợc null").trim();
         this.maxLimit = money(maxLimit);
-        this.incrementAmount = money(incrementAmount);
         this.isActive = true;
         validateConfig();
     }
@@ -33,21 +31,16 @@ public class AutoBidding extends Entity {
                        String auctionId,
                        String bidderId,
                        BigDecimal maxLimit,
-                       BigDecimal incrementAmount,
                        boolean isActive) {
         super(id, createdAt);
         this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
         this.bidderId = Objects.requireNonNull(bidderId, "bidderId không được null").trim();
         this.maxLimit = money(maxLimit);
-        this.incrementAmount = money(incrementAmount);
         this.isActive = isActive;
         validateConfig();
     }
 
     public void validateConfig() {
-        if (incrementAmount == null || incrementAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("incrementAmount phải lớn hơn 0");
-        }
         if (maxLimit == null || maxLimit.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("maxLimit phải lớn hơn 0");
         }
@@ -56,29 +49,13 @@ public class AutoBidding extends Entity {
     }
 
     // maxLimit phải lớn hơn giá hiện tại
-    public void validateConfig(BigDecimal currentAuctionPrice) {
+    public static void validateMaxLimit(BigDecimal maxLimit, BigDecimal currentAuctionPrice) {
         Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice không được null");
-        validateConfig();
         if (maxLimit.compareTo(money(currentAuctionPrice)) <= 0) {
             throw new IllegalArgumentException("maxLimit phải lớn hơn giá hiện tại của phiên");
         }
     }
-    /**
-     * Tính giá đặt kế tiếp = currentAuctionPrice + incrementAmount.
-     * - Nếu auto-bid không active hoặc giá mới vượt quá maxLimit -> trả Optional.empty()
-     * - Trả Optional.of(nextBid) nếu hợp lệ (đã làm tròn scale = 2)
-     * - Dùng Optional để tránh NPE, tốn bộ nhớ hơn 1 chút
-     */
-    public Optional<BigDecimal> calculateNextBid(BigDecimal currentAuctionPrice) {
-        Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice không được null");
-        if (!isActive) return Optional.empty(); // Trả về "không gì cả"
-        BigDecimal current = money(currentAuctionPrice);
-        BigDecimal next = money(current.add(incrementAmount));
-        if (next.compareTo(maxLimit) > 0) {
-            return Optional.empty();
-        }
-        return Optional.of(next);
-    }
+
     // Bật/tắt auto-bid (synchronized để an toàn đơn giản đa luồng)
     public synchronized void activate() { this.isActive = true; }
     public synchronized void deactivate() { this.isActive = false; }
@@ -95,11 +72,6 @@ public class AutoBidding extends Entity {
         this.maxLimit = money(maxLimit);
         validateConfig();
     }
-    public BigDecimal getIncrementAmount() { return incrementAmount; }
-    public void setIncrementAmount(BigDecimal incrementAmount) {
-        this.incrementAmount = money(incrementAmount);
-        validateConfig();
-    }
     public boolean isActive() { return isActive; }
     @Override
     public String toString() {
@@ -107,7 +79,6 @@ public class AutoBidding extends Entity {
                 " | auctionId : " + auctionId +
                 " | bidderId : " + bidderId +
                 " | maxLimit : " + maxLimit +
-                " | incrementAmount : " + incrementAmount +
                 " | isActive : " + isActive;
     }
 }

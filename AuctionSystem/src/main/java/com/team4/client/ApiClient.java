@@ -27,7 +27,8 @@ public class ApiClient {
                 .create();
     }
 
-    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+    private static class LocalDateTimeAdapter
+            implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
         private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
         @Override
@@ -36,28 +37,35 @@ public class ApiClient {
         }
 
         @Override
-        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
             return LocalDateTime.parse(json.getAsString(), formatter);
         }
     }
 
-    public String login(String username, String password) {
+    public String login(String username, String password, String adminCode) {
         try {
             String body = "username=" + username + "&password=" + password;
+            if (adminCode != null && !adminCode.trim().isEmpty()) {
+                body += "&adminCode=" + java.net.URLEncoder.encode(adminCode, StandardCharsets.UTF_8);
+            }
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "login"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200)
+                return response.body();
             return null;
         } catch (Exception e) {
             return null;
         }
     }
 
-    public String registerBidder(String username, String password, String fullName, String email, String shippingAddress, String phoneNumber) {
+    public String registerBidder(String username, String password, String fullName, String email,
+            String shippingAddress, String phoneNumber) {
         try {
             String body = "username=" + username
                     + "&password=" + password
@@ -70,8 +78,10 @@ public class ApiClient {
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200)
+                return response.body();
             System.out.println("Dang ky that bai. Status: " + response.statusCode());
             return null;
         } catch (Exception e) {
@@ -92,8 +102,10 @@ public class ApiClient {
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200) return response.body();
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() == 200)
+                return response.body();
             System.out.println("Dang ky that bai. Status: " + response.statusCode());
             return null;
         } catch (Exception e) {
@@ -108,13 +120,15 @@ public class ApiClient {
                     .uri(URI.create(API_URL + "items"))
                     .GET()
                     .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> response = client.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (response.statusCode() == 200) {
                 JsonObject responseObj = JsonParser.parseString(response.body()).getAsJsonObject();
                 if ("SUCCESS".equals(responseObj.get("status").getAsString())) {
                     JsonArray dataArray = responseObj.getAsJsonArray("data");
-                    Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
+                    Type listType = new TypeToken<ArrayList<Item>>() {
+                    }.getType();
                     return gson.fromJson(dataArray, listType);
                 }
             }

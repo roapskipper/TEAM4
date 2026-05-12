@@ -1,8 +1,11 @@
 package com.team4.dao;
 import com.team4.model.AutoBidding;
+
+import java.sql.Connection;
 import java.util.List;
 
 public interface AutoBiddingDAO {
+    AutoBidding findById(String Id);
     /**
      * 1. findByAuctionAndBidder() - tìm config auto-bid
      * Dùng khi: kiểm tra bidder đã cài auto-bid chưa
@@ -10,6 +13,7 @@ public interface AutoBiddingDAO {
      * tránh tạo 2 config cho cùng 1 bidder trong 1 phiên
      */
     AutoBidding findByAuctionAndBidder(String auctionId, String bidderId);
+    AutoBidding findByAuctionAndBidder(Connection conn, String auctionId, String bidderId);
 
     /**
      * 2. findActiveByAuctionId() - tìm tất cả auto-bid đang bật
@@ -18,6 +22,7 @@ public interface AutoBiddingDAO {
      * đang active trong phiên -> tự động bid cho họ
      */
     List<AutoBidding> findActiveByAuctionId(String auctionId);
+    List<AutoBidding> findActiveByAuctionId(Connection conn, String auctionId);
 
     /**
      * 3. insert() - tạo mới config auto-bid
@@ -25,6 +30,7 @@ public interface AutoBiddingDAO {
      * Ví dụ: bidder đặt maxLimit=5000$, increment=100$
      */
     boolean insert(AutoBidding autoBidding);
+    boolean insert(Connection conn, AutoBidding autoBidding);
 
     /**
      * 4. update() - cập nhật config auto-bid
@@ -33,6 +39,7 @@ public interface AutoBiddingDAO {
      * đổi increment từ 100$ -> 200$
      */
     boolean update(AutoBidding autoBidding);
+    boolean update(Connection conn, AutoBidding autoBidding);
 
     /**
      * 5. updateActive() - bật/tắt auto-bid
@@ -42,4 +49,5 @@ public interface AutoBiddingDAO {
      * - Phiên kết thúc -> tắt tất cả auto-bid
      */
     boolean updateActive(String id, boolean isActive);
+    boolean updateActive(Connection conn, String id, boolean isActive);
 }

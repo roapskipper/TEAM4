@@ -38,11 +38,11 @@ public class AdminAuctionsController implements Initializable {
     }
 
     private void loadMockData() {
-        allAuctions.add(new AuctionRow("A1", "iPhone 15 Pro Max", "tech_store", "25,000,000", "pending", "0", "Chờ duyet"));
-        allAuctions.add(new AuctionRow("A2", "Buc tranh son dau", "art_collector", "5,000,000", "pending", "0", "Cho duyet"));
-        allAuctions.add(new AuctionRow("A3", "Honda Civic 2020", "seller_pro", "450,000,000", "live", "0", "Dang dien ra"));
-        allAuctions.add(new AuctionRow("A4", "San pham la", "spammer_1", "1,000", "rejected", "5", "Vi pham"));
-        allAuctions.add(new AuctionRow("A5", "Rolex Datejust", "seller_pro", "120,000,000", "approved", "0", "Da duyet"));
+        allAuctions.add(new AuctionRow("A1", "iPhone 15 Pro Max", "tech_store", "25,000,000", "pending", "0", "Pending approval"));
+        allAuctions.add(new AuctionRow("A2", "Buc tranh son dau", "art_collector", "5,000,000", "pending", "0", "Pending approval"));
+        allAuctions.add(new AuctionRow("A3", "Honda Civic 2020", "seller_pro", "450,000,000", "live", "0", "Live"));
+        allAuctions.add(new AuctionRow("A4", "San pham la", "spammer_1", "1,000", "rejected", "5", "Violation"));
+        allAuctions.add(new AuctionRow("A5", "Rolex Datejust", "seller_pro", "120,000,000", "approved", "0", "Approved"));
         applyFilter();
     }
 
@@ -80,7 +80,7 @@ public class AdminAuctionsController implements Initializable {
             return matchSearch && matchFilter;
         });
         auctionsTable.setItems(filtered);
-        resultCount.setText(filtered.size() + " phien");
+        resultCount.setText(filtered.size() + " auctions");
     }
 
     @FXML private void onApprove(String id) {
@@ -106,10 +106,10 @@ public class AdminAuctionsController implements Initializable {
         public String getStartPrice() { return startPrice; }
         public String getStatus() {
             return switch(statusRaw) {
-                case "pending" -> "🟡 Cho duyet";
-                case "approved" -> "🔵 Da duyet";
-                case "live" -> "🟢 Dang dien ra";
-                case "rejected" -> "🔴 Vi pham";
+                case "pending" -> "🟡 Pending";
+                case "approved" -> "🔵 Approved";
+                case "live" -> "🟢 Live";
+                case "rejected" -> "🔴 Violation";
                 default -> "⚪ " + statusRaw;
             };
         }

@@ -9,6 +9,14 @@ import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import javafx.application.Platform;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class BiddingRoomController implements Initializable {
 
@@ -27,6 +35,8 @@ public class BiddingRoomController implements Initializable {
     @FXML private TextField chatInput;
 
     private double currentBid = 28500000;
+    private LocalDateTime auctionEndTime = LocalDateTime.now().plusMinutes(5);
+    private Timeline countdownTimeline;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -34,6 +44,56 @@ public class BiddingRoomController implements Initializable {
         loadBidHistory();
         loadChat();
         updateBidInfo();
+        startCountdown();
+    }
+
+    private void startCountdown() {
+        KeyFrame frame = new KeyFrame(Duration.seconds(1), event -> {
+            long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
+            if (secondsBetween <= 0) {
+                timeLeft.setText("00:00:00 (Ended)");
+            } else {
+                long h = secondsBetween / 3600;
+                long m = (secondsBetween % 3600) / 60;
+                long s = secondsBetween % 60;
+                timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+            }
+        });
+        countdownTimeline = new Timeline(frame);
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    public void startNetworkListener(com.team4.client.Client client) {
+        client.startListening(message -> {
+            Platform.runLater(() -> {
+                try {
+                    JsonObject json = JsonParser.parseString(message).getAsJsonObject();
+                    if (json.has("action") && "BID_UPDATE".equals(json.get("action").getAsString())) {
+                        if (json.has("data")) {
+                            JsonObject data = json.getAsJsonObject("data");
+                            
+                            // Cập nhật giá mới
+                            if (data.has("amount")) {
+                                double newAmount = data.get("amount").getAsDouble();
+                                currentBid = newAmount;
+                                updateBidInfo();
+                                addBidToHistory(data.has("bidderId") ? data.get("bidderId").getAsString() : "Unknown", newAmount);
+                                addChartPoint(newAmount);
+                            }
+                            
+                            // Anti-sniping: Cập nhật thời gian kết thúc mới
+                            if (data.has("endTime")) {
+                                String endTimeStr = data.get("endTime").getAsString();
+                                auctionEndTime = LocalDateTime.parse(endTimeStr);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     private void updateBidInfo() {
@@ -46,12 +106,12 @@ public class BiddingRoomController implements Initializable {
     @FXML private void onQuickBid() {
         int increment = 100000;
         double newBid = currentBid + increment;
-        
+
         if (newBid > MAX_BID) {
-            showBidError("Gia dat khong duoc vuot qua " + formatPrice(MAX_BID));
+            showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
             return;
         }
-        
+
         placeBid(newBid);
     }
 
@@ -59,16 +119,16 @@ public class BiddingRoomController implements Initializable {
         try {
             double bid = Double.parseDouble(bidAmountField.getText());
             if (bid > MAX_BID) {
-                showBidError("Gia dat khong duoc vuot qua " + formatPrice(MAX_BID));
+                showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
                 return;
             }
             if (bid <= currentBid) {
-                showBidError("Gia dat phai lon hon gia hien tai");
+                showBidError("Bid must be higher than current price");
                 return;
             }
             placeBid(bid);
         } catch (NumberFormatException e) {
-            showBidError("Vui long nhap so hop le");
+            showBidError("Please enter a valid number");
         }
     }
 
@@ -76,7 +136,7 @@ public class BiddingRoomController implements Initializable {
         currentBid = amount;
         updateBidInfo();
         hideBidError();
-        addBidToHistory("Ban", amount);
+        addBidToHistory("You", amount);
         addChartPoint(amount);
     }
 
@@ -89,14 +149,14 @@ public class BiddingRoomController implements Initializable {
     @FXML private void onSendChat() {
         String msg = chatInput.getText().trim();
         if (!msg.isEmpty()) {
-            chatList.getItems().add(0, "Ban: " + msg);
+            chatList.getItems().add(0, "You: " + msg);
             chatInput.clear();
         }
     }
 
     private void loadChart() {
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
-        series.setName("Gia dat");
+        series.setName("Bid price");
         series.getData().add(new XYChart.Data<>(0, 25000000));
         series.getData().add(new XYChart.Data<>(1, 25500000));
         series.getData().add(new XYChart.Data<>(2, 26000000));
@@ -110,29 +170,29 @@ public class BiddingRoomController implements Initializable {
     private void addChartPoint(double price) {
         int nextIndex = priceChart.getData().get(0).getData().size();
         priceChart.getData().get(0).getData().add(
-            new XYChart.Data<>(nextIndex, price)
+                new XYChart.Data<>(nextIndex, price)
         );
     }
 
     private void loadBidHistory() {
         bidHistoryList.getItems().addAll(
-            "🥇 Ban - 28,500,000 - Vua xong",
-            "🥈 Tran Thi B - 28,000,000 - 5 phut truoc",
-            "🥉 Le Van C - 27,500,000 - 8 phut truoc",
-            "4. Pham Thi D - 27,000,000 - 12 phut truoc",
-            "5. Hoang Van E - 26,000,000 - 15 phut truoc"
+                "🥇 You - 28,500,000 - Just now",
+                "🥈 Tran Thi B - 28,000,000 - 5 min ago",
+                "🥉 Le Van C - 27,500,000 - 8 min ago",
+                "4. Pham Thi D - 27,000,000 - 12 min ago",
+                "5. Hoang Van E - 26,000,000 - 15 min ago"
         );
     }
 
     private void addBidToHistory(String bidder, double amount) {
-        bidHistoryList.getItems().add(0, "🥇 " + bidder + " - " + formatPrice(amount) + " - Vua xong");
+        bidHistoryList.getItems().add(0, "🥇 " + bidder + " - " + formatPrice(amount) + " - Just now");
     }
 
     private void loadChat() {
         chatList.getItems().addAll(
-            "Nguyen Van A: San pham dep qua!",
-            "Tran Thi B: Gia nay hop ly roi",
-            "Le Van C: Con ai dau khong?"
+                "Nguyen Van A: Beautiful item!",
+                "Tran Thi B: This price is reasonable",
+                "Le Van C: Anyone else bidding?"
         );
     }
 

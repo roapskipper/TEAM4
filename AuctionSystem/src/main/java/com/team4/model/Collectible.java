@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
  * Collectible: Đại diện cho đồ sưu tập (Collectible).
  */
 public class Collectible extends Item {
+    private static final long serialVersionUID = 1L;
     public enum RarityLevel {
         COMMON,         // Phổ biến
         UNCOMMON,       // Ít phổ biến
