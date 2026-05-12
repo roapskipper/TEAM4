@@ -890,3 +890,26 @@
     -fx-background-color: rgba(185, 28, 28, 0.15);
     -fx-background-radius: 12;
 }
+
+.alert-box {
+    -fx-padding: 14;
+    -fx-spacing: 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.alert-icon {
+    -fx-font-size: 20px;
+}
+
+.alert-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.alert-desc {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
