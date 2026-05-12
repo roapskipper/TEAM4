@@ -49,15 +49,11 @@ public class WalletService {
             logger.warn("Rút tiền thất bại: Người dùng không tồn tại. userId={}", userId);
             throw new BusinessException("Người dùng không tồn tại");
         }
-
-        try {
-            user.withdraw(amount);
-        } catch (BusinessException e) {
+        if (!user.withdraw(amount)) {
             logger.warn("Rút tiền thất bại: Số dư không đủ hoặc số tiền không hợp lệ. userId={}, amount={}, currentBalance={}", 
                     userId, amount, user.getBalance());
-            throw e;
+            throw new BusinessException("Rút tiền thất bại: Số dư không đủ hoặc số tiền không hợp lệ");
         }
-
         if (!userDAO.updateBalance(userId, user.getBalance())) {
             logger.error("Lỗi hệ thống khi cập nhật số dư sau khi rút: userId={}, amount={}, currentBalance={}", 
                     userId, amount, user.getBalance());
