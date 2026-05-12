@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.AdminAuctionsController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1100">
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField"
+                   promptText="🔍 Search auctions..."
+                   styleClass="admin-input"
+                   prefWidth="320"/>
+
+        <HBox spacing="8">
+            <Button fx:id="filterAll" text="All" onAction="#onFilterAll" styleClass="admin-filter-active"/>
+            <Button fx:id="filterPending" text="Pending" onAction="#onFilterPending" styleClass="admin-filter"/>
+            <Button fx:id="filterLive" text="Live" onAction="#onFilterLive" styleClass="admin-filter"/>
+            <Button fx:id="filterViolated" text="Violated" onAction="#onFilterViolated" styleClass="admin-filter"/>
+        </HBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Label fx:id="resultCount" text="5 sessions" styleClass="muted-text"/>
+    </HBox>
+
+    <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="auctionsTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
+            <columns>
+                <TableColumn fx:id="colItem" text="Item" prefWidth="280"/>
+                <TableColumn fx:id="colSeller" text="Seller" prefWidth="140"/>
+                <TableColumn fx:id="colStartPrice" text="Start Price" prefWidth="130"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="130"/>
+                <TableColumn fx:id="colReports" text="Reports" prefWidth="80"/>
+                <TableColumn fx:id="colAction" text="Action" prefWidth="160"/>
+            </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
+        </TableView>
+    </VBox>
+</VBox>

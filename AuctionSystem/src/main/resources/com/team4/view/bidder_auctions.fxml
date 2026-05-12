@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.BidderAuctionsController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1100">
+
+    <HBox spacing="14">
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="liveCount" text="12" styleClass="stat-number-accent"/>
+            <Label text="Live" styleClass="muted-text"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="upcomingCount" text="8" styleClass="stat-number-neutral"/>
+            <Label text="Upcoming" styleClass="muted-text"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="endedCount" text="156" styleClass="stat-number-muted"/>
+            <Label text="Ended" styleClass="muted-text"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label fx:id="totalBids" text="2.4K" styleClass="stat-number-accent"/>
+            <Label text="Total Bids" styleClass="muted-text"/>
+        </VBox>
+    </HBox>
+
+    <VBox spacing="12" styleClass="filter-panel">
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <TextField fx:id="searchField" promptText="Search auctions..." styleClass="admin-input" prefWidth="300"/>
+            <ComboBox fx:id="sortBox" promptText="Sort by" styleClass="admin-combo" prefWidth="160"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <HBox fx:id="categoryPills" spacing="8">
+            <Button text="All" styleClass="filter-pill-active"/>
+            <Button text="Electronics" styleClass="filter-pill"/>
+            <Button text="Vehicles" styleClass="filter-pill"/>
+            <Button text="Art" styleClass="filter-pill"/>
+            <Button text="Fashion" styleClass="filter-pill"/>
+            <Button text="Collectibles" styleClass="filter-pill"/>
+        </HBox>
+
+        <HBox fx:id="statusPills" spacing="8">
+            <Button text="All" styleClass="filter-pill-active"/>
+            <Button text="Live" styleClass="filter-pill"/>
+            <Button text="Upcoming" styleClass="filter-pill"/>
+            <Button text="Ended" styleClass="filter-pill"/>
+        </HBox>
+    </VBox>
+
+    <FlowPane fx:id="auctionsGrid" VBox.vgrow="ALWAYS" hgap="16" vgap="16" style="-fx-background-color: transparent;">
+    </FlowPane>
+</VBox>
