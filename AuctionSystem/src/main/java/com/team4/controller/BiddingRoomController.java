@@ -1,0 +1,213 @@
+package com.team4.controller;
+
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.scene.chart.AreaChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+
+import java.net.URL;
+import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import javafx.application.Platform;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public class BiddingRoomController implements Initializable {
+
+    private static final double MAX_BID = 50000000;
+
+    @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating;
+    @FXML private Label currentPrice, bidCount, timeLeft, minBidLabel, bidError;
+    @FXML private AreaChart<Number, Number> priceChart;
+    @FXML private ListView<String> bidHistoryList;
+    @FXML private TextField bidAmountField;
+    @FXML private Button quick100k, quick200k, quick500k, quick1m, placeBidBtn;
+    @FXML private ToggleButton autoBidToggle;
+    @FXML private VBox autoBidPanel;
+    @FXML private TextField autoBidMax, autoBidIncrement;
+    @FXML private ListView<String> chatList;
+    @FXML private TextField chatInput;
+
+    private double currentBid = 28500000;
+    private LocalDateTime auctionEndTime = LocalDateTime.now().plusMinutes(5);
+    private Timeline countdownTimeline;
+
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        loadChart();
+        loadBidHistory();
+        loadChat();
+        updateBidInfo();
+        startCountdown();
+    }
+
+    private void startCountdown() {
+        KeyFrame frame = new KeyFrame(Duration.seconds(1), event -> {
+            long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
+            if (secondsBetween <= 0) {
+                timeLeft.setText("00:00:00 (Ended)");
+            } else {
+                long h = secondsBetween / 3600;
+                long m = (secondsBetween % 3600) / 60;
+                long s = secondsBetween % 60;
+                timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+            }
+        });
+        countdownTimeline = new Timeline(frame);
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+    }
+
+    public void startNetworkListener(com.team4.client.Client client) {
+        client.startListening(message -> {
+            Platform.runLater(() -> {
+                try {
+                    JsonObject json = JsonParser.parseString(message).getAsJsonObject();
+                    if (json.has("action") && "BID_UPDATE".equals(json.get("action").getAsString())) {
+                        if (json.has("data")) {
+                            JsonObject data = json.getAsJsonObject("data");
+                            
+                            // Cập nhật giá mới
+                            if (data.has("amount")) {
+                                double newAmount = data.get("amount").getAsDouble();
+                                currentBid = newAmount;
+                                updateBidInfo();
+                                addBidToHistory(data.has("bidderId") ? data.get("bidderId").getAsString() : "Unknown", newAmount);
+                                addChartPoint(newAmount);
+                            }
+                            
+                            // Anti-sniping: Cập nhật thời gian kết thúc mới
+                            if (data.has("endTime")) {
+                                String endTimeStr = data.get("endTime").getAsString();
+                                auctionEndTime = LocalDateTime.parse(endTimeStr);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    private void updateBidInfo() {
+        currentPrice.setText(formatPrice(currentBid));
+        double minNext = currentBid + 100000;
+        bidAmountField.setText(String.valueOf((int)minNext));
+        minBidLabel.setText(formatPrice(minNext));
+    }
+
+    @FXML private void onQuickBid() {
+        int increment = 100000;
+        double newBid = currentBid + increment;
+
+        if (newBid > MAX_BID) {
+            showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
+            return;
+        }
+
+        placeBid(newBid);
+    }
+
+    @FXML private void onPlaceBid() {
+        try {
+            double bid = Double.parseDouble(bidAmountField.getText());
+            if (bid > MAX_BID) {
+                showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
+                return;
+            }
+            if (bid <= currentBid) {
+                showBidError("Bid must be higher than current price");
+                return;
+            }
+            placeBid(bid);
+        } catch (NumberFormatException e) {
+            showBidError("Please enter a valid number");
+        }
+    }
+
+    private void placeBid(double amount) {
+        currentBid = amount;
+        updateBidInfo();
+        hideBidError();
+        addBidToHistory("You", amount);
+        addChartPoint(amount);
+    }
+
+    @FXML private void onAutoBidToggle() {
+        boolean active = autoBidToggle.isSelected();
+        autoBidPanel.setManaged(active);
+        autoBidPanel.setVisible(active);
+    }
+
+    @FXML private void onSendChat() {
+        String msg = chatInput.getText().trim();
+        if (!msg.isEmpty()) {
+            chatList.getItems().add(0, "You: " + msg);
+            chatInput.clear();
+        }
+    }
+
+    private void loadChart() {
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        series.setName("Bid price");
+        series.getData().add(new XYChart.Data<>(0, 25000000));
+        series.getData().add(new XYChart.Data<>(1, 25500000));
+        series.getData().add(new XYChart.Data<>(2, 26000000));
+        series.getData().add(new XYChart.Data<>(3, 27000000));
+        series.getData().add(new XYChart.Data<>(4, 27500000));
+        series.getData().add(new XYChart.Data<>(5, 28000000));
+        series.getData().add(new XYChart.Data<>(6, 28500000));
+        priceChart.getData().add(series);
+    }
+
+    private void addChartPoint(double price) {
+        int nextIndex = priceChart.getData().get(0).getData().size();
+        priceChart.getData().get(0).getData().add(
+                new XYChart.Data<>(nextIndex, price)
+        );
+    }
+
+    private void loadBidHistory() {
+        bidHistoryList.getItems().addAll(
+                "🥇 You - 28,500,000 - Just now",
+                "🥈 Tran Thi B - 28,000,000 - 5 min ago",
+                "🥉 Le Van C - 27,500,000 - 8 min ago",
+                "4. Pham Thi D - 27,000,000 - 12 min ago",
+                "5. Hoang Van E - 26,000,000 - 15 min ago"
+        );
+    }
+
+    private void addBidToHistory(String bidder, double amount) {
+        bidHistoryList.getItems().add(0, "🥇 " + bidder + " - " + formatPrice(amount) + " - Just now");
+    }
+
+    private void loadChat() {
+        chatList.getItems().addAll(
+                "Nguyen Van A: Beautiful item!",
+                "Tran Thi B: This price is reasonable",
+                "Le Van C: Anyone else bidding?"
+        );
+    }
+
+    private void showBidError(String msg) {
+        bidError.setText("⚠ " + msg);
+        bidError.setManaged(true);
+        bidError.setVisible(true);
+    }
+
+    private void hideBidError() {
+        bidError.setManaged(false);
+        bidError.setVisible(false);
+    }
+
+    private String formatPrice(double price) {
+        return String.format("%,d VND", (int)price);
+    }
+}
