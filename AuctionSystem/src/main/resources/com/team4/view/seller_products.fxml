@@ -14,20 +14,20 @@
 
     <HBox spacing="14">
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="totalProducts" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;" text="24" />
-            <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Total Products" />
+            <Label fx:id="totalProducts" styleClass="stat-number-neutral" text="24" />
+            <Label styleClass="muted-text" text="Total Products" />
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="activeAuctions" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #22c55e;" text="8" />
-            <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Bidding" />
+            <Label fx:id="activeAuctions" styleClass="stat-number-accent" text="8" />
+            <Label styleClass="muted-text" text="Bidding" />
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="pendingProducts" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #eab308;" text="3" />
-            <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Pending" />
+            <Label fx:id="pendingProducts" styleClass="stat-number-muted" text="3" />
+            <Label styleClass="muted-text" text="Pending" />
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="soldProducts" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #3b82f6;" text="156" />
-            <Label style="-fx-font-size: 12; -fx-text-fill: #6b7280;" text="Sold" />
+            <Label fx:id="soldProducts" styleClass="stat-number-neutral" text="156" />
+            <Label styleClass="muted-text" text="Sold" />
         </VBox>
     </HBox>
 

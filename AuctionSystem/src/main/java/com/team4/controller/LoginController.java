@@ -2,6 +2,7 @@ package com.team4.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -16,6 +17,9 @@ public class LoginController {
     @FXML private VBox loginForm;
     @FXML private TextField loginUsername;
     @FXML private PasswordField loginPassword;
+    @FXML private VBox adminCodeBox;
+    @FXML private PasswordField loginAdminCode;
+    @FXML private Hyperlink toggleAdminCodeLink;
     @FXML private Label loginError;
 
     @FXML private javafx.scene.control.Button loginTab;
@@ -133,9 +137,32 @@ public class LoginController {
     }
 
     @FXML
+    private void onToggleAdminCode() {
+        if (adminCodeBox == null) return;
+        boolean show = !adminCodeBox.isVisible();
+        adminCodeBox.setVisible(show);
+        adminCodeBox.setManaged(show);
+
+        if (show) {
+            if (toggleAdminCodeLink != null) toggleAdminCodeLink.setText("Hide admin code");
+            if (loginAdminCode != null) loginAdminCode.requestFocus();
+        } else {
+            if (toggleAdminCodeLink != null) toggleAdminCodeLink.setText("Login as admin?");
+            // Clear giá trị khi ẩn để tránh gửi adminCode mà user không thực sự muốn dùng
+            if (loginAdminCode != null) loginAdminCode.clear();
+        }
+    }
+
+    @FXML
     private void onLoginSubmit() {
         String username = loginUsername.getText();
         String password = loginPassword.getText();
+        // Chỉ lấy adminCode khi ô đang hiện; nếu ẩn thì coi như rỗng
+        String adminCode = "";
+        if (adminCodeBox != null && adminCodeBox.isVisible()
+                && loginAdminCode != null && loginAdminCode.getText() != null) {
+            adminCode = loginAdminCode.getText().trim();
+        }
 
         if (username == null || username.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             showError(loginError, "Please enter your username and password!");
@@ -144,7 +171,7 @@ public class LoginController {
 
         try {
             ApiClient apiClient = new ApiClient();
-            String response = apiClient.login(username, password);
+            String response = apiClient.login(username, password, adminCode);
             if (response != null) {
                 showError(loginError, "Login successful!");
                 loginError.setStyle("-fx-text-fill: #10b981;");
@@ -161,7 +188,9 @@ public class LoginController {
                     if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
                         role = "seller";
                     } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
-                        role = "admin";
+                        boolean isSuperAdmin = response.contains("\"accessLevel\":1")
+                                || response.contains("\"access_level\":1");
+                        role = isSuperAdmin ? "admin_super" : "admin_regular";
                     }
 
                     mainController.setUserRole(role);

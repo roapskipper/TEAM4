@@ -35,15 +35,19 @@ public class MainController implements Initializable {
         setupSidebar();
         updateUserInfo();
 
-        if ("admin".equals(role)) loadPage("admin_dashboard", "Dashboard", "Monitor and manage the entire system");
-        else if ("seller".equals(role)) loadPage("seller_products", "Products", "Manage auction products");
-        else loadPage("bidder_auctions", "Auctions", "Explore and join auctions");
+        if (role != null && role.startsWith("admin")) {
+            loadPage("admin_dashboard", "Dashboard", "Monitor and manage the entire system");
+        } else if ("seller".equals(role)) {
+            loadPage("seller_products", "Products", "Manage auction products");
+        } else {
+            loadPage("bidder_auctions", "Auctions", "Explore and join auctions");
+        }
     }
 
     private void setupSidebar() {
         navContainer.getChildren().clear();
 
-        if ("admin".equals(userRole)) {
+        if (userRole != null && userRole.startsWith("admin")) {
             addNavItem("📊", "Dashboard", "admin_dashboard", "Monitor and manage the system");
             addNavItem("👥", "Users", "admin_users", "Lock/unlock accounts");
             addNavItem("🔨", "Auctions", "admin_auctions", "Approve and manage auctions");
@@ -56,6 +60,10 @@ public class MainController implements Initializable {
             addNavItem("🔨", "Auctions", "bidder_auctions", "Explore auction sessions");
             addNavItem("📋", "My Auctions", "bidding_room", "Sessions you joined");
             addNavItem("👤", "Profile", "profile", "Update your information");
+        }
+
+        if (!navContainer.getChildren().isEmpty() && navContainer.getChildren().get(0) instanceof Button) {
+            selectNavButton((Button) navContainer.getChildren().get(0));
         }
     }
 
@@ -75,7 +83,9 @@ public class MainController implements Initializable {
             if (n instanceof Button) {
                 Button b = (Button) n;
                 b.getStyleClass().removeAll("nav-btn-active");
-                b.getStyleClass().add("nav-btn");
+                if (!b.getStyleClass().contains("nav-btn")) {
+                    b.getStyleClass().add("nav-btn");
+                }
             }
         }
         selected.getStyleClass().removeAll("nav-btn");
@@ -83,23 +93,22 @@ public class MainController implements Initializable {
     }
 
     private void updateUserInfo() {
-        String name = userRole.equals("admin") ? "Admin" :
-                userRole.equals("seller") ? "Seller" : "Buyer";
-        userNameLabel.setText(name);
+        String name;
+        String roleText;
 
-        if ("admin".equals(userRole)) {
-            userRoleBadge.setText("ADMIN");
-            userRoleBadge.setStyle("-fx-text-fill: #ef4444; -fx-padding: 2 8; -fx-background-color: rgba(239,68,68,0.15); -fx-background-radius: 20;");
-            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #ef4444, #f97316); -fx-background-radius: 50%;");
+        if (userRole != null && userRole.startsWith("admin")) {
+            name = "Admin";
+            roleText = "admin_super".equals(userRole) ? "SUPER ADMIN" : "ADMIN";
         } else if ("seller".equals(userRole)) {
-            userRoleBadge.setText("SELLER");
-            userRoleBadge.setStyle("-fx-text-fill: #ec4899; -fx-padding: 2 8; -fx-background-color: rgba(236,72,153,0.15); -fx-background-radius: 20;");
-            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #ec4899, #f43f5e); -fx-background-radius: 50%;");
+            name = "Seller";
+            roleText = "SELLER";
         } else {
-            userRoleBadge.setText("BIDDER");
-            userRoleBadge.setStyle("-fx-text-fill: #3b82f6; -fx-padding: 2 8; -fx-background-color: rgba(59,130,246,0.15); -fx-background-radius: 20;");
-            userAvatarBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #3b82f6, #06b6d4); -fx-background-radius: 50%;");
+            name = "Buyer";
+            roleText = "BIDDER";
         }
+
+        userNameLabel.setText(name);
+        userRoleBadge.setText(roleText);
     }
 
     private void loadPage(String pageId, String title, String subtitle) {
@@ -113,7 +122,7 @@ public class MainController implements Initializable {
             contentArea.getChildren().add(page);
         } catch (Exception ex) {
             Label placeholder = new Label("Page " + title + " (under development)");
-            placeholder.setStyle("-fx-text-fill: #4b5563; -fx-font-size: 16;");
+            placeholder.getStyleClass().add("muted-text");
             contentArea.getChildren().clear();
             contentArea.getChildren().add(placeholder);
         }

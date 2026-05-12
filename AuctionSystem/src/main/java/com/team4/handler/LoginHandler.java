@@ -33,14 +33,16 @@ public class LoginHandler implements HttpHandler {
 
         String username = ApiServer.parseParam(body, "username");
         String password = ApiServer.parseParam(body, "password");
+        String adminCode = ApiServer.parseParam(body, "adminCode");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
+            ApiServer.sendResponse(exchange, 400,
+                    ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
             return;
         }
 
         try {
-            User user = authService.login(username, password);
+            User user = authService.login(username, password, adminCode);
             JsonObject data = new JsonObject();
             data.addProperty("userId", user.getId());
             data.addProperty("role", user.getRole().name());
