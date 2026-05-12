@@ -224,7 +224,7 @@ Sử dụng các tài khoản dưới đây để truy cập Client Application 
 
 | Vai trò | Username | Password | Admin Code | Chức năng chính |
 | :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `superadmin` | `admin123` | *(không cần)* | Quản lý toàn hệ thống, cấp mã cho Admin thường. |
+| **Super Admin** | `superadmin` | `admin123` | `adminteam4` | Quản lý toàn hệ thống, cấp mã cho Admin thường. |
 | **Seller (Mixi Shop)** | `domixi` | `seller123` | — | Đăng sản phẩm, tạo và quản lý phiên đấu giá của mình. |
 | **Seller (Shop Chất)** | `daucatmoi` | `seller123` | — | Tương tự trên — dùng để test multi-seller. |
 | **Bidder (10 triệu)** | `ueteee` | `bidder123` | — | Tham gia đấu giá với balance thấp — test logic không đủ tiền. |
