@@ -6,9 +6,8 @@ import java.time.LocalDateTime;
 
 public class Auction extends Entity {
     // Giả sử luật: Nếu bid trong 1 phút cuối -> Cộng thêm 1 phút
-    private static final int SNIPING_THRESHOLD_MINUTES = 1;
-    private static final int EXTENSION_MINUTES = 1;
-    private static final long serialVersionUID = 1L;
+    private static final int SNIPING_THRESHOLD_MINUTES = 5;
+    private static final int EXTENSION_MINUTES = 30;
     // enum các trạng thái của phiên đấu giá
     public enum AuctionStatus {
         PENDING, RUNNING, FINISHED, PAID ,CANCELLED
@@ -69,8 +68,8 @@ public class Auction extends Entity {
             throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
         if (startTime == null)
             throw new IllegalArgumentException("Thời gian bắt đầu không được null");
-        if (endTime == null || !endTime.isAfter(startTime))
-            throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
+        if (endTime == null)
+            throw new IllegalArgumentException("Thời gian kết thúc không được null");
         if (currentPrice.compareTo(startingPrice) < 0)
             throw new IllegalArgumentException("Giá hiện tại không thể thấp hơn giá khởi điểm");
         if (status == null)
@@ -98,8 +97,6 @@ public class Auction extends Entity {
             throw new IllegalArgumentException("BidderId không được null");
         if (amount == null)
             throw new IllegalArgumentException("Amount không được null");
-        if (amount.compareTo(currentPrice.add(bidIncrement)) < 0)
-            throw new IllegalArgumentException("Giá bid phải cao hơn giá hiện tại ít nhất " + bidIncrement);
 
         this.currentPrice = money(amount);
         this.currentHighestBidderId = bidderId;
@@ -164,9 +161,6 @@ public class Auction extends Entity {
     }
     public LocalDateTime getEndTime() {
         return endTime;
-    }
-    public void extendEndTime(long seconds) {
-        this.endTime = this.endTime.plusSeconds(seconds);
     }
     public AuctionStatus getStatus() {
         return status;

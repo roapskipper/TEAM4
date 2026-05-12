@@ -3,17 +3,23 @@ package com.team4.handler;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.team4.dao.impl.AuctionDAOImpl;
+import com.team4.dao.impl.AutoBiddingDAOImpl;
+import com.team4.dao.impl.BidTransactionDAOImpl;
+import com.team4.dao.impl.UserDAOImpl;
 import com.team4.model.Auction;
 import com.team4.model.BidTransaction;
 import com.team4.network.NetworkMessage;
 import com.team4.observer.BidObserver;
 import com.team4.server.Server;
+import com.team4.service.BiddingService;
 import com.team4.util.BusinessException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.net.Socket;
 import java.util.List;
 
@@ -21,6 +27,13 @@ public class ClientHandler implements Runnable, BidObserver {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+
+    private static final BiddingService biddingService = new BiddingService(
+            new AuctionDAOImpl(),
+            new BidTransactionDAOImpl(),
+            new UserDAOImpl(),
+            new AutoBiddingDAOImpl()
+    );
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -76,7 +89,7 @@ public class ClientHandler implements Runnable, BidObserver {
         String command = netMsg.getCommand();
         switch (command) {
             case "LOGIN":
-                // TODO: Xử lý đăng nhập
+                // TODO: Xử lý đăng nhập qua socket
                 break;
             case "BID":
                 handleBid(netMsg.getData());
@@ -109,16 +122,24 @@ public class ClientHandler implements Runnable, BidObserver {
                     return;
                 }
 
-                // Giả định bạn có BiddingService trong Server
-                // BidTransaction transaction = Server.getBiddingService().placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
-                
-                // Do chúng ta đang fix code dựa trên yêu cầu 3.3, đảm bảo broadcast update
+                // Gọi BiddingService để xử lý proxy bidding
+                biddingService.placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
+
+                // Lấy lại auction sau khi bid để có giá và endTime mới nhất
+                Auction updatedAuction = Server.getAuctionService().getAuctionById(auctionId);
+
+                // Broadcast kết quả mới cho tất cả client
                 JsonObject broadcastData = new JsonObject();
                 broadcastData.addProperty("auctionId", auctionId);
-                broadcastData.addProperty("endTime", auction.getEndTime().toString());
+                broadcastData.addProperty("currentPrice", updatedAuction.getCurrentPrice().doubleValue());
+                broadcastData.addProperty("currentHighestBidderId", updatedAuction.getCurrentHighestBidderId());
+                if (updatedAuction.getEndTime() != null) {
+                    broadcastData.addProperty("endTime", updatedAuction.getEndTime().toString());
+                }
                 Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), null);
-                
-                sendMessage(buildResponse("ERROR", "BiddingService chua hoan thien", "BID_FAILED", null));
+
+                sendMessage(buildResponse("SUCCESS", "Dat gia thanh cong!", "BID_SUCCESS", broadcastData));
+
             } catch (BusinessException e) {
                 sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));
             }

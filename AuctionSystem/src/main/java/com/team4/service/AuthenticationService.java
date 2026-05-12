@@ -51,38 +51,55 @@ public class AuthenticationService {
         logger.info("Đã đăng ký tài khoản seller userId={} username={}", seller.getId(), username);
     }
 
-    // Đăng nhập - xử lý cả Bidder, Seller và Admin
-    public User login(String username, String rawPassword, String rawAdminCode) {
+    // Đăng nhập cho Bidder & Seller
+    public User login(String username, String rawPassword) {
         logger.info("Đang đăng nhập username={}", username);
         User user = userDAO.findByUsername(username);
-
         if (user == null) {
             logger.warn("Đăng nhập thất bại vì username không tồn tại username={}", username);
             throw new BusinessException("Tên đăng nhập không tồn tại");
         }
-
         if (!user.verifyPassword(rawPassword)) {
             logger.warn("Đăng nhập thất bại vì mật khẩu không đúng username={} userId={}", username, user.getId());
             throw new BusinessException("Mật khẩu không đúng");
         }
+        logger.info("Đăng nhập thành công userId={} username={} role={}", user.getId(), username, user.getRole());
+        return user;
+    }
 
-        // Nếu là Admin thì kiểm tra thêm admin code
-        if (user instanceof Admin admin) {
-            if (rawAdminCode == null || rawAdminCode.trim().isEmpty()) {
-                logger.warn("Đăng nhập admin thất bại vì thiếu mã admin username={} userId={}", username, admin.getId());
-                throw new BusinessException("Vui lòng nhập mã Admin");
-            }
-            if (!admin.verifyAdminCode(rawAdminCode)) {
-                logger.warn("Đăng nhập admin thất bại vì mã admin không đúng username={} userId={}", username, admin.getId());
-                throw new BusinessException("Mã Admin không đúng");
-            }
-            logger.info("Đăng nhập admin thành công userId={} username={} accessLevel={}",
-                    admin.getId(), username, admin.getAccessLevel());
-        } else {
-            logger.info("Đăng nhập thành công userId={} username={} role={}", user.getId(), username, user.getRole());
+    // Đăng nhập cho Admin
+    public Admin loginAdmin(String username, String rawPassword, String rawAdminCode) {
+        logger.info("Đang đăng nhập admin username={}", username);
+        User user = userDAO.findByUsername(username);
+
+        if (user == null) {
+            logger.warn("Đăng nhập admin thất bại vì username không tồn tại username={}", username);
+            throw new BusinessException("Tên đăng nhập không tồn tại");
+
         }
 
-        return user;
+        if (!(user instanceof Admin admin)) {
+            logger.warn("Đăng nhập admin thất bại vì tài khoản không có quyền admin username={} userId={} role={}",
+                    username, user.getId(), user.getRole());
+            throw new BusinessException("Tài khoản không có quyền admin");
+
+        }
+
+        if (!admin.verifyPassword(rawPassword)) {
+            logger.warn("Đăng nhập admin thất bại vì mật khẩu không đúng username={} userId={}", username, admin.getId());
+            throw new BusinessException("Mật khẩu không đúng");
+
+        }
+
+        if (!admin.verifyAdminCode(rawAdminCode)) {
+            logger.warn("Đăng nhập admin thất bại vì mã admin không đúng username={} userId={}", username, admin.getId());
+            throw new BusinessException("Mã admin không đúng");
+
+        }
+
+        logger.info("Đăng nhập admin thành công userId={} username={} accessLevel={}",
+                admin.getId(), username, admin.getAccessLevel());
+        return admin;
     }
 
     // Đỏi mật khẩu
