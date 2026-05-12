@@ -42,7 +42,12 @@ public class LoginHandler implements HttpHandler {
         }
 
         try {
-            User user = authService.login(username, password, adminCode);
+            User user;
+            if (adminCode != null && !adminCode.isEmpty()) {
+                user = authService.loginAdmin(username, password, adminCode);
+            } else {
+                user = authService.login(username, password);
+            }
             JsonObject data = new JsonObject();
             data.addProperty("userId", user.getId());
             data.addProperty("role", user.getRole().name());
