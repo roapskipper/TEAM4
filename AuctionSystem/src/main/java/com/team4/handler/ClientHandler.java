@@ -109,7 +109,6 @@ public class ClientHandler implements Runnable, BidObserver {
                     return;
                 }
 
-                // Giả định bạn có BiddingService trong Server
                 // BidTransaction transaction = Server.getBiddingService().placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
                 
                 // Do chúng ta đang fix code dựa trên yêu cầu 3.3, đảm bảo broadcast update
