@@ -1,11 +1,11 @@
-# AuctionSpace: Real-time Online Auction System 🚀
+# AuctionSpace: Real-time Online Auction System
 
 ## Giới thiệu (Abstract)
 **AuctionSpace** là hệ thống Đấu giá Trực tuyến hoạt động theo kiến trúc Client-Server, được phát triển hoàn toàn bằng Java 21 và JavaFX 17+. Hệ thống cung cấp trải nghiệm đấu giá thời gian thực (Real-time), hỗ trợ xử lý đồng thời (Concurrency) để tránh tranh chấp dữ liệu (Lost Update, Race Condition), và tích hợp các tính năng nâng cao như Đấu giá tự động (Auto-Bidding), Chống bắn tỉa (Anti-sniping) cùng biểu đồ biến động giá trực quan.
 
 Giao diện được thiết kế theo concept **"The Heritage"** — phong cách truyền thống, sang trọng, lấy cảm hứng từ Sotheby's, với bảng màu Deep Burgundy (`#722F37`) trên nền Cream (`#FBF9F6`) và bộ font Playfair Display + Lato.
 
-Dự án được phát triển bởi **Nhóm 4 - Lớp K70I-IT6** (Đại học Công nghệ - ĐHQGHN).
+Dự án được phát triển bởi **Nhóm 4 - Lớp K70I-IT6** (Trường Đại học Công nghệ - Đại học Quốc gia Hà Nội).
 
 ---
 
@@ -125,15 +125,7 @@ AuctionSystem/
 │   │   │   └── TestConnect.java    # Test nhanh kết nối DB
 │   │   └── resources/
 │   │       ├── com/team4/view/
-│   │       │   ├── admin_auctions.fxml
-│   │       │   ├── admin_dashboard.fxml
-│   │       │   ├── admin_users.fxml
-│   │       │   ├── bidder_auctions.fxml
-│   │       │   ├── bidding_room.fxml
-│   │       │   ├── login.fxml
-│   │       │   ├── main.fxml
-│   │       │   ├── profile.fxml
-│   │       │   ├── seller_products.fxml
+│   │       │   ├── *.fxml          #Các file .fxml
 │   │       │   └── style.css       # CSS theo concept The Heritage
 │   │       ├── fonts/              # Font Playfair Display & Lato (TTF)
 │   │       ├── data.sql            # Dữ liệu khởi tạo mẫu
@@ -222,13 +214,14 @@ mvn exec:java -Dexec.mainClass="com.team4.Launcher"
 
 Sử dụng các tài khoản dưới đây để truy cập Client Application và kiểm tra luồng phân quyền tương ứng:
 
-| Vai trò | Username | Password | Admin Code | Chức năng chính |
-| :--- | :--- | :--- | :--- | :--- |
-| **Super Admin** | `superadmin` | `admin123` | `adminteam4` | Quản lý toàn hệ thống, cấp mã cho Admin thường. |
-| **Seller (Mixi Shop)** | `domixi` | `seller123` | — | Đăng sản phẩm, tạo và quản lý phiên đấu giá của mình. |
-| **Seller (Shop Chất)** | `daucatmoi` | `seller123` | — | Tương tự trên — dùng để test multi-seller. |
-| **Bidder (10 triệu)** | `ueteee` | `bidder123` | — | Tham gia đấu giá với balance thấp — test logic không đủ tiền. |
-| **Bidder (100 triệu)** | `thichthimua` | `bidder123` | — | Tham gia đấu giá với balance cao — test luồng đặt bid bình thường. |
+| Vai trò                | Username          | Password          | Admin Code        | Chức năng chính                                                                                        |
+|:-----------------------|:------------------|:------------------|:------------------|:-------------------------------------------------------------------------------------------------------|
+| **Super Admin**        | `superadmin`      | `admin123`        | `adminteam4`      | Quản lý toàn hệ thống, cấp mã cho Admin thường.                                                        |
+| **Admin**              | *(Chưa cập nhật)* | *(Chưa cập nhật)* | *(Chưa cập nhật)* | Có ít chức năng hơn super admin, chỉ có những chức năng cơ bản như báo vi phạm, khóa tài khoản,...
+| **Seller (Mixi Shop)** | `domixi`          | `seller123`       | —                 | Đăng sản phẩm, tạo và quản lý phiên đấu giá của mình.                                                  |
+| **Seller (Shop Chất)** | `daucatmoi`       | `seller123`       | —                 | Tương tự trên — dùng để test multi-seller.                                                             |
+| **Bidder (10 triệu)**  | `ueteee`          | `bidder123`       | —                 | Tham gia đấu giá với balance thấp — test logic không đủ tiền.                                          |
+| **Bidder (100 triệu)** | `thichthimua`     | `bidder123`       | —                 | Tham gia đấu giá với balance cao — test luồng đặt bid bình thường.                                     |
 
 > *(Lưu ý: mật khẩu thực được lưu dưới dạng BCrypt hash trong cột `password_hash`. Server tự xử lý đối chiếu khi đăng nhập.)*
 
