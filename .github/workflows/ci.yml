@@ -96,7 +96,8 @@ jobs:
 
       # Chờ MySQL sẵn sàng và tạo schema
       - name: Initialize database schema
-        run: mysql -h 127.0.0.1 -u root -prootpass < AuctionSystem/src/test/resources/schema-test.sql
+        run: |
+          mysql -h 127.0.0.1 -u root -prootpass < AuctionSystem/src/test/resources/schema-test.sql
       # Override database.properties để trỏ tới MySQL container trong CI
       - name: Configure test database connection
         working-directory: AuctionSystem/src/test/resources
