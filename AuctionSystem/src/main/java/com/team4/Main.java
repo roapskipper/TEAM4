@@ -12,6 +12,7 @@ public class Main extends Application {
     @Override
     public void init() {
         String[] fontFiles = {
+                //Font Lato
                 "Lato Regular.ttf",
                 "Lato Bold.ttf",
                 "Lato Italic.ttf",
@@ -22,7 +23,7 @@ public class Main extends Application {
                 "Lato Heavy.ttf",
                 "Lato Hairline.ttf",
                 "Lato Thin.ttf",
-
+                //Font PlayfairDisplay
                 "PlayfairDisplay-Regular.ttf",
                 "PlayfairDisplay-Bold.ttf",
                 "PlayfairDisplay-BoldItalic.ttf",

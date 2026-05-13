@@ -39,11 +39,11 @@ public class AdminUsersController implements Initializable {
     }
 
     private void loadMockData() {
-        allUsers.add(new UserRow("bidder_a", "a@mail.com", "bidder", "active", "2024-01-15", "12"));
-        allUsers.add(new UserRow("seller_pro", "seller@mail.com", "seller", "active", "2024-01-10", "8"));
-        allUsers.add(new UserRow("spammer_1", "spam@mail.com", "bidder", "locked", "2024-02-01", "0"));
-        allUsers.add(new UserRow("art_collector", "art@mail.com", "bidder", "active", "2024-01-20", "5"));
-        allUsers.add(new UserRow("tech_store", "tech@mail.com", "seller", "active", "2024-01-05", "25"));
+        allUsers.add(new UserRow("bidder_a", "a@mail.com", "bidder", "active", "2026-01-15", "12"));
+        allUsers.add(new UserRow("seller_pro", "seller@mail.com", "seller", "active", "2026-01-10", "8"));
+        allUsers.add(new UserRow("spammer_1", "spam@mail.com", "bidder", "locked", "2026-02-01", "0"));
+        allUsers.add(new UserRow("art_collector", "art@mail.com", "bidder", "active", "2026-01-20", "5"));
+        allUsers.add(new UserRow("tech_store", "tech@mail.com", "seller", "active", "2026-01-05", "25"));
         applyFilter();
     }
 
