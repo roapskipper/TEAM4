@@ -234,6 +234,13 @@ Sử dụng các tài khoản dưới đây để truy cập Client Application 
 
 ---
 
+## 🌏 Sử dụng .env để đặt biến môi trường
+
+- Tạo file **.env** với mẫu **.env.example**
+- Thêm các thông số dựa theo db trên máy cá nhân
+
+---
+
 ## ⚠️ Lưu ý quan trọng (Troubleshooting)
 
 > [!CAUTION]
