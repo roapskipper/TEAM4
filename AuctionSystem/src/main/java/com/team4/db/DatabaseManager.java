@@ -26,7 +26,7 @@ public final class DatabaseManager {
     private static int connectionTimeout;
     private static int idleTimeout;
     private static int maxLifetime;
-    private static final Dotenv dotenv = Dotenv.load();
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
     // Không cho tạo instance
     private DatabaseManager() {}
