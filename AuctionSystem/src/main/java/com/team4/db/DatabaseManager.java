@@ -55,9 +55,9 @@ public final class DatabaseManager {
             props.load(is);
 
             // Ưu tiên lấy từ biến môi trường (.env hoặc hệ thống), nếu không có thì lấy từ file properties
-            url      = dotenv.get("DB_URL", props.getProperty("db.url"));
-            username = dotenv.get("DB_USERNAME", props.getProperty("db.username"));
-            password = dotenv.get("DB_PASSWORD", props.getProperty("db.password"));
+            url      = dotenv.get("DB_URL");
+            username = dotenv.get("DB_USERNAME");
+            password = dotenv.get("DB_PASSWORD");
 
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
