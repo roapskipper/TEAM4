@@ -36,6 +36,7 @@ public final class DatabaseManager {
     public static synchronized void initialize() {
         if (dataSource == null) {
             loadConfig();
+
             initDataSource();
         }
     }
@@ -49,13 +50,15 @@ public final class DatabaseManager {
                 .getResourceAsStream("database.properties")) {
 
             if (is == null)
-                throw new RuntimeException("Không tìm thấy database.properties"); // getResourceAsStream trả null nếu không tìm thấy file
+                throw new RuntimeException("Không tìm thấy database.properties");
 
             props.load(is);
-            // Lấy các giá trị
-            url               = dotenv.get("DB_URL");
-            username          = dotenv.get("DB_USERNAME");
-            password          = dotenv.get("DB_PASSWORD");
+
+            // Ưu tiên lấy từ biến môi trường (.env hoặc hệ thống), nếu không có thì lấy từ file properties
+            url      = dotenv.get("DB_URL", props.getProperty("db.url"));
+            username = dotenv.get("DB_USERNAME", props.getProperty("db.username"));
+            password = dotenv.get("DB_PASSWORD", props.getProperty("db.password"));
+
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
             idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
