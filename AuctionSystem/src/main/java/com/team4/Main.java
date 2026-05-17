@@ -1,4 +1,3 @@
-
 package com.team4;
 
 import javafx.application.Application;
@@ -13,7 +12,6 @@ public class Main extends Application {
     @Override
     public void init() {
         String[] fontFiles = {
-                // ===== LATO=====
                 "Lato Regular.ttf",
                 "Lato Bold.ttf",
                 "Lato Italic.ttf",
@@ -25,7 +23,6 @@ public class Main extends Application {
                 "Lato Hairline.ttf",
                 "Lato Thin.ttf",
 
-                // ===== PLAYFAIR DISPLAY=====
                 "PlayfairDisplay-Regular.ttf",
                 "PlayfairDisplay-Bold.ttf",
                 "PlayfairDisplay-BoldItalic.ttf",
@@ -58,7 +55,7 @@ public class Main extends Application {
         );
         Parent root = loader.load();
 
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(root, 1100, 880);
         scene.getStylesheets().add(
                 getClass().getResource("/com/team4/view/style.css").toExternalForm()
         );
@@ -66,7 +63,7 @@ public class Main extends Application {
         primaryStage.setTitle("AuctionSpace - Dang nhap");
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(1000);
-        primaryStage.setMinHeight(700);
+        primaryStage.setMinHeight(850);
         primaryStage.centerOnScreen();
         primaryStage.show();
     }
@@ -75,4 +72,3 @@ public class Main extends Application {
         launch(args);
     }
 }
-

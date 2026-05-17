@@ -88,9 +88,6 @@ public class ClientHandler implements Runnable, BidObserver {
     private void handleRequest(NetworkMessage netMsg) {
         String command = netMsg.getCommand();
         switch (command) {
-            case "LOGIN":
-                // TODO: Xử lý đăng nhập qua socket
-                break;
             case "BID":
                 handleBid(netMsg.getData());
                 break;
