@@ -51,9 +51,9 @@ public final class DatabaseManager {
 
             props.load(is);
             // Lấy các giá trị
-            url               = props.getProperty("db.url");
-            username          = props.getProperty("db.username");
-            password          = props.getProperty("db.password");
+            url               = System.getenv("DB_URL");
+            username          = System.getenv("DB_USERNAME");
+            password          = System.getenv("DB_PASSWORD");
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
             idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
