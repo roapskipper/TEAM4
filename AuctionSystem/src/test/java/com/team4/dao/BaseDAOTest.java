@@ -3,16 +3,17 @@ package com.team4.dao;
 import com.team4.db.DatabaseManager;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Lớp BaseDAOTest.
- * Đây là lớp cha (Base Class) cho tất cả các lớp kiểm thử DAO khác.
- * Mục đích: 
- * 1. Đảm bảo DatabaseManager được khởi tạo đúng một lần duy nhất.
- * 2. Đảm bảo dữ liệu được xóa sạch trước mỗi phương thức test (@Test).
+ * Lớp BaseDAOTest – lớp cha cho tất cả DAO integration tests.
+ *
+ * @Tag("integration") – các test này cần MySQL thật, sẽ bị bỏ qua trong CI pipeline.
+ * Chạy thủ công bằng: mvn test -Dgroups=integration
  */
+@Tag("integration")
 public abstract class BaseDAOTest {
     private static final Logger logger = LoggerFactory.getLogger(BaseDAOTest.class);
 
@@ -22,14 +23,12 @@ public abstract class BaseDAOTest {
     @BeforeAll
     static void initAll() {
         logger.info("--- KHỞI TẠO HỆ THỐNG KIỂM THỬ DAO ---");
-        // Khởi tạo DatabaseManager. 
-        // Nhờ file database.properties trong src/test/resources, nó sẽ kết nối vào DB auction_system_test.
         DatabaseManager.initialize();
     }
 
     /**
      * Chạy trước mỗi phương thức @Test.
-     * Đảm bảo mỗi bài test đều bắt đầu với một Database trống, không bị ảnh hưởng bởi dữ liệu cũ.
+     * Đảm bảo mỗi bài test đều bắt đầu với một Database trống.
      */
     @BeforeEach
     void initEach() {
