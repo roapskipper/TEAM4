@@ -26,6 +26,12 @@ public class Client {
         return instance;
     }
 
+    private Runnable onForceLogout;
+
+    public void setOnForceLogout(Runnable onForceLogout) {
+        this.onForceLogout = onForceLogout;
+    }
+
     public boolean connect() {
         try {
             socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
@@ -37,14 +43,25 @@ public class Client {
         }
     }
 
+    private MessageListener currentListener;
+    private Thread readThread;
+
     public void startListening(MessageListener listener) {
-        Thread readThread = new Thread(() -> {
+        this.currentListener = listener;
+        if (readThread != null && readThread.isAlive()) return; // Chỉ start 1 thread duy nhất
+
+        readThread = new Thread(() -> {
             try {
                 String serverMessage;
                 while ((serverMessage = in.readLine()) != null) {
-                    // Để Listener ở Controller tự bóc tách JSON và cập nhật UI bằng Platform.runLater
-                    if (listener != null) {
-                        listener.onMessage(serverMessage);
+                    if (serverMessage.contains("\"action\":\"FORCE_LOGOUT\"")) {
+                        if (onForceLogout != null) {
+                            javafx.application.Platform.runLater(onForceLogout);
+                        }
+                        break;
+                    }
+                    if (currentListener != null) {
+                        currentListener.onMessage(serverMessage);
                     }
                 }
             } catch (IOException e) {
@@ -57,14 +74,23 @@ public class Client {
 
     public void sendBid(String auctionId, String bidderId, double amount) {
         JsonObject request = new JsonObject();
-        request.addProperty("action", "BID");
+        request.addProperty("command", "BID");
 
         JsonObject data = new JsonObject();
         data.addProperty("auctionId", auctionId);
         data.addProperty("bidderId", bidderId);
         data.addProperty("amount", amount);
 
-        request.add("data", data);
+        request.addProperty("data", data.toString());
+        sendMessage(request.toString());
+    }
+
+    public void sendLogin(String userId) {
+        JsonObject request = new JsonObject();
+        request.addProperty("command", "LOGIN");
+        JsonObject data = new JsonObject();
+        data.addProperty("userId", userId);
+        request.addProperty("data", data.toString());
         sendMessage(request.toString());
     }
 
