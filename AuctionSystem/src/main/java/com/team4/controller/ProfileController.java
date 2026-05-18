@@ -12,6 +12,8 @@ public class ProfileController implements Initializable {
     @FXML private Label avatarText, displayName, roleBadge, statusBadge, emailDisplay;
     @FXML private TextField editName, editEmail, editPhone;
     @FXML private PasswordField currentPassword, newPassword, confirmPassword;
+    @FXML private Button saveBtn, cancelBtn, loginBtn, regBtn;
+    @FXML private Label errorLabel, loginError, regError;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -37,6 +39,10 @@ public class ProfileController implements Initializable {
         String newPass = newPassword.getText();
         String confirmPass = confirmPassword.getText();
 
+        if (errorLabel != null) errorLabel.setText("");
+        if (loginError != null) loginError.setText("");
+        if (regError != null) regError.setText("");
+
         if (name.isEmpty() || email.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Missing Information", "Please enter your name and email");
             return;
@@ -52,32 +58,77 @@ public class ProfileController implements Initializable {
                 return;
             }
 
-            try {
-                String userId = "currentUserId";
-                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-                    if (currentUser != null) {
-                        userId = currentUser.getId();
+            if (saveBtn != null) saveBtn.setDisable(true);
+            if (cancelBtn != null) cancelBtn.setDisable(true);
+            if (loginBtn != null) loginBtn.setDisable(true);
+            if (regBtn != null) regBtn.setDisable(true);
+            String originalSaveText = (saveBtn != null) ? saveBtn.getText() : "Save Changes";
+            if (saveBtn != null) saveBtn.setText("Processing...");
+
+            javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    String userId = "currentUserId";
+                    if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+                        com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
+                        if (currentUser != null) {
+                            userId = currentUser.getId();
+                        }
                     }
+
+                    com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+                    apiClient.changePassword(userId, oldPass, newPass);
+
+                    com.team4.service.AuthenticationService authService = new com.team4.service.AuthenticationService(new com.team4.dao.impl.UserDAOImpl());
+                    authService.changePassword(userId, oldPass, newPass);
+                    return null;
                 }
+            };
 
-                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
-                apiClient.changePassword(userId, oldPass, newPass);
+            task.setOnSucceeded(e -> {
+                if (saveBtn != null) {
+                    saveBtn.setDisable(false);
+                    saveBtn.setText(originalSaveText);
+                }
+                if (cancelBtn != null) cancelBtn.setDisable(false);
+                if (loginBtn != null) loginBtn.setDisable(false);
+                if (regBtn != null) regBtn.setDisable(false);
 
-                com.team4.service.AuthenticationService authService = new com.team4.service.AuthenticationService(new com.team4.dao.impl.UserDAOImpl());
-                authService.changePassword(userId, oldPass, newPass);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText(null);
+                alert.setContentText("Password changed successfully!");
+                alert.show();
 
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Password changed successfully!");
-                currentPassword.clear();
-                newPassword.clear();
-                confirmPassword.clear();
-            } catch (com.team4.util.BusinessException be) {
-                showAlert(Alert.AlertType.ERROR, "Update Failed", be.getMessage());
-                return;
-            } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Network Error", "Could not connect to server: " + e.getMessage());
-                return;
-            }
+                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
+                delay.setOnFinished(ev -> {
+                    alert.close();
+                    currentPassword.clear();
+                    newPassword.clear();
+                    confirmPassword.clear();
+                });
+                delay.play();
+            });
+
+            task.setOnFailed(e -> {
+                if (saveBtn != null) {
+                    saveBtn.setDisable(false);
+                    saveBtn.setText(originalSaveText);
+                }
+                if (cancelBtn != null) cancelBtn.setDisable(false);
+                if (loginBtn != null) loginBtn.setDisable(false);
+                if (regBtn != null) regBtn.setDisable(false);
+
+                Throwable ex = task.getException();
+                if (ex instanceof com.team4.util.BusinessException) {
+                    showAlert(Alert.AlertType.ERROR, "Update Failed", ex.getMessage());
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Network Error", "Could not connect to server: " + (ex != null ? ex.getMessage() : "Unknown"));
+                }
+            });
+
+            new Thread(task).start();
+            return;
         }
 
         showAlert(Alert.AlertType.INFORMATION, "Success", "Your information has been updated!");
