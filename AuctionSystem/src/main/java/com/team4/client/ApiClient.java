@@ -138,6 +138,30 @@ public class ApiClient {
         return new ArrayList<>();
     }
 
+    public List<Item> getSellerItems(String sellerId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "seller/" + java.net.URLEncoder.encode(sellerId, StandardCharsets.UTF_8) + "/items"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        
+        if (response.statusCode() == 200) {
+            JsonObject responseObj = JsonParser.parseString(response.body()).getAsJsonObject();
+            if (responseObj.has("status") && "SUCCESS".equals(responseObj.get("status").getAsString())) {
+                JsonArray dataArray = responseObj.getAsJsonArray("data");
+                Type listType = new TypeToken<ArrayList<Item>>() {}.getType();
+                return gson.fromJson(dataArray, listType);
+            } else if (responseObj.has("message")) {
+                throw new Exception(responseObj.get("message").getAsString());
+            } else {
+                Type listType = new TypeToken<ArrayList<Item>>() {}.getType();
+                return gson.fromJson(response.body(), listType);
+            }
+        } else {
+            throw new Exception("Server returned status " + response.statusCode());
+        }
+    }
+
     public Gson getGson() {
         return this.gson;
     }

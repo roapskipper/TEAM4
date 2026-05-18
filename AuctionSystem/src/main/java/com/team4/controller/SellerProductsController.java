@@ -36,6 +36,7 @@ public class SellerProductsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        setupTable();
         loadStats();
         setupCategoryFilter();
         loadDataFromServer();
@@ -47,12 +48,14 @@ public class SellerProductsController implements Initializable {
         pendingProducts.setText("...");
         soldProducts.setText("...");
 
-        String sellerId = "currentSellerId";
-        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-            com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-            if (currentUser != null) {
-                sellerId = currentUser.getId();
-            }
+        String sellerId = null;
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+            sellerId = com.team4.util.UserSession.getInstance().getUserId();
+        }
+
+        if (sellerId == null) {
+            System.err.println("User not logged in or invalid session.");
+            return;
         }
 
         final String finalSellerId = sellerId;
@@ -118,12 +121,12 @@ public class SellerProductsController implements Initializable {
                 double price = dialogController.getPrice();
                 String desc = dialogController.getDescription();
                 
-                String sellerId = "currentSellerId";
-                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-                    if (currentUser != null) {
-                        sellerId = currentUser.getId();
-                    }
+                String sellerId = null;
+                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+                    sellerId = com.team4.util.UserSession.getInstance().getUserId();
+                }
+                if (sellerId == null) {
+                    throw new Exception("User not logged in or invalid session.");
                 }
                 final String finalSellerId = sellerId;
                 
@@ -214,7 +217,7 @@ public class SellerProductsController implements Initializable {
         }
     }
 
-    private void loadDataFromServer() {
+    private void setupTable() {
         colProduct.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
@@ -241,20 +244,25 @@ public class SellerProductsController implements Initializable {
                 }
             }
         });
+    }
 
-        String sellerId = "currentSellerId";
-        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-            com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-            if (currentUser != null) {
-                sellerId = currentUser.getId();
-            }
+    private void loadDataFromServer() {
+        String sellerId = null;
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+            sellerId = com.team4.util.UserSession.getInstance().getUserId();
+        }
+
+        if (sellerId == null) {
+            System.err.println("User not logged in or invalid session.");
+            return;
         }
 
         final String finalSellerId = sellerId;
         javafx.concurrent.Task<List<Item>> task = new javafx.concurrent.Task<List<Item>>() {
             @Override
             protected List<Item> call() throws Exception {
-                return ItemService.getSellerItems(finalSellerId);
+                ApiClient apiClient = new ApiClient();
+                return apiClient.getSellerItems(finalSellerId);
             }
         };
 
@@ -273,40 +281,5 @@ public class SellerProductsController implements Initializable {
         new Thread(task).start();
     }
 
-    // Nested class to fulfill "call ItemService.getSellerItems" and "Parse JSON response"
-    private static class ItemService {
-        public static List<Item> getSellerItems(String sellerId) throws Exception {
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("http://localhost:8080/api/seller/" + sellerId + "/items"))
-                    .GET()
-                    .build();
-            
-            java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new Exception("Server returned status " + response.statusCode());
-            }
-
-            Gson gson = new com.google.gson.GsonBuilder()
-                    .registerTypeAdapter(java.time.LocalDateTime.class, new com.google.gson.JsonDeserializer<java.time.LocalDateTime>() {
-                        @Override
-                        public java.time.LocalDateTime deserialize(com.google.gson.JsonElement json, Type typeOfT, com.google.gson.JsonDeserializationContext context) throws com.google.gson.JsonParseException {
-                            return java.time.LocalDateTime.parse(json.getAsString(), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-                        }
-                    }).create();
-
-            com.google.gson.JsonObject responseObj = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
-            if (responseObj.has("status") && "SUCCESS".equals(responseObj.get("status").getAsString())) {
-                com.google.gson.JsonArray dataArray = responseObj.getAsJsonArray("data");
-                Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
-                return gson.fromJson(dataArray, listType);
-            } else if (responseObj.has("message")) {
-                throw new Exception(responseObj.get("message").getAsString());
-            } else {
-                Type listType = new TypeToken<ArrayList<Item>>(){}.getType();
-                return gson.fromJson(response.body(), listType);
-            }
-        }
-    }
+    // Removed nested ItemService class as ApiClient is used now
 }
