@@ -41,10 +41,54 @@ public class SellerProductsController implements Initializable {
     }
 
     private void loadStats() {
-        totalProducts.setText("24");
-        activeAuctions.setText("8");
-        pendingProducts.setText("3");
-        soldProducts.setText("156");
+        totalProducts.setText("...");
+        activeAuctions.setText("...");
+        pendingProducts.setText("...");
+        soldProducts.setText("...");
+
+        String sellerId = "currentSellerId";
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+            com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
+            if (currentUser != null) {
+                sellerId = currentUser.getId();
+            }
+        }
+
+        final String finalSellerId = sellerId;
+        javafx.concurrent.Task<com.google.gson.JsonObject> task = new javafx.concurrent.Task<com.google.gson.JsonObject>() {
+            @Override
+            protected com.google.gson.JsonObject call() throws Exception {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.getSellerStats(finalSellerId);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            com.google.gson.JsonObject responseObj = task.getValue();
+            com.google.gson.JsonObject stats = null;
+            if (responseObj.has("status") && "SUCCESS".equals(responseObj.get("status").getAsString()) && responseObj.has("data")) {
+                stats = responseObj.getAsJsonObject("data");
+            } else {
+                stats = responseObj; // fallback if data is at root
+            }
+
+            java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(java.util.Locale.US);
+
+            totalProducts.setText(stats.has("totalProducts") ? formatter.format(stats.get("totalProducts").getAsInt()) : "N/A");
+            activeAuctions.setText(stats.has("activeAuctions") ? formatter.format(stats.get("activeAuctions").getAsInt()) : "N/A");
+            pendingProducts.setText(stats.has("pendingProducts") ? formatter.format(stats.get("pendingProducts").getAsInt()) : "N/A");
+            soldProducts.setText(stats.has("soldProducts") ? formatter.format(stats.get("soldProducts").getAsInt()) : "N/A");
+        });
+
+        task.setOnFailed(e -> {
+            totalProducts.setText("N/A");
+            activeAuctions.setText("N/A");
+            pendingProducts.setText("N/A");
+            soldProducts.setText("N/A");
+            System.err.println("Failed to load stats: " + task.getException().getMessage());
+        });
+
+        new Thread(task).start();
     }
 
     private void setupCategoryFilter() {

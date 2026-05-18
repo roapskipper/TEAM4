@@ -174,4 +174,17 @@ public class ApiClient {
             throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
         }
     }
+
+    public JsonObject getSellerStats(String sellerId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "seller/" + sellerId + "/stats"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return JsonParser.parseString(response.body()).getAsJsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
 }
