@@ -60,4 +60,24 @@ public class UserService {
         logger.debug("Đang lấy danh sách tất cả người dùng");
         return userDAO.findAll();
     }
+
+    /**
+     * Thay đổi mật khẩu người dùng
+     */
+    public void changePassword(String userId, String oldPassword, String newPassword) {
+        logger.info("Đang đổi mật khẩu cho người dùng: userId={}", userId);
+        User user = userDAO.findById(userId);
+        if (user == null) {
+            throw new BusinessException("Người dùng không tồn tại");
+        }
+        if (!user.verifyPassword(oldPassword)) {
+            throw new BusinessException("Mật khẩu cũ không chính xác");
+        }
+        String newHash = com.team4.util.PasswordHasher.hashPassword(newPassword);
+        user.changePasswordHash(newHash);
+        boolean updated = userDAO.update(user);
+        if (!updated) {
+            throw new BusinessException("Lỗi hệ thống: Không thể cập nhật mật khẩu");
+        }
+    }
 }

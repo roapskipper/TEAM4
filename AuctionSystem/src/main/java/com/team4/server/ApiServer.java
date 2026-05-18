@@ -23,6 +23,7 @@ public class ApiServer {
                 server.createContext("/api/register/seller", new RegisterSellerHandler());
                 server.createContext("/api/items", new ItemsHandler());
                 server.createContext("/api/auctions", new AuctionsHandler());
+                server.createContext("/api/user", new UserHandler());
                 server.setExecutor(null);
                 server.start();
                 System.out.println("API Server dang chay tren port " + API_PORT + "...");

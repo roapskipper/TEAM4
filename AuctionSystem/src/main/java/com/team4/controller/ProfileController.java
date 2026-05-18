@@ -21,14 +21,50 @@ public class ProfileController implements Initializable {
     }
 
     private void loadProfile() {
-        avatarText.setText("U");
-        displayName.setText("User Name");
-        roleBadge.setText("BIDDER");
-        emailDisplay.setText("user@email.com");
+        String userId = null;
+        if (com.team4.util.UserSession.getInstance() != null) {
+            userId = com.team4.util.UserSession.getInstance().getUserId();
+        }
+        if (userId == null) {
+            return;
+        }
 
-        editName.setText("User Name");
-        editEmail.setText("user@email.com");
-        editPhone.setText("0901234567");
+        final String finalUserId = userId;
+        javafx.concurrent.Task<com.google.gson.JsonObject> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected com.google.gson.JsonObject call() throws Exception {
+                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+                return apiClient.getUserProfile(finalUserId);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            com.google.gson.JsonObject profile = task.getValue();
+            if (profile != null && profile.has("id")) {
+                String name = profile.has("fullName") && !profile.get("fullName").isJsonNull() ? profile.get("fullName").getAsString() : "User Name";
+                String email = profile.has("email") && !profile.get("email").isJsonNull() ? profile.get("email").getAsString() : "user@email.com";
+                String role = profile.has("role") && !profile.get("role").isJsonNull() ? profile.get("role").getAsString() : "BIDDER";
+                String phone = profile.has("phoneNumber") && !profile.get("phoneNumber").isJsonNull() ? profile.get("phoneNumber").getAsString() : "";
+                
+                String initial = name.isEmpty() ? "U" : name.substring(0, 1).toUpperCase();
+                
+                avatarText.setText(initial);
+                displayName.setText(name);
+                roleBadge.setText(role);
+                emailDisplay.setText(email);
+
+                editName.setText(name);
+                editEmail.setText(email);
+                editPhone.setText(phone);
+            }
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            System.err.println("Failed to load profile: " + (ex != null ? ex.getMessage() : "Unknown"));
+        });
+
+        new Thread(task).start();
     }
 
     @FXML private void onSaveProfile() {

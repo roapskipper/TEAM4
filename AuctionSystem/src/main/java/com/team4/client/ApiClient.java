@@ -206,6 +206,26 @@ public class ApiClient {
         }
     }
 
+    public JsonObject getUserProfile(String userId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "/profile"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+            }
+            return new JsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
     public JsonObject getSellerStats(String sellerId) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "seller/" + sellerId + "/stats"))
