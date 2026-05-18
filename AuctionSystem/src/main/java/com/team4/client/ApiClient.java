@@ -366,4 +366,25 @@ public class ApiClient {
             throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
         }
     }
+
+    public JsonObject getDashboardStats() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/dashboard/stats"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
 }
