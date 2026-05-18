@@ -31,8 +31,8 @@ public class UserService {
      * Cập nhật thông tin cá nhân như tên, email
      * Chưa phát triển chức năng thay đổi số điện thoại,địa chỉ,..
      */
-    public User updateProfile(String userId, String fullName, String email) {
-        logger.info("Đang cập nhật hồ sơ người dùng: userId={}, fullName={}, email={}", userId, fullName, email);
+    public User updateProfile(String userId, String fullName, String email, String phone) {
+        logger.info("Đang cập nhật hồ sơ người dùng: userId={}, fullName={}, email={}, phone={}", userId, fullName, email, phone);
         User user = userDAO.findById(userId);
         if (user == null) {
             logger.warn("Cập nhật hồ sơ thất bại: Người dùng không tồn tại. userId={}", userId);
@@ -40,6 +40,9 @@ public class UserService {
         }
         // Cập nhật thông tin cá nhân
         user.updateProfile(fullName, email);
+        if (user instanceof com.team4.model.Bidder) {
+            ((com.team4.model.Bidder) user).setPhoneNumber(phone);
+        }
         // Lưu thay đổi vào DB
         boolean updated = userDAO.update(user);
         if (updated) {
