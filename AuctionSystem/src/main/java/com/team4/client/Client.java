@@ -13,9 +13,18 @@ public class Client {
     private static final String SERVER_ADDRESS = "127.0.0.1";
     private static final int SERVER_PORT = 18368;
 
+    private static Client instance;
+
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+
+    public static Client getInstance() {
+        if (instance == null) {
+            instance = new Client();
+        }
+        return instance;
+    }
 
     public boolean connect() {
         try {

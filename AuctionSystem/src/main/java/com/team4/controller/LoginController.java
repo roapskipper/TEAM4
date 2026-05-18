@@ -177,6 +177,13 @@ public class LoginController {
                 loginError.setStyle("-fx-text-fill: #10b981;");
                 System.out.println("Server response: " + response);
 
+                com.team4.client.Client socketClient = com.team4.client.Client.getInstance();
+                if (socketClient.connect()) {
+                    System.out.println("Socket connected successfully!");
+                } else {
+                    System.out.println("Failed to connect to Socket server!");
+                }
+
                 try {
                     javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
                     javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
