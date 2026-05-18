@@ -128,8 +128,19 @@
         </VBox>
 
         <VBox prefWidth="500" spacing="12" styleClass="admin-card" HBox.hgrow="ALWAYS">
-            <Label styleClass="section-title" text="System Alerts" />
+            <Label styleClass="section-title" text="Quick Actions" />
+            <VBox spacing="8">
+                <HBox spacing="10">
+                    <Button text="Pending Auctions" onAction="#onViewPendingAuctions" styleClass="admin-button-primary" prefWidth="200"/>
+                    <Button text="Review Reports" onAction="#onReviewReports" styleClass="admin-button-secondary" prefWidth="200"/>
+                </HBox>
+                <HBox spacing="10">
+                    <Button text="Manage Users" onAction="#onManageUsers" styleClass="admin-button-secondary" prefWidth="200"/>
+                    <Button text="System Settings" onAction="#onSystemSettings" styleClass="admin-button-secondary" prefWidth="200"/>
+                </HBox>
+            </VBox>
 
+            <Label styleClass="section-title" text="System Alerts" style="-fx-padding: 16 0 0 0;"/>
             <VBox fx:id="alertsContainer" spacing="8" VBox.vgrow="ALWAYS">
             </VBox>
         </VBox>

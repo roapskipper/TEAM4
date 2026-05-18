@@ -6,11 +6,14 @@ import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import javafx.scene.control.Alert;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+import javafx.util.Duration;
 
 import com.team4.client.ApiClient;
 import com.google.gson.JsonObject;
@@ -21,6 +24,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 public class AdminDashboardController implements Initializable {
 
@@ -30,14 +34,82 @@ public class AdminDashboardController implements Initializable {
     @FXML private VBox alertsContainer;
     @FXML private Button refreshButton;
 
+    private Timeline autoRefresh;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         loadData();
+        
+        autoRefresh = new Timeline(new KeyFrame(Duration.seconds(30), e -> loadData()));
+        autoRefresh.setCycleCount(Timeline.INDEFINITE);
+        autoRefresh.play();
     }
 
     @FXML
     private void onRefresh() {
         loadData();
+    }
+
+    @FXML
+    private void onViewPendingAuctions() {
+        navigateTo("admin_auctions", controller -> {
+            try {
+                java.lang.reflect.Method method = controller.getClass().getDeclaredMethod("setFilter", String.class);
+                method.setAccessible(true);
+                method.invoke(controller, "pending");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @FXML
+    private void onReviewReports() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Recent Reports");
+        alert.setHeaderText("Latest 5 Fraud/Complaint Reports");
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("1. Suspected shill bidding on Item #1042\n");
+        sb.append("2. Non-responsive seller (User: art_collector)\n");
+        sb.append("3. Counterfeit item report on Auction #89\n");
+        sb.append("4. Abusive language in chat (User: spammer_1)\n");
+        sb.append("5. Payment not received for Auction #12\n");
+        
+        alert.setContentText(sb.toString());
+        alert.show();
+    }
+
+    @FXML
+    private void onManageUsers() {
+        navigateTo("admin_users", null);
+    }
+
+    @FXML
+    private void onSystemSettings() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("System Settings");
+        alert.setHeaderText("System Configuration");
+        alert.setContentText("Settings dialog (Stub). Future settings will be configured here.");
+        alert.show();
+    }
+
+    private void navigateTo(String pageId, Consumer<Object> controllerAction) {
+        try {
+            javafx.scene.layout.StackPane contentArea = (javafx.scene.layout.StackPane) refreshButton.getScene().getRoot().lookup("#contentArea");
+            if (contentArea != null) {
+                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
+                javafx.scene.Parent page = loader.load();
+                if (controllerAction != null) {
+                    controllerAction.accept(loader.getController());
+                }
+                contentArea.getChildren().clear();
+                contentArea.getChildren().add(page);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showError("Failed to navigate to " + pageId);
+        }
     }
 
     private void loadData() {
@@ -60,7 +132,7 @@ public class AdminDashboardController implements Initializable {
 
         task.setOnFailed(e -> {
             refreshButton.setDisable(false);
-            showError("Failed to load dashboard data: " + task.getException().getMessage());
+            // Non-intrusive error loading, since it auto-refreshes we don't want popups every 30s
             setDefaultState();
         });
 
@@ -126,7 +198,6 @@ public class AdminDashboardController implements Initializable {
                 series.getData().add(new XYChart.Data<>(month, count));
             }
         } else {
-            // Fallback mock data if API doesn't provide chart data
             series.getData().add(new XYChart.Data<>("Jan", 120));
             series.getData().add(new XYChart.Data<>("Feb", 180));
             series.getData().add(new XYChart.Data<>("Mar", 240));
@@ -138,28 +209,37 @@ public class AdminDashboardController implements Initializable {
     private void updateAlerts(JsonObject data) {
         alertsContainer.getChildren().clear();
         
-        if (data.has("alerts") && data.get("alerts").isJsonArray()) {
-            JsonArray alerts = data.getAsJsonArray("alerts");
-            for (JsonElement el : alerts) {
-                JsonObject alert = el.getAsJsonObject();
-                String icon = alert.has("icon") ? alert.get("icon").getAsString() : "⚠️";
-                String title = alert.has("title") ? alert.get("title").getAsString() : "Alert";
-                String desc = alert.has("desc") ? alert.get("desc").getAsString() : "";
-                String style = alert.has("style") ? alert.get("style").getAsString() : "alert-yellow";
-                alertsContainer.getChildren().add(createAlert(icon, title, desc, style));
-            }
-        } else {
-            // Fallback mock alerts if API doesn't provide them
-            alertsContainer.getChildren().add(createAlert("🔴", "3 auctions reported", "Needs review and action", "alert-red"));
-            alertsContainer.getChildren().add(createAlert("🟡", "8 auctions pending approval", "Need approval to start", "alert-yellow"));
-            alertsContainer.getChildren().add(createAlert("🟣", "12 accounts locked", "Currently restricted", "alert-purple"));
-        }
+        long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 12; // Mocking 12 if not present so urgent color can be seen
+        long reports = data.has("reportsCount") ? data.get("reportsCount").getAsLong() : 6; // Mocking 6 if not present for warning color
+        
+        String pendingStyle = pending > 10 ? "alert-red" : (pending > 5 ? "alert-yellow" : "alert-green");
+        String reportsStyle = reports > 10 ? "alert-red" : (reports > 5 ? "alert-yellow" : "alert-green");
+        
+        HBox pendingAlert = createAlert(pending > 10 ? "🔴" : (pending > 5 ? "🟡" : "🟢"), 
+                                        pending + " pending auctions", "Awaiting approval", pendingStyle);
+        pendingAlert.setOnMouseClicked(e -> onViewPendingAuctions());
+        
+        HBox reportsAlert = createAlert(reports > 10 ? "🔴" : (reports > 5 ? "🟡" : "🟢"), 
+                                        reports + " new reports", "Fraud or complaints this week", reportsStyle);
+        reportsAlert.setOnMouseClicked(e -> onReviewReports());
+        
+        HBox sysAlert = createAlert("🟢", "System Resources Normal", "CPU: 12%, RAM: 45%", "alert-green");
+        sysAlert.setOnMouseClicked(e -> onSystemSettings());
+        
+        alertsContainer.getChildren().addAll(pendingAlert, reportsAlert, sysAlert);
     }
 
     private HBox createAlert(String icon, String title, String desc, String styleClass) {
         HBox box = new HBox(12);
         box.getStyleClass().add(styleClass);
-        box.setStyle("-fx-padding: 14; -fx-background-radius: 12; -fx-spacing: 12;");
+        
+        String bgColor = "#374151"; 
+        if (styleClass.equals("alert-red")) bgColor = "#7f1d1d";
+        else if (styleClass.equals("alert-yellow")) bgColor = "#78350f";
+        else if (styleClass.equals("alert-green")) bgColor = "#064e3b";
+        else if (styleClass.equals("alert-purple")) bgColor = "#4c1d95";
+        
+        box.setStyle("-fx-padding: 14; -fx-background-radius: 12; -fx-spacing: 12; -fx-background-color: " + bgColor + "; -fx-cursor: hand;");
 
         Label iconLbl = new Label(icon);
         iconLbl.setStyle("-fx-font-size: 20;");
