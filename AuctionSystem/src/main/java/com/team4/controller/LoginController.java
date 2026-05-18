@@ -192,12 +192,21 @@ public class LoginController {
                     MainController mainController = loader.getController();
 
                     String role = "bidder";
-                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
-                        role = "seller";
-                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
-                        boolean isSuperAdmin = response.contains("\"accessLevel\":1")
-                                || response.contains("\"access_level\":1");
-                        role = isSuperAdmin ? "admin_super" : "admin_regular";
+                    com.google.gson.JsonObject jsonResponse = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
+                    if (jsonResponse.has("data")) {
+                        com.google.gson.JsonObject data = jsonResponse.getAsJsonObject("data");
+                        String r = data.has("role") ? data.get("role").getAsString().toUpperCase() : "";
+                        if ("SELLER".equals(r)) role = "seller";
+                        else if ("ADMIN".equals(r)) {
+                            boolean isSuperAdmin = data.has("accessLevel") && data.get("accessLevel").getAsInt() == 1;
+                            role = isSuperAdmin ? "admin_super" : "admin_regular";
+                        }
+                        
+                        String userId = data.has("userId") ? data.get("userId").getAsString() : null;
+                        String uName = data.has("username") ? data.get("username").getAsString() : username;
+                        if (userId != null) {
+                            com.team4.util.UserSession.createSession(userId, uName, role);
+                        }
                     }
 
                     mainController.setUserRole(role);

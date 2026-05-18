@@ -48,11 +48,8 @@ public class SellerProductsController implements Initializable {
         soldProducts.setText("...");
 
         String sellerId = "currentSellerId";
-        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-            com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-            if (currentUser != null) {
-                sellerId = currentUser.getId();
-            }
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+            sellerId = com.team4.util.UserSession.getInstance().getUserId();
         }
 
         final String finalSellerId = sellerId;
@@ -119,11 +116,8 @@ public class SellerProductsController implements Initializable {
                 String desc = dialogController.getDescription();
                 
                 String sellerId = "currentSellerId";
-                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-                    if (currentUser != null) {
-                        sellerId = currentUser.getId();
-                    }
+                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+                    sellerId = com.team4.util.UserSession.getInstance().getUserId();
                 }
                 final String finalSellerId = sellerId;
                 
@@ -243,11 +237,8 @@ public class SellerProductsController implements Initializable {
         });
 
         String sellerId = "currentSellerId";
-        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-            com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-            if (currentUser != null) {
-                sellerId = currentUser.getId();
-            }
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+            sellerId = com.team4.util.UserSession.getInstance().getUserId();
         }
 
         final String finalSellerId = sellerId;

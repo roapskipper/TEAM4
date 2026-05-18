@@ -107,6 +107,10 @@ public class MainController implements Initializable {
             roleText = "BIDDER";
         }
 
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+            name = com.team4.util.UserSession.getInstance().getUsername();
+        }
+
         userNameLabel.setText(name);
         userRoleBadge.setText(roleText);
     }
