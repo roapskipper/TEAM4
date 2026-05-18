@@ -12,8 +12,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.concurrent.Task;
 
+import javafx.scene.layout.HBox;
+import javafx.geometry.Pos;
+
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.Callable;
 
 public class AdminUsersController implements Initializable {
 
@@ -39,6 +43,48 @@ public class AdminUsersController implements Initializable {
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colJoinDate.setCellValueFactory(new PropertyValueFactory<>("joinDate"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        
+        colStatus.setCellFactory(param -> new TableCell<UserRow, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    UserRow user = getTableRow().getItem();
+                    String status = user.getStatus() != null ? user.getStatus().toUpperCase() : "UNKNOWN";
+                    HBox actionBox = new HBox(10);
+                    actionBox.setAlignment(Pos.CENTER_LEFT);
+                    
+                    Label statusLabel = new Label(status);
+                    if ("ACTIVE".equals(status)) statusLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                    else if ("SUSPENDED".equals(status)) statusLabel.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
+                    else if ("BANNED".equals(status)) statusLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    
+                    Button suspendBtn = new Button("Suspend");
+                    Button banBtn = new Button("Ban");
+                    Button unsuspendBtn = new Button("Unsuspend");
+                    
+                    suspendBtn.setOnAction(e -> handleSuspend(user));
+                    banBtn.setOnAction(e -> handleBan(user));
+                    unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
+                    
+                    if ("ACTIVE".equals(status)) {
+                        actionBox.getChildren().addAll(statusLabel, suspendBtn, banBtn);
+                    } else if ("SUSPENDED".equals(status)) {
+                        actionBox.getChildren().addAll(statusLabel, unsuspendBtn);
+                    } else if ("BANNED".equals(status)) {
+                        actionBox.getChildren().add(statusLabel);
+                    } else {
+                        actionBox.getChildren().add(statusLabel);
+                    }
+                    
+                    setGraphic(actionBox);
+                    setText(null);
+                }
+            }
+        });
     }
 
     private void loadRealData() {
@@ -109,6 +155,80 @@ public class AdminUsersController implements Initializable {
         });
         usersTable.setItems(filtered);
         resultCount.setText(filtered.size() + " users");
+    }
+
+    private void handleSuspend(UserRow user) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Suspend User");
+        dialog.setHeaderText("Suspend User: " + user.getUsername());
+        dialog.setContentText("Reason (optional):");
+        
+        dialog.showAndWait().ifPresent(reason -> {
+            disableButtonsAndCallApi(() -> {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.suspendUser(user.getUserId(), reason);
+            }, "User suspended successfully!");
+        });
+    }
+
+    private void handleBan(UserRow user) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Ban User");
+        dialog.setHeaderText("Ban User: " + user.getUsername());
+        dialog.setContentText("Reason (mandatory):");
+        
+        dialog.showAndWait().ifPresent(reason -> {
+            if (reason.trim().isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Ban reason is mandatory.");
+                return;
+            }
+            disableButtonsAndCallApi(() -> {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.banUser(user.getUserId(), reason);
+            }, "User banned successfully!");
+        });
+    }
+
+    private void handleUnsuspend(UserRow user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to unsuspend " + user.getUsername() + "?", ButtonType.YES, ButtonType.NO);
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                disableButtonsAndCallApi(() -> {
+                    ApiClient apiClient = new ApiClient();
+                    return apiClient.unsuspendUser(user.getUserId());
+                }, "User unsuspended successfully!");
+            }
+        });
+    }
+
+    private void disableButtonsAndCallApi(Callable<String> apiCall, String successMsg) {
+        usersTable.setDisable(true);
+        Task<String> task = new Task<>() {
+            @Override
+            protected String call() throws Exception {
+                return apiCall.call();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            usersTable.setDisable(false);
+            showAlert(Alert.AlertType.INFORMATION, "Success", successMsg);
+            loadRealData();
+        });
+
+        task.setOnFailed(e -> {
+            usersTable.setDisable(false);
+            showAlert(Alert.AlertType.ERROR, "Error", "Action failed: " + task.getException().getMessage());
+        });
+
+        new Thread(task).start();
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type, message);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.show();
     }
 
     public static class UserRow {
