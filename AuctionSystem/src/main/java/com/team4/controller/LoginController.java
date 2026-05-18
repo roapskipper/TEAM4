@@ -184,7 +184,19 @@ public class LoginController {
                         com.google.gson.JsonObject resObj = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
                         String userId = resObj.getAsJsonObject("data").get("userId").getAsString();
                         socketClient.sendLogin(userId);
-                        socketClient.startListening(null); // Bắt đầu lắng nghe các event global (như FORCE_LOGOUT) ngay lập tức
+                        
+                        // Đăng ký sự kiện bị ép đăng xuất (Tách logic UI ra khỏi Client.java)
+                        socketClient.setOnForceLogout(() -> {
+                            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                            alert.setTitle("Cảnh báo");
+                            alert.setHeaderText("Đăng xuất bắt buộc");
+                            alert.setContentText("Tài khoản của bạn vừa đăng nhập từ thiết bị khác. Ứng dụng sẽ thoát.");
+                            alert.showAndWait();
+                            javafx.application.Platform.exit();
+                            System.exit(0);
+                        });
+
+                        socketClient.startListening(null); // Bắt đầu lắng nghe các event global ngay lập tức
                     } catch (Exception e) {
                         System.out.println("Loi parse userId tu response: " + e.getMessage());
                     }
