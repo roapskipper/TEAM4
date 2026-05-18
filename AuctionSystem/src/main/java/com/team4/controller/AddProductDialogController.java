@@ -95,6 +95,30 @@ public class AddProductDialogController implements Initializable {
         stage.close();
     }
 
+    public void setItemData(String n, String c, double p, String d, String status) {
+        nameField.setText(n != null ? n : "");
+        // Map category properly to UI selection
+        if (c != null) {
+            for (String item : categoryBox.getItems()) {
+                if (item.equalsIgnoreCase(c)) {
+                    categoryBox.setValue(item);
+                    break;
+                }
+            }
+        }
+        priceField.setText(String.format(java.util.Locale.US, "%.0f", p));
+        descArea.setText(d != null ? d : "");
+
+        if (!"PENDING".equalsIgnoreCase(status)) {
+            priceField.setDisable(true);
+            if ("ACTIVE".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status)) {
+                nameField.setDisable(true);
+                categoryBox.setDisable(true);
+                descArea.setDisable(true);
+            }
+        }
+    }
+
     public boolean isConfirmed() { return confirmed; }
     public String getName() { return name; }
     public String getCategory() { return category; }

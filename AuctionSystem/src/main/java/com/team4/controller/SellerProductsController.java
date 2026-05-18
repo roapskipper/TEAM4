@@ -32,6 +32,7 @@ public class SellerProductsController implements Initializable {
     @FXML private TableColumn<Item, Double> colCurrentPrice;
     @FXML private TableColumn<Item, String> colStatus;
     @FXML private TableColumn<Item, String> colDate;
+    @FXML private TableColumn<Item, Void> colAction;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -156,6 +157,63 @@ public class SellerProductsController implements Initializable {
         }
     }
 
+    private void onEditProduct(Item item) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/add_product_dialog.fxml"));
+            javafx.scene.Parent root = loader.load();
+            
+            AddProductDialogController dialogController = loader.getController();
+            
+            String status = "PENDING";
+            try {
+                java.lang.reflect.Method m = item.getClass().getMethod("getStatus");
+                status = (String) m.invoke(item);
+            } catch (Exception e) {}
+
+            dialogController.setItemData(item.getName(), item.getCategory().name(), item.getStartingPrice().doubleValue(), item.getDescription(), status);
+            
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Edit Product");
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.showAndWait();
+            
+            if (dialogController.isConfirmed()) {
+                String name = dialogController.getName();
+                String category = dialogController.getCategory();
+                double price = dialogController.getPrice();
+                String desc = dialogController.getDescription();
+                
+                javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        ApiClient apiClient = new ApiClient();
+                        apiClient.updateItem(item.getId(), name, category, price, desc);
+                        return null;
+                    }
+                };
+                
+                task.setOnSucceeded(e -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Product updated successfully!");
+                    alert.show();
+                    loadDataFromServer();
+                    loadStats();
+                });
+                
+                task.setOnFailed(e -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to update product: " + task.getException().getMessage());
+                    alert.show();
+                });
+                
+                new Thread(task).start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Could not open dialog: " + e.getMessage());
+            alert.show();
+        }
+    }
+
     private void loadDataFromServer() {
         colProduct.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -163,6 +221,26 @@ public class SellerProductsController implements Initializable {
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentBidPrice"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+        colAction.setCellFactory(param -> new TableCell<Item, Void>() {
+            private final Button editBtn = new Button("Edit");
+
+            {
+                editBtn.setOnAction(event -> {
+                    Item item = getTableView().getItems().get(getIndex());
+                    onEditProduct(item);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(editBtn);
+                }
+            }
+        });
 
         String sellerId = "currentSellerId";
         if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
