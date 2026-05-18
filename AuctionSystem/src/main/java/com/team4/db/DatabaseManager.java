@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+import io.github.cdimascio.dotenv.Dotenv;
 
 /**Là cửa vào duy nhất để lấy connection và quản lý transaction.
  * Có các nhiệm vụ: Mở pool, Cấp connection, Transaction, Đóng pool
@@ -25,6 +26,7 @@ public final class DatabaseManager {
     private static int connectionTimeout;
     private static int idleTimeout;
     private static int maxLifetime;
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
     // Không cho tạo instance
     private DatabaseManager() {}
@@ -51,9 +53,9 @@ public final class DatabaseManager {
 
             props.load(is);
             // Lấy các giá trị
-            url               = props.getProperty("db.url");
-            username          = props.getProperty("db.username");
-            password          = props.getProperty("db.password");
+            url               = dotenv.get("DB_URL");
+            username          = dotenv.get("DB_USERNAME");
+            password          = dotenv.get("DB_PASSWORD");
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
             idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
