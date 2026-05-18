@@ -99,7 +99,61 @@ public class SellerProductsController implements Initializable {
     }
 
     @FXML private void onAddProduct() {
-        System.out.println("Add product clicked");
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/add_product_dialog.fxml"));
+            javafx.scene.Parent root = loader.load();
+            
+            AddProductDialogController dialogController = loader.getController();
+            
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Add Product");
+            stage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            stage.setScene(new javafx.scene.Scene(root));
+            stage.showAndWait();
+            
+            if (dialogController.isConfirmed()) {
+                String name = dialogController.getName();
+                String category = dialogController.getCategory();
+                double price = dialogController.getPrice();
+                String desc = dialogController.getDescription();
+                
+                String sellerId = "currentSellerId";
+                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
+                    if (currentUser != null) {
+                        sellerId = currentUser.getId();
+                    }
+                }
+                final String finalSellerId = sellerId;
+                
+                javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        ApiClient apiClient = new ApiClient();
+                        apiClient.createItem(finalSellerId, name, category, price, desc);
+                        return null;
+                    }
+                };
+                
+                task.setOnSucceeded(e -> {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "Product added successfully!");
+                    alert.show();
+                    loadDataFromServer();
+                    loadStats();
+                });
+                
+                task.setOnFailed(e -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to add product: " + task.getException().getMessage());
+                    alert.show();
+                });
+                
+                new Thread(task).start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Could not open dialog: " + e.getMessage());
+            alert.show();
+        }
     }
 
     private void loadDataFromServer() {
