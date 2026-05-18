@@ -6,7 +6,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
+import com.team4.client.ApiClient;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import javafx.concurrent.Task;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -14,64 +18,93 @@ import java.util.ResourceBundle;
 public class AdminUsersController implements Initializable {
 
     @FXML private TextField searchField;
-    @FXML private Button filterAll, filterActive, filterLocked;
+    @FXML private ComboBox<String> roleFilter;
     @FXML private Label resultCount;
     @FXML private TableView<UserRow> usersTable;
-    @FXML private TableColumn<UserRow, String> colUser, colRole, colStatus, colJoined, colAuctions, colAction;
+    @FXML private TableColumn<UserRow, String> colUsername, colFullName, colRole, colEmail, colJoinDate, colStatus;
 
     private ObservableList<UserRow> allUsers = FXCollections.observableArrayList();
-    private String currentFilter = "all";
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setupTable();
-        loadMockData();
         setupFilters();
+        loadRealData();
     }
 
     private void setupTable() {
-        colUser.setCellValueFactory(new PropertyValueFactory<>("userInfo"));
+        colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
+        colFullName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        colJoinDate.setCellValueFactory(new PropertyValueFactory<>("joinDate"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-        colJoined.setCellValueFactory(new PropertyValueFactory<>("joined"));
-        colAuctions.setCellValueFactory(new PropertyValueFactory<>("auctions"));
-        colAction.setCellValueFactory(new PropertyValueFactory<>("action"));
     }
 
-    private void loadMockData() {
-        allUsers.add(new UserRow("bidder_a", "a@mail.com", "bidder", "active", "2024-01-15", "12"));
-        allUsers.add(new UserRow("seller_pro", "seller@mail.com", "seller", "active", "2024-01-10", "8"));
-        allUsers.add(new UserRow("spammer_1", "spam@mail.com", "bidder", "locked", "2024-02-01", "0"));
-        allUsers.add(new UserRow("art_collector", "art@mail.com", "bidder", "active", "2024-01-20", "5"));
-        allUsers.add(new UserRow("tech_store", "tech@mail.com", "seller", "active", "2024-01-05", "25"));
-        applyFilter();
+    private void loadRealData() {
+        usersTable.setPlaceholder(new Label("Loading users..."));
+        Task<JsonArray> task = new Task<>() {
+            @Override
+            protected JsonArray call() throws Exception {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.getAllUsers();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            allUsers.clear();
+            JsonArray array = task.getValue();
+
+            for (JsonElement el : array) {
+                JsonObject obj = el.getAsJsonObject();
+                String id = obj.has("id") ? obj.get("id").getAsString() : "";
+                String username = obj.has("username") ? obj.get("username").getAsString() : "";
+                String fullName = obj.has("fullName") ? obj.get("fullName").getAsString() : "";
+                String role = obj.has("role") ? obj.get("role").getAsString() : "BIDDER";
+                String email = obj.has("email") ? obj.get("email").getAsString() : "";
+                String joinDate = obj.has("createdAt") ? obj.get("createdAt").getAsString() : "";
+                String status = obj.has("status") ? obj.get("status").getAsString() : "ACTIVE";
+                
+                allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, status));
+            }
+            
+            if (allUsers.isEmpty()) {
+                usersTable.setPlaceholder(new Label("No users found."));
+            }
+            applyFilter();
+        });
+
+        task.setOnFailed(e -> {
+            allUsers.clear();
+            usersTable.setPlaceholder(new Label("Failed to load: " + task.getException().getMessage()));
+            applyFilter();
+        });
+
+        new Thread(task).start();
     }
 
     private void setupFilters() {
+        roleFilter.setItems(FXCollections.observableArrayList("All Users", "Bidders Only", "Sellers Only", "Admins Only"));
+        roleFilter.setValue("All Users");
+        roleFilter.valueProperty().addListener((obs, old, val) -> applyFilter());
         searchField.textProperty().addListener((obs, old, val) -> applyFilter());
     }
 
-    @FXML private void onFilterAll() { setFilter("all"); }
-    @FXML private void onFilterActive() { setFilter("active"); }
-    @FXML private void onFilterLocked() { setFilter("locked"); }
-
-    private void setFilter(String f) {
-        currentFilter = f;
-        updateFilterButtons();
-        applyFilter();
-    }
-
-    private void updateFilterButtons() {
-        filterAll.getStyleClass().setAll(currentFilter.equals("all") ? "admin-filter-active" : "admin-filter");
-        filterActive.getStyleClass().setAll(currentFilter.equals("active") ? "admin-filter-active" : "admin-filter");
-        filterLocked.getStyleClass().setAll(currentFilter.equals("locked") ? "admin-filter-active" : "admin-filter");
-    }
-
     private void applyFilter() {
-        String search = searchField.getText().toLowerCase();
+        String search = searchField.getText().toLowerCase().trim();
+        String roleStr = roleFilter.getValue();
+        
         ObservableList<UserRow> filtered = allUsers.filtered(u -> {
-            boolean matchSearch = u.username.toLowerCase().contains(search);
-            boolean matchFilter = currentFilter.equals("all") || u.statusRaw.equals(currentFilter);
+            boolean matchSearch = u.getUsername().toLowerCase().contains(search) || 
+                                  u.getEmail().toLowerCase().contains(search);
+            boolean matchFilter = true;
+            if ("Bidders Only".equals(roleStr)) {
+                matchFilter = "BIDDER".equalsIgnoreCase(u.getRole());
+            } else if ("Sellers Only".equals(roleStr)) {
+                matchFilter = "SELLER".equalsIgnoreCase(u.getRole());
+            } else if ("Admins Only".equals(roleStr)) {
+                matchFilter = "ADMIN".equalsIgnoreCase(u.getRole());
+            }
             return matchSearch && matchFilter;
         });
         usersTable.setItems(filtered);
@@ -79,16 +112,22 @@ public class AdminUsersController implements Initializable {
     }
 
     public static class UserRow {
-        private String username, email, role, statusRaw, joined, auctions;
-        public UserRow(String u, String e, String r, String s, String j, String a) {
-            username=u; email=e; role=r; statusRaw=s; joined=j; auctions=a;
+        private String userId, username, fullName, role, email, joinDate, status;
+        public UserRow(String userId, String username, String fullName, String role, String email, String joinDate, String status) {
+            this.userId = userId;
+            this.username = username;
+            this.fullName = fullName;
+            this.role = role;
+            this.email = email;
+            this.joinDate = joinDate;
+            this.status = status;
         }
-        public String getUserInfo() { return username + "\n" + email; }
-        public String getRole() { return "bidder".equals(role) ? "Buyer" : "Seller"; }
-        public String getStatus() { return "active".equals(statusRaw) ? "🟢 Active" : "🔴 Locked"; }
-        public String getJoined() { return joined; }
-        public String getAuctions() { return auctions; }
-        public String getAction() { return "active".equals(statusRaw) ? "🔒 Lock" : "🔓 Unlock"; }
-        public String getStatusRaw() { return statusRaw; }
+        public String getUserId() { return userId; }
+        public String getUsername() { return username; }
+        public String getFullName() { return fullName; }
+        public String getRole() { return role; }
+        public String getEmail() { return email; }
+        public String getJoinDate() { return joinDate; }
+        public String getStatus() { return status; }
     }
 }
