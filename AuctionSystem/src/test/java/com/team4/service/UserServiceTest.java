@@ -107,8 +107,8 @@ public class UserServiceTest {
             when(userDAO.findById(userId)).thenReturn(realUser);
             when(userDAO.update(any(User.class))).thenReturn(true);
 
-            // WHEN: Cập nhật tên mới và email có chữ hoa "NEW@gmail.com"
-            User updated = userService.updateProfile(userId, "Tên Mới", "NEW@gmail.com");
+            // WHEN: Cập nhật tên mới, email có chữ hoa "NEW@gmail.com" và sđt mới
+            User updated = userService.updateProfile(userId, "Tên Mới", "NEW@gmail.com", "0987654321");
 
             // THEN: 
             // 1. Dữ liệu trong đối tượng phải thay đổi (email tự động về chữ thường do logic Model)
@@ -126,7 +126,7 @@ public class UserServiceTest {
 
             // WHEN & THEN: Kỳ vọng ném BusinessException
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                userService.updateProfile("unknown", "Name", "email@test.com")
+                userService.updateProfile("unknown", "Name", "email@test.com", "0987654321")
             );
             assertEquals("Người dùng không tồn tại", ex.getMessage());
             verify(userDAO, never()).update(any());
@@ -143,7 +143,7 @@ public class UserServiceTest {
             // WHEN & THEN: Model User sẽ ném IllegalArgumentException nếu email sai định dạng
             // Service gọi user.updateProfile() nên lỗi này sẽ bắn ra ngoài
             assertThrows(IllegalArgumentException.class, () -> 
-                userService.updateProfile(userId, "Name", "email-sai-dinh-dang")
+                userService.updateProfile(userId, "Name", "email-sai-dinh-dang", "0987654321")
             );
             
             // Đảm bảo không gọi update DB khi dữ liệu sai
