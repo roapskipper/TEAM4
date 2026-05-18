@@ -137,4 +137,42 @@ public class ItemService {
         logger.debug("Đang lấy danh sách mặt hàng của người sở hữu: sellerId={}", sellerId);
         return itemDAO.findByOwnerId(sellerId);
     }
+
+    /**
+     * Validate product pricing rules based on category
+     */
+    public void validatePrice(Item.ItemCategory category, java.math.BigDecimal price) {
+        if (price == null) {
+            throw new BusinessException("Starting price cannot be null.");
+        }
+        if (price.compareTo(new java.math.BigDecimal("50000")) < 0) {
+            throw new BusinessException("Minimum starting price is 50,000 VND.");
+        }
+        if (price.remainder(new java.math.BigDecimal("1000")).compareTo(java.math.BigDecimal.ZERO) != 0) {
+            throw new BusinessException("Price must be a multiple of 1,000 VND (no decimals).");
+        }
+        
+        java.math.BigDecimal maxPrice;
+        switch (category) {
+            case ELECTRONICS:
+                maxPrice = new java.math.BigDecimal("5000000000");
+                break;
+            case VEHICLE:
+                maxPrice = new java.math.BigDecimal("10000000000");
+                break;
+            case ART:
+            case COLLECTIBLE:
+                maxPrice = new java.math.BigDecimal("2000000000");
+                break;
+            case FASHION:
+                maxPrice = new java.math.BigDecimal("500000000");
+                break;
+            default:
+                maxPrice = new java.math.BigDecimal("10000000000");
+        }
+        if (price.compareTo(maxPrice) > 0) {
+            java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(java.util.Locale.US);
+            throw new BusinessException("Maximum starting price for " + category + " is " + formatter.format(maxPrice.longValue()) + " VND.");
+        }
+    }
 }

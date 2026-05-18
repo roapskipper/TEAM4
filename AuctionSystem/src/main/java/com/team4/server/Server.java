@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 public class Server {
     private static final int PORT = 18368;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
+    private static ConcurrentHashMap<String, ClientHandler> activeUsers = new ConcurrentHashMap<>();
     private static ExecutorService threadPool;
 
     private static final AuctionService auctionService = new AuctionService(
@@ -94,7 +95,22 @@ public class Server {
 
     public static void removeClient(ClientHandler handler) {
         clientHandlers.remove(handler);
+        if (handler.getUserId() != null) {
+            // Chỉ xóa nếu ClientHandler hiện tại trong map đúng là handler này (tránh xóa nhầm của session mới)
+            activeUsers.remove(handler.getUserId(), handler);
+        }
         System.out.println("Mot client da ngat ket noi. So luong hien tai: " + clientHandlers.size());
+    }
+
+    public static void registerUser(String userId, ClientHandler newHandler) {
+        ClientHandler oldHandler = activeUsers.get(userId);
+        if (oldHandler != null && oldHandler != newHandler) {
+            System.out.println("Phat hien dang nhap tu thiet bi khac cho user: " + userId);
+            oldHandler.forceLogout();
+            removeClient(oldHandler);
+        }
+        activeUsers.put(userId, newHandler);
+        System.out.println("Dang ky Socket session cho user: " + userId);
     }
 
     public static void broadcast(String message, ClientHandler excludeUser) {

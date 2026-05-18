@@ -53,6 +53,7 @@ public class AuthenticationServiceTest {
             // GIVEN: Username chưa tồn tại
             String username = "new_bidder";
             when(userDAO.findByUsername(username)).thenReturn(null);
+            when(userDAO.insert(any(Bidder.class))).thenReturn(true);
 
             // WHEN: Thực hiện đăng ký
             authService.registerBidder(username, "Password123", "Người Mua Mới", "bidder@test.com", "Hà Nội", "0912345678");
@@ -67,6 +68,7 @@ public class AuthenticationServiceTest {
             // GIVEN
             String username = "new_seller";
             when(userDAO.findByUsername(username)).thenReturn(null);
+            when(userDAO.insert(any(Seller.class))).thenReturn(true);
 
             // WHEN
             authService.registerSeller(username, "Password123", "Người Bán Mới", "seller@test.com", "Cửa hàng ABC");

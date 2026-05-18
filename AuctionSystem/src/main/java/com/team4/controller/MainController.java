@@ -107,6 +107,10 @@ public class MainController implements Initializable {
             roleText = "BIDDER";
         }
 
+        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+            name = com.team4.util.UserSession.getInstance().getUsername();
+        }
+
         userNameLabel.setText(name);
         userRoleBadge.setText(roleText);
     }
@@ -130,6 +134,12 @@ public class MainController implements Initializable {
 
     @FXML private void onLogout() {
         try {
+            // Ngắt kết nối socket để giải phóng thread trên server
+            com.team4.client.Client.getInstance().disconnect();
+            
+            // Xóa session (nếu có phương thức clear)
+            com.team4.util.UserSession.clearSession();
+
             Parent root = FXMLLoader.load(getClass().getResource("/com/team4/view/login.fxml"));
             Stage stage = (Stage) mainRoot.getScene().getWindow();
             Scene scene = new Scene(root);

@@ -13,30 +13,26 @@
 
     <HBox spacing="12" alignment="CENTER_LEFT">
         <TextField fx:id="searchField"
-                   promptText="🔍 Search users..."
+                   promptText="🔍 Search username or email..."
                    styleClass="admin-input"
                    prefWidth="320"/>
 
-        <HBox spacing="8">
-            <Button fx:id="filterAll" text="All" onAction="#onFilterAll" styleClass="admin-filter-active"/>
-            <Button fx:id="filterActive" text="Active" onAction="#onFilterActive" styleClass="admin-filter"/>
-            <Button fx:id="filterLocked" text="Locked" onAction="#onFilterLocked" styleClass="admin-filter"/>
-        </HBox>
+        <ComboBox fx:id="roleFilter" styleClass="admin-input" prefWidth="150" />
 
         <Region HBox.hgrow="ALWAYS" />
 
-        <Label fx:id="resultCount" text="5 users" styleClass="muted-text"/>
+        <Label fx:id="resultCount" text="0 users" styleClass="muted-text"/>
     </HBox>
 
     <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
-                <TableColumn fx:id="colUser" text="User" prefWidth="280"/>
-                <TableColumn fx:id="colRole" text="Role" prefWidth="120"/>
-                <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
-                <TableColumn fx:id="colJoined" text="Joined" prefWidth="140"/>
-                <TableColumn fx:id="colAuctions" text="Auctions" prefWidth="80"/>
-                <TableColumn fx:id="colAction" text="Action" prefWidth="140"/>
+                <TableColumn fx:id="colUsername" text="Username" prefWidth="150"/>
+                <TableColumn fx:id="colFullName" text="Full Name" prefWidth="200"/>
+                <TableColumn fx:id="colRole" text="Role" prefWidth="100"/>
+                <TableColumn fx:id="colEmail" text="Email" prefWidth="200"/>
+                <TableColumn fx:id="colJoinDate" text="Join Date" prefWidth="150"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="250"/>
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
