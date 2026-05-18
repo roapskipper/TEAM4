@@ -25,6 +25,11 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import com.team4.model.Item;
+import com.team4.model.Art;
+import com.team4.model.Collectible;
+import com.team4.model.Electronics;
+import com.team4.model.Fashion;
+import com.team4.model.Vehicle;
 
 public class ApiClient {
     private static final String API_URL = "http://localhost:8080/api/";
@@ -39,7 +44,30 @@ public class ApiClient {
         this.client = client;
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(Item.class, new ItemDeserializer())
                 .create();
+    }
+
+    private static class ItemDeserializer implements JsonDeserializer<Item> {
+        @Override
+        public Item deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            String category = jsonObject.get("category").getAsString();
+            switch (category) {
+                case "ART":
+                    return context.deserialize(jsonObject, Art.class);
+                case "COLLECTIBLE":
+                    return context.deserialize(jsonObject, Collectible.class);
+                case "ELECTRONICS":
+                    return context.deserialize(jsonObject, Electronics.class);
+                case "FASHION":
+                    return context.deserialize(jsonObject, Fashion.class);
+                case "VEHICLE":
+                    return context.deserialize(jsonObject, Vehicle.class);
+                default:
+                    throw new JsonParseException("Unknown category: " + category);
+            }
+        }
     }
 
     /** URL-encodes a value using UTF-8. */

@@ -212,8 +212,8 @@ public class SellerProductsController implements Initializable {
         colProduct.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startingPrice"));
-        colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentBidPrice"));
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colCurrentPrice.setCellValueFactory(param -> new javafx.beans.property.SimpleObjectProperty<>(param.getValue().getStartingPrice().doubleValue()));
+        colStatus.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty("PENDING"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
         colAction.setCellFactory(param -> new TableCell<Item, Void>() {
             private final Button editBtn = new Button("Edit");
