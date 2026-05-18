@@ -51,6 +51,33 @@ public class ProfileController implements Initializable {
                 showAlert(Alert.AlertType.WARNING, "Mismatch", "New password and confirmation do not match");
                 return;
             }
+
+            try {
+                String userId = "currentUserId";
+                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
+                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
+                    if (currentUser != null) {
+                        userId = currentUser.getId();
+                    }
+                }
+
+                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+                apiClient.changePassword(userId, oldPass, newPass);
+
+                com.team4.service.AuthenticationService authService = new com.team4.service.AuthenticationService(new com.team4.dao.impl.UserDAOImpl());
+                authService.changePassword(userId, oldPass, newPass);
+
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Password changed successfully!");
+                currentPassword.clear();
+                newPassword.clear();
+                confirmPassword.clear();
+            } catch (com.team4.util.BusinessException be) {
+                showAlert(Alert.AlertType.ERROR, "Update Failed", be.getMessage());
+                return;
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Network Error", "Could not connect to server: " + e.getMessage());
+                return;
+            }
         }
 
         showAlert(Alert.AlertType.INFORMATION, "Success", "Your information has been updated!");

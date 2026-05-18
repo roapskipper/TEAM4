@@ -141,4 +141,20 @@ public class ApiClient {
     public Gson getGson() {
         return this.gson;
     }
+
+    public String changePassword(String userId, String oldPassword, String newPassword) throws Exception {
+        String body = "oldPassword=" + java.net.URLEncoder.encode(oldPassword, StandardCharsets.UTF_8)
+                + "&newPassword=" + java.net.URLEncoder.encode(newPassword, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + userId + "/password"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
 }
