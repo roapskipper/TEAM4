@@ -27,6 +27,11 @@ public class ApiClient {
                 .create();
     }
 
+    /** URL-encodes a value using UTF-8. */
+    private static String enc(String value) {
+        return java.net.URLEncoder.encode(value != null ? value : "", StandardCharsets.UTF_8);
+    }
+
     private static class LocalDateTimeAdapter
             implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
         private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -43,75 +48,62 @@ public class ApiClient {
         }
     }
 
-    public String login(String username, String password, String adminCode) {
-        try {
-            String body = "username=" + username + "&password=" + password;
-            if (adminCode != null && !adminCode.trim().isEmpty()) {
-                body += "&adminCode=" + java.net.URLEncoder.encode(adminCode, StandardCharsets.UTF_8);
-            }
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "login"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            return null;
-        } catch (Exception e) {
-            return null;
+    public String login(String username, String password, String adminCode) throws Exception {
+        String body = "username=" + enc(username) + "&password=" + enc(password);
+        if (adminCode != null && !adminCode.trim().isEmpty()) {
+            body += "&adminCode=" + enc(adminCode);
         }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "login"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
     public String registerBidder(String username, String password, String fullName, String email,
-            String shippingAddress, String phoneNumber) {
-        try {
-            String body = "username=" + username
-                    + "&password=" + password
-                    + "&fullName=" + fullName
-                    + "&email=" + email
-                    + "&shippingAddress=" + shippingAddress
-                    + "&phoneNumber=" + phoneNumber;
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "register/bidder"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            System.out.println("Dang ky that bai. Status: " + response.statusCode());
-            return null;
-        } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
-        }
+            String shippingAddress, String phoneNumber) throws Exception {
+        String body = "username=" + enc(username)
+                + "&password=" + enc(password)
+                + "&fullName=" + enc(fullName)
+                + "&email=" + enc(email)
+                + "&shippingAddress=" + enc(shippingAddress)
+                + "&phoneNumber=" + enc(phoneNumber);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "register/bidder"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
-    public String registerSeller(String username, String password, String fullName, String email, String storeName) {
-        try {
-            String body = "username=" + username
-                    + "&password=" + password
-                    + "&fullName=" + fullName
-                    + "&email=" + email
-                    + "&storeName=" + storeName;
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "register/seller"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            System.out.println("Dang ky that bai. Status: " + response.statusCode());
-            return null;
-        } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
-        }
+    public String registerSeller(String username, String password, String fullName, String email, String storeName) throws Exception {
+        String body = "username=" + enc(username)
+                + "&password=" + enc(password)
+                + "&fullName=" + enc(fullName)
+                + "&email=" + enc(email)
+                + "&storeName=" + enc(storeName);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "register/seller"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
     public List<Item> getItems() {
@@ -213,11 +205,11 @@ public class ApiClient {
     }
 
     public String createItem(String sellerId, String name, String category, double startingPrice, String description) throws Exception {
-        String body = "sellerId=" + java.net.URLEncoder.encode(sellerId, StandardCharsets.UTF_8)
-                + "&name=" + java.net.URLEncoder.encode(name, StandardCharsets.UTF_8)
-                + "&category=" + java.net.URLEncoder.encode(category, StandardCharsets.UTF_8)
-                + "&startingPrice=" + startingPrice
-                + "&description=" + java.net.URLEncoder.encode(description != null ? description : "", StandardCharsets.UTF_8);
+        String body = "sellerId=" + enc(sellerId)
+                + "&name=" + enc(name)
+                + "&category=" + enc(category)
+                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&description=" + enc(description);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "items"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -232,10 +224,10 @@ public class ApiClient {
     }
 
     public String updateItem(String itemId, String name, String category, double startingPrice, String description) throws Exception {
-        String body = "name=" + java.net.URLEncoder.encode(name, StandardCharsets.UTF_8)
-                + "&category=" + java.net.URLEncoder.encode(category, StandardCharsets.UTF_8)
-                + "&startingPrice=" + startingPrice
-                + "&description=" + java.net.URLEncoder.encode(description != null ? description : "", StandardCharsets.UTF_8);
+        String body = "name=" + enc(name)
+                + "&category=" + enc(category)
+                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&description=" + enc(description);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "items/" + itemId))
                 .header("Content-Type", "application/x-www-form-urlencoded")
