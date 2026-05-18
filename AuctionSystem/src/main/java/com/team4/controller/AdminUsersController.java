@@ -1,23 +1,32 @@
 package com.team4.controller;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import com.team4.client.ApiClient;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import javafx.concurrent.Task;
-
-import javafx.scene.layout.HBox;
-import javafx.geometry.Pos;
-
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.team4.client.ApiClient;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 
 public class AdminUsersController implements Initializable {
 
@@ -26,6 +35,7 @@ public class AdminUsersController implements Initializable {
     @FXML private Label resultCount;
     @FXML private TableView<UserRow> usersTable;
     @FXML private TableColumn<UserRow, String> colUsername, colFullName, colRole, colEmail, colJoinDate, colStatus;
+    @FXML private TableColumn<UserRow, Void> colAction;
 
     private ObservableList<UserRow> allUsers = FXCollections.observableArrayList();
 
@@ -43,43 +53,64 @@ public class AdminUsersController implements Initializable {
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colJoinDate.setCellValueFactory(new PropertyValueFactory<>("joinDate"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-        
+
         colStatus.setCellFactory(param -> new TableCell<UserRow, String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                if (empty || item == null) {
                     setText(null);
                     setGraphic(null);
                 } else {
-                    UserRow user = getTableRow().getItem();
-                    String status = user.getStatus() != null ? user.getStatus().toUpperCase() : "UNKNOWN";
-                    HBox actionBox = new HBox(10);
-                    actionBox.setAlignment(Pos.CENTER_LEFT);
-                    
+                    String status = item.toUpperCase();
                     Label statusLabel = new Label(status);
-                    if ("ACTIVE".equals(status)) statusLabel.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    else if ("SUSPENDED".equals(status)) statusLabel.setStyle("-fx-text-fill: orange; -fx-font-weight: bold;");
-                    else if ("BANNED".equals(status)) statusLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    
-                    Button suspendBtn = new Button("Suspend");
-                    Button banBtn = new Button("Ban");
-                    Button unsuspendBtn = new Button("Unsuspend");
-                    
-                    suspendBtn.setOnAction(e -> handleSuspend(user));
-                    banBtn.setOnAction(e -> handleBan(user));
-                    unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
-                    
+                    statusLabel.setStyle("-fx-font-weight: bold;");
+
+                    if ("ACTIVE".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #10b981;");
+                    else if ("SUSPENDED".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #f59e0b;");
+                    else if ("BANNED".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #ef4444;");
+
+                    setGraphic(statusLabel);
+                    setText(null);
+                }
+            }
+        });
+
+        colAction.setCellFactory(param -> new TableCell<UserRow, Void>() {
+            private final Button suspendBtn = new Button("⏸ Suspend");
+            private final Button banBtn = new Button("🚫 Ban");
+            private final Button unsuspendBtn = new Button("▶ Unsuspend");
+            private final HBox actionBox = new HBox(10);
+
+            {
+                actionBox.setAlignment(Pos.CENTER_LEFT);
+                suspendBtn.setStyle("-fx-font-size: 11px;");
+                banBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #ef4444;");
+                unsuspendBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #10b981;");
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    UserRow user = getTableRow().getItem();
+                    String status = user.getStatus() != null ? user.getStatus().toUpperCase() : "ACTIVE";
+                    actionBox.getChildren().clear();
+
                     if ("ACTIVE".equals(status)) {
-                        actionBox.getChildren().addAll(statusLabel, suspendBtn, banBtn);
+                        suspendBtn.setOnAction(e -> handleSuspend(user));
+                        banBtn.setOnAction(e -> handleBan(user));
+                        actionBox.getChildren().addAll(suspendBtn, banBtn);
                     } else if ("SUSPENDED".equals(status)) {
-                        actionBox.getChildren().addAll(statusLabel, unsuspendBtn);
+                        unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
+                        banBtn.setOnAction(e -> handleBan(user));
+                        actionBox.getChildren().addAll(unsuspendBtn, banBtn);
                     } else if ("BANNED".equals(status)) {
-                        actionBox.getChildren().add(statusLabel);
-                    } else {
-                        actionBox.getChildren().add(statusLabel);
+                        // Thường người dùng bị Ban sẽ không có thao tác nhanh ở đây
                     }
-                    
+
                     setGraphic(actionBox);
                     setText(null);
                 }
