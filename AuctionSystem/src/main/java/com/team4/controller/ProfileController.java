@@ -74,26 +74,23 @@ public class ProfileController implements Initializable {
         javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                String userId = "currentUserId";
-                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-                    com.team4.model.User currentUser = new com.team4.dao.impl.UserDAOImpl().findByUsername(com.team4.util.UserSession.getInstance().getUsername());
-                    if (currentUser != null) {
-                        userId = currentUser.getId();
-                    }
+                String userId = null;
+                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
+                    userId = com.team4.util.UserSession.getInstance().getUserId();
+                }
+
+                if (userId == null) {
+                    throw new Exception("User not logged in or invalid session.");
                 }
 
                 com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
                 
                 // Profile Update
                 apiClient.updateProfile(userId, name, email, phone);
-                com.team4.service.UserService userService = new com.team4.service.UserService(new com.team4.dao.impl.UserDAOImpl());
-                userService.updateProfile(userId, name, email, phone);
 
                 // Password Update
                 if (!newPass.isEmpty()) {
                     apiClient.changePassword(userId, oldPass, newPass);
-                    com.team4.service.AuthenticationService authService = new com.team4.service.AuthenticationService(new com.team4.dao.impl.UserDAOImpl());
-                    authService.changePassword(userId, oldPass, newPass);
                 }
                 return null;
             }
