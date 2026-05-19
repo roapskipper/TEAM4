@@ -73,7 +73,6 @@
     -fx-faint-focus-color: transparent;
 }
 
-/* Reset và ÉP CỨNG màu cho nút Toggle (Bidder/Seller) */
 .role-btn-active,
 .role-btn-active:focused,
 .role-btn-active:selected {
@@ -82,7 +81,7 @@
     -fx-border-width: 1.5 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #722F37 !important; /* Ép cứng chữ màu đỏ rượu vang */
+    -fx-text-fill: #722F37 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;
@@ -101,7 +100,7 @@
     -fx-border-width: 1 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #555555 !important; /* Ép cứng chữ màu xám */
+    -fx-text-fill: #555555 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;

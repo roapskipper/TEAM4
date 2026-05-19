@@ -13,7 +13,7 @@
 
     <HBox spacing="12" alignment="CENTER_LEFT">
         <TextField fx:id="searchField"
-                   promptText="🔍 Search username or email..."
+                   promptText="Search username or email..."
                    styleClass="admin-input"
                    prefWidth="320"/>
 
