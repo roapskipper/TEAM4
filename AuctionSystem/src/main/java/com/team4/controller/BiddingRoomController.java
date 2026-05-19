@@ -20,7 +20,7 @@ import com.google.gson.JsonParser;
 
 public class BiddingRoomController implements Initializable {
 
-    private static final double MAX_BID = 50000000;
+    private static final double MAX_BID = 500000000;
 
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating;
     @FXML private Label currentPrice, bidCount, timeLeft, minBidLabel, bidError;
