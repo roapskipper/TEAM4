@@ -28,11 +28,12 @@
         <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
                 <TableColumn fx:id="colUsername" text="Username" prefWidth="150"/>
-                <TableColumn fx:id="colFullName" text="Full Name" prefWidth="200"/>
+                <TableColumn fx:id="colFullName" text="Full Name" prefWidth="150"/>
                 <TableColumn fx:id="colRole" text="Role" prefWidth="100"/>
                 <TableColumn fx:id="colEmail" text="Email" prefWidth="200"/>
                 <TableColumn fx:id="colJoinDate" text="Join Date" prefWidth="150"/>
-                <TableColumn fx:id="colStatus" text="Status" prefWidth="250"/>
+                <TableColumn fx:id="colStatus" text="Status" prefWidth="150"/>
+                <TableColumn fx:id="colAction" text="Action" prefWidth="200"/>
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
