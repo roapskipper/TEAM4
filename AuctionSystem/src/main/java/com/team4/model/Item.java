@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
  * - Không chứa nghiệp vụ cập nhật nhiều bảng (AuctionService chịu trách nhiệm đó)
  */
 public abstract class Item extends Entity {
-    private static final long serialVersionUID = 1L;
     // Dùng enum cho category
     public enum ItemCategory {
         ART,
@@ -105,7 +104,7 @@ public abstract class Item extends Entity {
     public abstract String summary();
 
     // Các phương thức chuẩn hóa
-    private static BigDecimal money(BigDecimal amount) {
+    public static BigDecimal money(BigDecimal amount) {
         if (amount == null) throw new IllegalArgumentException("Amount không được null.");
         return amount.setScale(2, RoundingMode.HALF_UP);
     }

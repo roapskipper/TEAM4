@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class BidTransaction extends Entity{
-    private static final long serialVersionUID = 1L;
     private final String auctionId; // id cuộc đấu giá,tham chiếu đến id của model Auction
     private final String bidderId; // id người đặt giá, tham chiếu đến id của model User
     private final BigDecimal bidAmount; // mức đặt giá
