@@ -181,9 +181,9 @@ public class LoginController {
                         
                         socketClient.setOnForceLogout(() -> {
                             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                            alert.setTitle("Cảnh báo");
-                            alert.setHeaderText("Đăng xuất bắt buộc");
-                            alert.setContentText("Tài khoản của bạn vừa đăng nhập từ thiết bị khác. Ứng dụng sẽ thoát.");
+                            alert.setTitle("Warning");
+                            alert.setHeaderText("Forced logout");
+                            alert.setContentText("Your account has just signed in from another device. The application will close.");
                             alert.showAndWait();
                             javafx.application.Platform.exit();
                             System.exit(0);

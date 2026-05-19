@@ -47,14 +47,14 @@ public class UserHandler implements HttpHandler {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();
-            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Lỗi server nội bộ", null));
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Internal server error", null));
         }
     }
 
     private void handleGetProfile(HttpExchange exchange, String userId) throws IOException {
         User user = Server.getUserService().getUserById(userId);
         if (user == null) {
-            ApiServer.sendResponse(exchange, 404, ApiServer.buildResponse("ERROR", "Người dùng không tồn tại", null));
+            ApiServer.sendResponse(exchange, 404, ApiServer.buildResponse("ERROR", "User does not exist", null));
             return;
         }
 
@@ -72,7 +72,7 @@ public class UserHandler implements HttpHandler {
             data.addProperty("phoneNumber", ""); // For Sellers/Admins if they don't have phone
         }
 
-        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lấy thông tin thành công", data));
+        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Profile loaded successfully", data));
     }
 
     private void handleUpdateProfile(HttpExchange exchange, String userId) throws IOException {
@@ -85,14 +85,14 @@ public class UserHandler implements HttpHandler {
         String phone = ApiServer.parseParam(body, "phone");
 
         if (fullName == null || email == null) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thiếu fullName hoặc email", null));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Missing fullName or email", null));
             return;
         }
 
         User updated = Server.getUserService().updateProfile(userId, fullName, email, phone);
         JsonObject data = new JsonObject();
         data.addProperty("fullName", updated.getFullName());
-        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Cập nhật thành công", data));
+        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Updated successfully", data));
     }
 
     private void handleChangePassword(HttpExchange exchange, String userId) throws IOException {
@@ -104,11 +104,11 @@ public class UserHandler implements HttpHandler {
         String newPassword = ApiServer.parseParam(body, "newPassword");
 
         if (oldPassword == null || newPassword == null) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thiếu mật khẩu", null));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Missing password", null));
             return;
         }
 
         Server.getUserService().changePassword(userId, oldPassword, newPassword);
-        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Đổi mật khẩu thành công", null));
+        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Password changed successfully", null));
     }
 }

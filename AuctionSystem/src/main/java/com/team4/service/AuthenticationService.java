@@ -23,11 +23,11 @@ public class AuthenticationService {
 
     // Tạo tài khoản Bidder mới
     public void registerBidder(String username, String rawPassword, String fullName, String email, String shippingAddress, String phoneNumber) {
-        logger.info("Đang đăng ký tài khoản bidder username={} email={}", username, email);
+        logger.info("Registering bidder account username={} email={}", username, email);
         // Kiểm tra xem username đã tồn tại chưa
         if (userDAO.findByUsername(username) != null) {
-            logger.warn("Đăng ký bidder thất bại vì username đã tồn tại username={}", username);
-            throw new BusinessException("Tên đăng nhập đã tồn tại");
+            logger.warn("Bidder registration failed because username already exists username={}", username);
+            throw new BusinessException("Username already exists");
         }
         // Nếu username hợp lệ thì tạo bidder mới
         // model Bidder sẽ tự động validate fields
@@ -36,94 +36,94 @@ public class AuthenticationService {
         // Lưu vào DB
         boolean saved = userDAO.insert(bidder);
         if (!saved) {
-            logger.error("Đăng ký bidder thất bại do lỗi lưu DB username={}", username);
-            throw new BusinessException("Không thể tạo tài khoản, vui lòng thử lại");
+            logger.error("Bidder registration failed due to database save error username={}", username);
+            throw new BusinessException("Unable to create account, please try again");
         }
-        logger.info("Đã đăng ký tài khoản bidder userId={} username={}", bidder.getId(), username);
+        logger.info("Bidder account registered userId={} username={}", bidder.getId(), username);
     }
 
     // Tạo tài khoản Seller mới
     public void registerSeller(String username, String rawPassword, String fullName, String email, String storeName) {
-        logger.info("Đang đăng ký tài khoản seller username={} email={} storeName={}", username, email, storeName);
+        logger.info("Registering seller account username={} email={} storeName={}", username, email, storeName);
         if (userDAO.findByUsername(username) != null) {
-            logger.warn("Đăng ký seller thất bại vì username đã tồn tại username={}", username);
-            throw new BusinessException("Tên đăng nhập đã tồn tại");
+            logger.warn("Seller registration failed because username already exists username={}", username);
+            throw new BusinessException("Username already exists");
         }
         String hashedPassword = PasswordHasher.hashPassword(rawPassword);
         Seller seller = new Seller(username, hashedPassword, fullName, email, storeName);
         boolean saved = userDAO.insert(seller);
         if (!saved) {
-            logger.error("Đăng ký seller thất bại do lỗi lưu DB username={}", username);
-            throw new BusinessException("Không thể tạo tài khoản, vui lòng thử lại");
+            logger.error("Seller registration failed due to database save error username={}", username);
+            throw new BusinessException("Unable to create account, please try again");
         }
-        logger.info("Đã đăng ký tài khoản seller userId={} username={}", seller.getId(), username);
+        logger.info("Seller account registered userId={} username={}", seller.getId(), username);
     }
 
     // Đăng nhập cho Bidder & Seller
     public User login(String username, String rawPassword) {
-        logger.info("Đang đăng nhập username={}", username);
+        logger.info("Signing in username={}", username);
         User user = userDAO.findByUsername(username);
         if (user == null) {
-            logger.warn("Đăng nhập thất bại vì username không tồn tại username={}", username);
-            throw new BusinessException("Tên đăng nhập không tồn tại");
+            logger.warn("Sign-in failed because username does not exist username={}", username);
+            throw new BusinessException("Username does not exist");
         }
         if (!user.verifyPassword(rawPassword)) {
-            logger.warn("Đăng nhập thất bại vì mật khẩu không đúng username={} userId={}", username, user.getId());
-            throw new BusinessException("Mật khẩu không đúng");
+            logger.warn("Sign-in failed because password is incorrect username={} userId={}", username, user.getId());
+            throw new BusinessException("Incorrect password");
         }
-        logger.info("Đăng nhập thành công userId={} username={} role={}", user.getId(), username, user.getRole());
+        logger.info("Sign-in successful userId={} username={} role={}", user.getId(), username, user.getRole());
         return user;
     }
 
     // Đăng nhập cho Admin
     public Admin loginAdmin(String username, String rawPassword, String rawAdminCode) {
-        logger.info("Đang đăng nhập admin username={}", username);
+        logger.info("Signing in admin username={}", username);
         User user = userDAO.findByUsername(username);
 
         if (user == null) {
-            logger.warn("Đăng nhập admin thất bại vì username không tồn tại username={}", username);
-            throw new BusinessException("Tên đăng nhập không tồn tại");
+            logger.warn("Admin sign-in failed because username does not exist username={}", username);
+            throw new BusinessException("Username does not exist");
 
         }
 
         if (!(user instanceof Admin admin)) {
-            logger.warn("Đăng nhập admin thất bại vì tài khoản không có quyền admin username={} userId={} role={}",
+            logger.warn("Admin sign-in failed because account does not have admin privileges username={} userId={} role={}",
                     username, user.getId(), user.getRole());
-            throw new BusinessException("Tài khoản không có quyền admin");
+            throw new BusinessException("Account does not have admin privileges");
 
         }
 
         if (!admin.verifyPassword(rawPassword)) {
-            logger.warn("Đăng nhập admin thất bại vì mật khẩu không đúng username={} userId={}", username, admin.getId());
-            throw new BusinessException("Mật khẩu không đúng");
+            logger.warn("Admin sign-in failed because password is incorrect username={} userId={}", username, admin.getId());
+            throw new BusinessException("Incorrect password");
 
         }
 
         if (!admin.verifyAdminCode(rawAdminCode)) {
-            logger.warn("Đăng nhập admin thất bại vì mã admin không đúng username={} userId={}", username, admin.getId());
-            throw new BusinessException("Mã admin không đúng");
+            logger.warn("Admin sign-in failed because admin code is incorrect username={} userId={}", username, admin.getId());
+            throw new BusinessException("Incorrect admin code");
 
         }
 
-        logger.info("Đăng nhập admin thành công userId={} username={} accessLevel={}",
+        logger.info("Admin sign-in successful userId={} username={} accessLevel={}",
                 admin.getId(), username, admin.getAccessLevel());
         return admin;
     }
 
     // Đỏi mật khẩu
     public void changePassword(String userId, String oldRawPassword, String newRawPassword) {
-        logger.info("Đang đổi mật khẩu userId={}", userId);
+        logger.info("Changing password userId={}", userId);
         User user = userDAO.findById(userId);
         if (user == null) {
-            logger.warn("Đổi mật khẩu thất bại vì người dùng không tồn tại userId={}", userId);
-            throw new BusinessException("Người dùng không tồn tại");
+            logger.warn("Password change failed because user does not exist userId={}", userId);
+            throw new BusinessException("User does not exist");
         }
         if (!user.verifyPassword(oldRawPassword)) {
-            logger.warn("Đổi mật khẩu thất bại vì mật khẩu cũ không đúng userId={}", userId);
-            throw new BusinessException("Mật khẩu cũ không đúng");
+            logger.warn("Password change failed because old password is incorrect userId={}", userId);
+            throw new BusinessException("Old password is incorrect");
         }
         user.changePasswordHash(PasswordHasher.hashPassword(newRawPassword));
         userDAO.update(user);
-        logger.info("Đã đổi mật khẩu userId={} username={}", userId, user.getUsername());
+        logger.info("Password changed userId={} username={}", userId, user.getUsername());
     }
 }

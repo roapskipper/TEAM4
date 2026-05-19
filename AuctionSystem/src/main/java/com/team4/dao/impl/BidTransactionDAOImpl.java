@@ -42,7 +42,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            logger.error("Không thể tạo bid transaction id={} trong transaction", transaction.getId(), e);
+            logger.error("Unable to create bid transaction id={} in transaction", transaction.getId(), e);
             return false;
         }
     }
@@ -62,7 +62,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm bid transactions với auctionId={}", auctionId, e);
+            logger.error("Unable to find bid transactions with auctionId={}", auctionId, e);
         }
         return list;
     }
@@ -82,7 +82,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm bid transactions với bidderId={}", bidderId, e);
+            logger.error("Unable to find bid transactions with bidderId={}", bidderId, e);
         }
         return list;
     }
@@ -103,7 +103,7 @@ public class BidTransactionDAOImpl implements BidTransactionDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể lấy highest bid cho auctionId={}", auctionId, e);
+            logger.error("Unable to get highest bid for auctionId={}", auctionId, e);
         }
         return null; // Trả về null nếu phiên này chưa có ai đặt giá
     }

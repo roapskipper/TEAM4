@@ -199,7 +199,7 @@ public class ClientHandler implements Runnable, BidObserver {
     }
 
     public void forceLogout() {
-        sendMessage(buildResponse("ERROR", "Tài khoản của bạn đã được đăng nhập ở thiết bị khác.", "FORCE_LOGOUT", null));
+        sendMessage(buildResponse("ERROR", "Your account has been signed in on another device.", "FORCE_LOGOUT", null));
         try {
             if (socket != null && !socket.isClosed()) {
                 socket.close();

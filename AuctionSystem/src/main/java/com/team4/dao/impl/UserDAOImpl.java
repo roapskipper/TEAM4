@@ -50,7 +50,7 @@ public class UserDAOImpl implements UserDAO {
                 return new Seller(id, createdAt, username, passwordHash, fullName, email, balance, storeName, rating);
 
             default:
-                throw new SQLException("Lỗi: Không nhận diện được role '" + role + "' của user ID: " + id);
+                throw new SQLException("Error: Unrecognized role '" + role + "' for user ID: " + id);
         }
     }
 
@@ -78,7 +78,7 @@ public class UserDAOImpl implements UserDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm user với id={}", id, e);
+            logger.error("Unable to find user with id={}", id, e);
         }
         return null; // Không tìm thấy
     }
@@ -96,7 +96,7 @@ public class UserDAOImpl implements UserDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm user by id={} trong transaction", id, e);
+            logger.error("Unable to find user by id={} in transaction", id, e);
         }
         return null; // Không tìm thấy
     }
@@ -119,7 +119,7 @@ public class UserDAOImpl implements UserDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm user với username={}", username, e);
+            logger.error("Unable to find user with username={}", username, e);
         }
         return null;
     }
@@ -177,7 +177,7 @@ public class UserDAOImpl implements UserDAO {
             return rowsAffected > 0;
 
         } catch (SQLException e) {
-            logger.error("Không thể tạo user id={}", user.getId(), e);
+            logger.error("Unable to create user id={}", user.getId(), e);
             return false;
         }
     }
@@ -219,7 +219,7 @@ public class UserDAOImpl implements UserDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            logger.error("Không thể update user id={}", user.getId(), e);
+            logger.error("Unable to update user id={}", user.getId(), e);
             return false;
         }
     }
@@ -240,7 +240,7 @@ public class UserDAOImpl implements UserDAO {
                 list.add(mapRowToUser(rs));
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm tất cả user", e);
+            logger.error("Unable to find all users", e);
         }
         return list;
     }
@@ -254,7 +254,7 @@ public class UserDAOImpl implements UserDAO {
             stmt.setString(2,id);
             stmt.executeUpdate();
         } catch  (SQLException e) {
-            logger.error("Không thể update userbalance id={} newBalance={}", id, newBalance, e);
+            logger.error("Unable to update user balance id={} newBalance={}", id, newBalance, e);
             return false;
         }
         return true;
@@ -268,7 +268,7 @@ public class UserDAOImpl implements UserDAO {
             stmt.setString(2,id);
             stmt.executeUpdate();
         } catch  (SQLException e) {
-            logger.error("Không thể update user balance id={} newBalance={} trong transaction", id, newBalance, e);
+            logger.error("Unable to update user balance id={} newBalance={} in transaction", id, newBalance, e);
             return false;
         }
         return true;

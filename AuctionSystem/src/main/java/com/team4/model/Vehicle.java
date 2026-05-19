@@ -132,35 +132,35 @@ public class Vehicle extends Item {
     // Validate
     private static void validateBrand(String b) {
         if (b == null) return;
-        if (b.length() > 120) throw new IllegalArgumentException("Brand không được vượt quá 120 ký tự.");
+        if (b.length() > 120) throw new IllegalArgumentException("Brand must not exceed 120 characters.");
     }
     private static void validateModel(String m) {
         if (m == null) return;
-        if (m.length() > 120) throw new IllegalArgumentException("Model không được vượt quá 120 ký tự.");
+        if (m.length() > 120) throw new IllegalArgumentException("Model must not exceed 120 characters.");
     }
     private static void validateManufacturingYear(int year) {
         if (year == 0) return;
         int current = LocalDate.now().getYear();
         final int MIN_YEAR = 1886;
         if (year < MIN_YEAR || year > current) {
-            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
-                    MIN_YEAR + " .. " + (current) + " (Nếu không rõ có thể điền '0').");
+            throw new IllegalArgumentException("Invalid production year. Valid range: " +
+                    MIN_YEAR + " .. " + (current) + " (Use '0' if unknown).");
         }
     }
     private static void validateOdo(int odo) {
-        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) phải >= 0.");
-        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer có vẻ không hợp lệ (>1,000,000).");
+        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) must be >= 0.");
+        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer seems invalid (>1,000,000).");
     }
     private static void validateEngineType(EngineType t) {
         if (t == null)
-            throw new IllegalArgumentException("EngineType không được null. Nếu không rõ loại động cơ, hãy chọn EngineType.OTHER.");
+            throw new IllegalArgumentException("EngineType must not be null. If the engine type is unknown, choose EngineType.OTHER.");
     }
     private static void validateColor(String c) {
         if (c == null) return; // optional
-        if (c.length() > 50) throw new IllegalArgumentException("Color không được vượt quá 50 ký tự.");
+        if (c.length() > 50) throw new IllegalArgumentException("Color must not exceed 50 characters.");
     }
     private static void validateTransmission(Transmission t) {
-        if (t == null) throw new IllegalArgumentException("Transmission không được null.");
+        if (t == null) throw new IllegalArgumentException("Transmission must not be null.");
     }
     // Summary / toString
     @Override
@@ -169,7 +169,7 @@ public class Vehicle extends Item {
                 " - " + manufacturingYear +
                 " - " + odo + "km" +
                 " - " + engineType.name() +
-                (hasLegalPapers ? " (Đủ giấy tờ)" : " (Không đủ giấy tờ)");
+                (hasLegalPapers ? " (Legal papers available)" : " (Legal papers incomplete)");
     }
     @Override
     public String toString() {
@@ -202,7 +202,7 @@ public class Vehicle extends Item {
     public int getOdo() { return odo; }
     public void setOdo(int odo) {
         if (odo < this.odo)
-            throw new IllegalArgumentException("Odo không thể giảm");
+            throw new IllegalArgumentException("Odo cannot decrease");
         this.odo = odo;
         validateOdo(this.odo);
     }
