@@ -35,7 +35,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm cấu hình có id={}", id, e); }
+            logger.error("Unable to find configuration with id={}", id, e); }
     return null;}
     @Override
     public AutoBidding findByAuctionAndBidder(String auctionId, String bidderId) {
@@ -48,7 +48,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm cấu hình với auctionId={} bidderId={}", auctionId, bidderId, e);
+            logger.error("Unable to find configuration with auctionId={} bidderId={}", auctionId, bidderId, e);
         }
         return null;
     }
@@ -63,7 +63,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 if (rs.next()) return mapRowToAutoBidding(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm cấu hình với auctionId={} bidderId={} trong transaction", auctionId, bidderId, e);
+            logger.error("Unable to find configuration with auctionId={} bidderId={} trong transaction", auctionId, bidderId, e);
         }
         return null;
     }
@@ -82,7 +82,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm danh sách cấu hình với auctionId={} trong transaction", auctionId, e);
+            logger.error("Unable to find configuration list with auctionId={} in transaction", auctionId, e);
         }
         return list;
     }
@@ -102,7 +102,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm danh sách cấu hình với auctionId={}", auctionId, e);
+            logger.error("Unable to find configuration list with auctionId={}", auctionId, e);
         }
         return list;
     }
@@ -121,7 +121,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể tạo cấu hình có id={}", autoBidding.getId(), e);
+            logger.error("Unable to create configuration with id={}", autoBidding.getId(), e);
             return false;
         }
     }
@@ -139,7 +139,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể tạo cấu hình có id={} trong transaction", autoBidding.getId(), e);
+            logger.error("Unable to create configuration with id={} trong transaction", autoBidding.getId(), e);
             return false;
         }
     }
@@ -154,7 +154,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Khong thể update auto-bid id={} trong transaction", autoBidding.getId(), e);
+            logger.error("Unable to update auto-bid id={} in transaction", autoBidding.getId(), e);
             return false;
         }
     }
@@ -170,7 +170,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update auto-bid id={}", autoBidding.getId(), e);
+            logger.error("Unable to update auto-bid id={}", autoBidding.getId(), e);
             return false;
         }
     }
@@ -184,7 +184,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
             stmt.setString(2,id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update trạng thái auto-bid id={} isActive={}", id, isActive, e);
+            logger.error("Unable to update auto-bid status id={} isActive={}", id, isActive, e);
             return false;
         }
     }
@@ -197,7 +197,7 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
             stmt.setString(2,id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update trạng thái auto-bid id={} isActive={} trong transaction", id, isActive, e);
+            logger.error("Unable to update auto-bid status id={} isActive={} trong transaction", id, isActive, e);
             return false;
         }
     }

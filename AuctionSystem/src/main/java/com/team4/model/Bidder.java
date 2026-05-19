@@ -42,10 +42,10 @@ public class Bidder extends User {
         if (shippingAddress != null) {
             String adr = shippingAddress.trim();
             if (adr.isEmpty()) {
-                throw new IllegalArgumentException("Địa chỉ giao hàng không được rỗng nếu được cung cấp.");
+                throw new IllegalArgumentException("Shipping address must not be blank when provided.");
             }
             if (adr.length() > 255) {
-                throw new IllegalArgumentException("Địa chỉ giao hàng không được vượt quá 255 ký tự.");
+                throw new IllegalArgumentException("Shipping address must not exceed 255 characters.");
             }
         }
     }
@@ -53,7 +53,7 @@ public class Bidder extends User {
         if (phoneNumber != null) {
             String num = phoneNumber.trim();
             if (!PHONE_PATTERN.matcher(num).matches()) {
-                throw new IllegalArgumentException("Số điện thoại không hợp lệ.");
+                throw new IllegalArgumentException("Invalid phone number.");
             }
         }
     }

@@ -51,28 +51,28 @@ public abstract class Item extends Entity {
     // Validate Item
     protected final void validateBaseItem() {
         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Tên mặt hàng không được để trống.");
+            throw new IllegalArgumentException("Item name must not be blank.");
         }
         if (name.length() > NAME_MAX) {
-            throw new IllegalArgumentException("Tên mặt hàng không được vượt quá " + NAME_MAX + " ký tự.");
+            throw new IllegalArgumentException("Item name must not exceed " + NAME_MAX + " characters.");
         }
         if (startingPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Giá khởi điểm không được âm.");
+            throw new IllegalArgumentException("Starting price cannot be negative.");
         }
         if (category == null) {
-            throw new IllegalArgumentException("Category không được để trống.");
+            throw new IllegalArgumentException("Category must not be blank.");
         }
         if (ownerId == null || ownerId.isEmpty()) {
-            throw new IllegalArgumentException("OwnerId không được để trống.");
+            throw new IllegalArgumentException("OwnerId must not be blank.");
         }
         if (ownerId.length() > OWNER_ID_MAX) {
-            throw new IllegalArgumentException("OwnerId không được dài quá " + OWNER_ID_MAX + " ký tự.");
+            throw new IllegalArgumentException("OwnerId must not exceed " + OWNER_ID_MAX + " characters.");
         }
         if (description == null || description.isEmpty()) {
-            throw new IllegalArgumentException("Mô tả không được để trống.");
+            throw new IllegalArgumentException("Description must not be blank.");
         }
         if (description.length() > DESC_MAX) {
-            throw new IllegalArgumentException("Mô tả không được vượt quá " + DESC_MAX + " ký tự.");
+            throw new IllegalArgumentException("Description must not exceed " + DESC_MAX + " characters.");
         }
     }
 
@@ -106,11 +106,11 @@ public abstract class Item extends Entity {
 
     // Các phương thức chuẩn hóa
     private static BigDecimal money(BigDecimal amount) {
-        if (amount == null) throw new IllegalArgumentException("Amount không được null.");
+        if (amount == null) throw new IllegalArgumentException("Amount must not be null.");
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
     private static String normalizeName(String name) {
-        if (name == null) throw new IllegalArgumentException("Tên không được null.");
+        if (name == null) throw new IllegalArgumentException("Name must not be null.");
         String t = name.trim();
         return t.isEmpty() ? null : t;
     }
@@ -120,7 +120,7 @@ public abstract class Item extends Entity {
         return t.isEmpty() ? null : t;
     }
     private static String normalizeOwnerId(String ownerId) {
-        if (ownerId == null) throw new IllegalArgumentException("OwnerId không được null.");
+        if (ownerId == null) throw new IllegalArgumentException("OwnerId must not be null.");
         return ownerId.trim();
     }
     // Item này là gì về mặt kỹ thuật

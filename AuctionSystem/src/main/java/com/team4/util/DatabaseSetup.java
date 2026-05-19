@@ -49,12 +49,12 @@ public final class DatabaseSetup {
                 .getResourceAsStream("database.properties")
         ) {
             if (is == null) {
-                throw new IOException("Không tồn tại database.properties trong classpath"); // Kiểm tra file có tồn tại không
+                throw new IOException("database.properties does not exist on the classpath"); // Kiểm tra file có tồn tại không
             }
             properties.load(is);
         } catch (IOException e) {
             // Sử dụng RuntimeException là cách tốt nhất để Ngắt ứng dụng ngay khi lỗi nền tảng xảy ra và Giữ cho mã nguồn các tầng bên trên được sạch đẹp, không vướng bận các ngoại lệ của I/O.
-            throw new RuntimeException("Không thể tải database.properties", e);
+            throw new RuntimeException("Unable to load database.properties", e);
         }
         String url = properties.getProperty("db.url");
         String user = properties.getProperty("db.username");
@@ -64,13 +64,13 @@ public final class DatabaseSetup {
          * Dùng trim() ở đây thay vè bên trên để tránh NPE :((
          */
         if (url == null || url.trim().isEmpty()) {
-            throw new IllegalArgumentException("db.url không được trống");
+            throw new IllegalArgumentException("db.url must not be blank");
         }
         if (user == null || user.trim().isEmpty()) {
-            throw new IllegalArgumentException("db.user is không đươ trống");
+            throw new IllegalArgumentException("db.user must not be blank");
         }
         if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("password không được trống");
+            throw new IllegalArgumentException("password must not be blank");
         }
         return new DbConfig(url.trim(), user.trim(), password);
     }
@@ -94,7 +94,7 @@ public final class DatabaseSetup {
             stmt.execute(sql);
 
         } catch (Exception e) {
-            throw new RuntimeException("Không thể kết nối hoặc tạo Database: auction_system", e);
+            throw new RuntimeException("Unable to connect to or create database: auction_system", e);
         }
     }
 
@@ -110,7 +110,7 @@ public final class DatabaseSetup {
          */
         try (InputStream is = DatabaseSetup.class.getClassLoader().getResourceAsStream("schema.sql")) {
             if (is == null) {
-                throw new IOException("Không thấy schema.sql trong classpath");
+                throw new IOException("schema.sql not found on the classpath");
             }
 
             try (BufferedReader br = new BufferedReader(
@@ -126,7 +126,7 @@ public final class DatabaseSetup {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Không thể đọc schema.sql", e);
+            throw new RuntimeException("Unable to read schema.sql", e);
         }
         return sb.toString();
     }
@@ -181,7 +181,7 @@ public final class DatabaseSetup {
         // Tìm dấu / cuối cùng trong baseUrl
         int slashIdx = baseUrl.lastIndexOf('/');
         if (slashIdx < 0) {
-            throw new IllegalArgumentException("db.url không hợp lệ: " + dbUrl);
+            throw new IllegalArgumentException("Invalid db.url: " + dbUrl);
         }
 
         String adminBase = baseUrl.substring(0, slashIdx + 1);;
