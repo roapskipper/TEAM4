@@ -1,6 +1,7 @@
 package com.team4.client;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -70,9 +71,53 @@ public class ApiClient {
         }
     }
 
-    /** URL-encodes a value using UTF-8. */
     private static String enc(String value) {
         return java.net.URLEncoder.encode(value != null ? value : "", StandardCharsets.UTF_8);
+    }
+
+    private static String plainNumber(double value) {
+        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    public static String extractErrorMessage(String rawMessage) {
+        if (rawMessage == null || rawMessage.trim().isEmpty()) {
+            return "Something went wrong. Please try again.";
+        }
+
+        String message = rawMessage.trim();
+        try {
+            JsonElement parsed = JsonParser.parseString(message);
+            if (parsed.isJsonObject()) {
+                JsonObject obj = parsed.getAsJsonObject();
+                if (obj.has("message") && !obj.get("message").isJsonNull()) {
+                    return obj.get("message").getAsString();
+                }
+                if (obj.has("error") && !obj.get("error").isJsonNull()) {
+                    return obj.get("error").getAsString();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        return message;
+    }
+
+    public static String toDisplayMessage(Throwable error) {
+        String message = extractErrorMessage(error != null ? error.getMessage() : null);
+        String lower = message.toLowerCase();
+        if (lower.contains("connection refused") || lower.contains("connect timed out")
+                || lower.contains("no route to host")) {
+            return "Cannot connect to server. Please start the server and try again.";
+        }
+        return message;
+    }
+
+    private static Exception apiException(HttpResponse<String> response) {
+        String body = response.body();
+        if (body != null && !body.isEmpty()) {
+            return new Exception(extractErrorMessage(body));
+        }
+        return new Exception("HTTP " + response.statusCode());
     }
 
     private static class LocalDateTimeAdapter
@@ -105,8 +150,7 @@ public class ApiClient {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200)
             return response.body();
-        throw new Exception(response.body() != null && !response.body().isEmpty()
-                ? response.body() : "HTTP " + response.statusCode());
+        throw apiException(response);
     }
 
     public String registerBidder(String username, String password, String fullName, String email,
@@ -126,8 +170,7 @@ public class ApiClient {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200)
             return response.body();
-        throw new Exception(response.body() != null && !response.body().isEmpty()
-                ? response.body() : "HTTP " + response.statusCode());
+        throw apiException(response);
     }
 
     public String registerSeller(String username, String password, String fullName, String email, String storeName) throws Exception {
@@ -145,8 +188,7 @@ public class ApiClient {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200)
             return response.body();
-        throw new Exception(response.body() != null && !response.body().isEmpty()
-                ? response.body() : "HTTP " + response.statusCode());
+        throw apiException(response);
     }
 
     public List<Item> getItems() {
@@ -193,7 +235,7 @@ public class ApiClient {
                 return gson.fromJson(response.body(), listType);
             }
         } else {
-            throw new Exception("Server returned status " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -213,7 +255,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -230,7 +272,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -250,7 +292,7 @@ public class ApiClient {
             }
             return new JsonObject();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -263,7 +305,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return JsonParser.parseString(response.body()).getAsJsonObject();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -271,7 +313,7 @@ public class ApiClient {
         String body = "sellerId=" + enc(sellerId)
                 + "&name=" + enc(name)
                 + "&category=" + enc(category)
-                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&startingPrice=" + enc(plainNumber(startingPrice))
                 + "&description=" + enc(description);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "items"))
@@ -282,14 +324,14 @@ public class ApiClient {
         if (response.statusCode() == 200 || response.statusCode() == 201) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
     public String updateItem(String itemId, String name, String category, double startingPrice, String description) throws Exception {
         String body = "name=" + enc(name)
                 + "&category=" + enc(category)
-                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&startingPrice=" + enc(plainNumber(startingPrice))
                 + "&description=" + enc(description);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "items/" + itemId))
@@ -300,7 +342,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -323,7 +365,7 @@ public class ApiClient {
             }
             return new JsonArray();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -337,7 +379,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -352,7 +394,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -375,7 +417,7 @@ public class ApiClient {
             }
             return new JsonArray();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -398,7 +440,7 @@ public class ApiClient {
             }
             return new JsonArray();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -413,7 +455,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -428,7 +470,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -442,7 +484,7 @@ public class ApiClient {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 
@@ -463,7 +505,7 @@ public class ApiClient {
             }
             return new JsonObject();
         } else {
-            throw new Exception("HTTP " + response.statusCode());
+            throw apiException(response);
         }
     }
 }
