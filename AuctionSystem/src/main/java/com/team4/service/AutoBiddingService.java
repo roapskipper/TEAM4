@@ -46,6 +46,12 @@ public class AutoBiddingService {
             logger.warn("Bật Auto-bid thất bại: Giới hạn tối đa ({}) nhỏ hơn hoặc bằng giá hiện tại ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại của phiên đấu giá.");
         }
+        
+        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
+            logger.warn("Bật Auto-bid thất bại: Giới hạn tối đa ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
+            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
+        }
         User user = userDAO.findById(bidderId);
         if (user == null || user.getRole() != User.Role.BIDDER) {
             logger.warn("Bật Auto-bid thất bại: Bidder không hợp lệ hoặc không tồn tại. bidderId={}", bidderId);
@@ -101,6 +107,12 @@ public class AutoBiddingService {
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
             logger.warn("Cập nhật Auto-bid thất bại: Giới hạn mới ({}) không lớn hơn giá hiện tại ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại.");
+        }
+
+        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
+            logger.warn("Cập nhật Auto-bid thất bại: Giới hạn mới ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
+            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
         }
 
         autoBidding.setMaxLimit(maxLimit);
