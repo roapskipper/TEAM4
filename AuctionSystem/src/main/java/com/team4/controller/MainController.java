@@ -48,18 +48,18 @@ public class MainController implements Initializable {
         navContainer.getChildren().clear();
 
         if (userRole != null && userRole.startsWith("admin")) {
-            addNavItem("📊", "Dashboard", "admin_dashboard", "Monitor and manage the system");
-            addNavItem("👥", "Users", "admin_users", "Lock/unlock accounts");
-            addNavItem("🔨", "Auctions", "admin_auctions", "Approve and manage auctions");
-            addNavItem("👤", "Profile", "profile", "Update your information");
+            addNavItem("Dashboard", "admin_dashboard", "Monitor and manage the system");
+            addNavItem("Users", "admin_users", "Lock/unlock accounts");
+            addNavItem("Auctions", "admin_auctions", "Approve and manage auctions");
+            addNavItem("Profile", "profile", "Update your information");
         } else if ("seller".equals(userRole)) {
-            addNavItem("📦", "Products", "seller_products", "Manage your products");
-            addNavItem("📋", "My Auctions", "bidder_auctions", "Sessions you created");
-            addNavItem("👤", "Profile", "profile", "Update your information");
+            addNavItem("Products", "seller_products", "Manage your products");
+            addNavItem("My Auctions", "bidder_auctions", "Sessions you created");
+            addNavItem("Profile", "profile", "Update your information");
         } else {
-            addNavItem("🔨", "Auctions", "bidder_auctions", "Explore auction sessions");
-            addNavItem("📋", "My Auctions", "bidding_room", "Sessions you joined");
-            addNavItem("👤", "Profile", "profile", "Update your information");
+            addNavItem("Auctions", "bidder_auctions", "Explore auction sessions");
+            addNavItem("My Auctions", "bidding_room", "Sessions you joined");
+            addNavItem("Profile", "profile", "Update your information");
         }
 
         if (!navContainer.getChildren().isEmpty() && navContainer.getChildren().get(0) instanceof Button) {
@@ -67,8 +67,8 @@ public class MainController implements Initializable {
         }
     }
 
-    private void addNavItem(String icon, String label, String pageId, String subtitle) {
-        Button btn = new Button(icon + "  " + label);
+    private void addNavItem(String label, String pageId, String subtitle) {
+        Button btn = new Button(label);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.getStyleClass().add("nav-btn");
         btn.setOnAction(e -> {
@@ -134,10 +134,7 @@ public class MainController implements Initializable {
 
     @FXML private void onLogout() {
         try {
-            // Ngắt kết nối socket để giải phóng thread trên server
             com.team4.client.Client.getInstance().disconnect();
-            
-            // Xóa session (nếu có phương thức clear)
             com.team4.util.UserSession.clearSession();
 
             Parent root = FXMLLoader.load(getClass().getResource("/com/team4/view/login.fxml"));

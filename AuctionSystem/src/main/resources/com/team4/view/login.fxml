@@ -34,7 +34,7 @@
             <HBox spacing="14" alignment="CENTER_LEFT">
                 <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 12;"
                            prefWidth="52" prefHeight="52">
-                    <Label text="⚡" style="-fx-font-size: 26; -fx-text-fill: white;" />
+                    <Label text="AS" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white;" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
@@ -72,9 +72,9 @@
 
             <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 20 0 0 0;">
                 <Label text="UET-VNU" style="-fx-text-fill: #722F37; -fx-font-size: 12; -fx-font-weight: bold;"/>
-                <Label text="•" style="-fx-text-fill: #9CA3AF;"/>
+                <Label text="-" style="-fx-text-fill: #9CA3AF;"/>
                 <Label text="K70I - IT6" style="-fx-text-fill: #555555; -fx-font-size: 12;"/>
-                <Label text="•" style="-fx-text-fill: #9CA3AF;"/>
+                <Label text="-" style="-fx-text-fill: #9CA3AF;"/>
                 <Label text="Group 4" style="-fx-text-fill: #555555; -fx-font-size: 12;"/>
             </HBox>
         </VBox>
@@ -92,7 +92,7 @@
             <HBox id="mobileLogo" spacing="10" alignment="CENTER" managed="false" visible="false">
                 <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 14;"
                            prefWidth="40" prefHeight="40">
-                    <Label text="⚡" style="-fx-font-size: 20; -fx-text-fill: white;" />
+                    <Label text="AS" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: white;" />
                 </StackPane>
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>

@@ -132,7 +132,6 @@ public class AdminDashboardController implements Initializable {
 
         task.setOnFailed(e -> {
             refreshButton.setDisable(false);
-            // Non-intrusive error loading, since it auto-refreshes we don't want popups every 30s
             setDefaultState();
         });
 
@@ -209,27 +208,25 @@ public class AdminDashboardController implements Initializable {
     private void updateAlerts(JsonObject data) {
         alertsContainer.getChildren().clear();
         
-        long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 12; // Mocking 12 if not present so urgent color can be seen
-        long reports = data.has("reportsCount") ? data.get("reportsCount").getAsLong() : 6; // Mocking 6 if not present for warning color
+        long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 0;
+        long reports = data.has("reportsCount") ? data.get("reportsCount").getAsLong() : 0;
         
         String pendingStyle = pending > 10 ? "alert-red" : (pending > 5 ? "alert-yellow" : "alert-green");
         String reportsStyle = reports > 10 ? "alert-red" : (reports > 5 ? "alert-yellow" : "alert-green");
         
-        HBox pendingAlert = createAlert(pending > 10 ? "🔴" : (pending > 5 ? "🟡" : "🟢"), 
-                                        pending + " pending auctions", "Awaiting approval", pendingStyle);
+        HBox pendingAlert = createAlert(pending + " pending auctions", "Awaiting approval", pendingStyle);
         pendingAlert.setOnMouseClicked(e -> onViewPendingAuctions());
         
-        HBox reportsAlert = createAlert(reports > 10 ? "🔴" : (reports > 5 ? "🟡" : "🟢"), 
-                                        reports + " new reports", "Fraud or complaints this week", reportsStyle);
+        HBox reportsAlert = createAlert(reports + " new reports", "Fraud or complaints this week", reportsStyle);
         reportsAlert.setOnMouseClicked(e -> onReviewReports());
         
-        HBox sysAlert = createAlert("🟢", "System Resources Normal", "CPU: 12%, RAM: 45%", "alert-green");
+        HBox sysAlert = createAlert("System Resources Normal", "CPU: 12%, RAM: 45%", "alert-green");
         sysAlert.setOnMouseClicked(e -> onSystemSettings());
         
         alertsContainer.getChildren().addAll(pendingAlert, reportsAlert, sysAlert);
     }
 
-    private HBox createAlert(String icon, String title, String desc, String styleClass) {
+    private HBox createAlert(String title, String desc, String styleClass) {
         HBox box = new HBox(12);
         box.getStyleClass().add(styleClass);
         
@@ -241,9 +238,6 @@ public class AdminDashboardController implements Initializable {
         
         box.setStyle("-fx-padding: 14; -fx-background-radius: 12; -fx-spacing: 12; -fx-background-color: " + bgColor + "; -fx-cursor: hand;");
 
-        Label iconLbl = new Label(icon);
-        iconLbl.setStyle("-fx-font-size: 20;");
-
         VBox text = new VBox(4);
         Label titleLbl = new Label(title);
         titleLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
@@ -252,7 +246,7 @@ public class AdminDashboardController implements Initializable {
         
         text.getChildren().addAll(titleLbl, descLbl);
 
-        box.getChildren().addAll(iconLbl, text);
+        box.getChildren().add(text);
         return box;
     }
 

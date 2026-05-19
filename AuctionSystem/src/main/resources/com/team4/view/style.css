@@ -73,7 +73,6 @@
     -fx-faint-focus-color: transparent;
 }
 
-/* Reset và ÉP CỨNG màu cho nút Toggle (Bidder/Seller) */
 .role-btn-active,
 .role-btn-active:focused,
 .role-btn-active:selected {
@@ -82,7 +81,7 @@
     -fx-border-width: 1.5 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #722F37 !important; /* Ép cứng chữ màu đỏ rượu vang */
+    -fx-text-fill: #722F37 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;
@@ -101,7 +100,7 @@
     -fx-border-width: 1 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #555555 !important; /* Ép cứng chữ màu xám */
+    -fx-text-fill: #555555 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;
@@ -340,9 +339,29 @@
     -fx-border-color: transparent;
 }
 
+.table-card {
+    -fx-padding: 14;
+}
+
+.products-table {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E5E5;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.products-table .column-header-background {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.products-table .filler {
+    -fx-background-color: #FBF9F6;
+}
+
 .admin-table .column-header {
     -fx-background-color: #FBF9F6;
-    -fx-padding: 14 16;
+    -fx-padding: 12 14;
     -fx-border-color: transparent transparent #E5E5E5 transparent;
 }
 
@@ -356,18 +375,43 @@
 .admin-table .table-row-cell {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #F3F4F6 transparent;
-    -fx-padding: 2 0;
+    -fx-padding: 0;
+    -fx-cell-size: 44px;
 }
 
 .admin-table .table-row-cell:hover {
     -fx-background-color: #FBF9F6;
 }
 
+.admin-table .table-row-cell:selected {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+}
+
 .admin-table .table-cell {
     -fx-text-fill: #2C2C2C;
     -fx-font-family: "Lato";
-    -fx-padding: 12 16;
+    -fx-padding: 10 14;
     -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-color: transparent transparent #F3F4F6 transparent;
+}
+
+.table-action-btn {
+    -fx-background-color: #F3F4F6;
+    -fx-text-fill: #2C2C2C;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 5 12;
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.table-action-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.12);
+    -fx-text-fill: #722F37;
 }
 
 .filter-pill {
