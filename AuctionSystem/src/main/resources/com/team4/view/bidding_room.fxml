@@ -24,8 +24,8 @@
                            styleClass="section-title-large"
                            style="-fx-font-size: 20;"/>
                     <HBox spacing="8">
-                        <Label fx:id="itemCategory" text="Electronics" styleClass="badge,badge-blue"/>
-                        <Label fx:id="itemCondition" text="Brand New" styleClass="badge,badge-green"/>
+                        <Label fx:id="itemCategory" text="Electronics" styleClass="badge badge-blue"/>
+                        <Label fx:id="itemCondition" text="Brand New" styleClass="badge badge-green"/>
                     </HBox>
                     <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 4 0 0 0;">
                         <Label fx:id="sellerName" text="TechStore Official"
@@ -115,15 +115,6 @@
                         <Label text="System will automatically bid on your behalf" styleClass="muted-text-sm" wrapText="true"/>
                     </VBox>
                 </VBox>
-            </VBox>
-
-            <VBox styleClass="bidding-card" prefHeight="300">
-                <Label text="Chat" styleClass="section-title"/>
-                <ListView fx:id="chatList" VBox.vgrow="ALWAYS" styleClass="chat-list"/>
-                <HBox spacing="8" style="-fx-padding: 8 0 0 0;">
-                    <TextField fx:id="chatInput" promptText="Type a message..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="sendChatBtn" text="Send" onAction="#onSendChat" styleClass="btn-primary"/>
-                </HBox>
             </VBox>
         </VBox>
     </HBox>

@@ -49,9 +49,6 @@
                 <TableColumn fx:id="colDate" minWidth="105" prefWidth="120" text="Date" />
                 <TableColumn fx:id="colAction" minWidth="85" prefWidth="95" text="Action" />
             </columns>
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-            </columnResizePolicy>
         </TableView>
     </VBox>
 </VBox>

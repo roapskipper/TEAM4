@@ -32,16 +32,13 @@
     <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="auctionsTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
-                <TableColumn fx:id="colItem" text="Item" prefWidth="280"/>
-                <TableColumn fx:id="colSeller" text="Seller" prefWidth="140"/>
-                <TableColumn fx:id="colStartPrice" text="Start Price" prefWidth="130"/>
-                <TableColumn fx:id="colStatus" text="Status" prefWidth="130"/>
-                <TableColumn fx:id="colReports" text="Reports" prefWidth="80"/>
-                <TableColumn fx:id="colAction" text="Action" prefWidth="160"/>
+                <TableColumn fx:id="colItem" text="Item" minWidth="260" prefWidth="300"/>
+                <TableColumn fx:id="colSeller" text="Seller" minWidth="140" prefWidth="160"/>
+                <TableColumn fx:id="colStartPrice" text="Start Price" minWidth="130" prefWidth="150"/>
+                <TableColumn fx:id="colStatus" text="Status" minWidth="120" prefWidth="130"/>
+                <TableColumn fx:id="colReports" text="Reports" minWidth="80" prefWidth="90"/>
+                <TableColumn fx:id="colAction" text="Action" minWidth="150" prefWidth="170"/>
             </columns>
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-            </columnResizePolicy>
         </TableView>
     </VBox>
 </VBox>

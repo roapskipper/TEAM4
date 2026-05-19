@@ -37,19 +37,22 @@
 
             <Region VBox.vgrow="ALWAYS" />
 
-            <VBox style="-fx-padding: 16; -fx-border-color: #E5E5E5 transparent transparent transparent;">
-                <HBox spacing="10" alignment="CENTER_LEFT">
+            <VBox styleClass="user-footer" spacing="12">
+                <HBox spacing="10" alignment="CENTER_LEFT" styleClass="user-summary">
                     <StackPane fx:id="userAvatarBg"
                                styleClass="brand-icon-bg-circle"
-                               prefWidth="38" prefHeight="38">
+                               minWidth="38" prefWidth="38" maxWidth="38"
+                               minHeight="38" prefHeight="38" maxHeight="38">
                         <Label fx:id="userAvatarText" text="U"
                                styleClass="brand-icon-text"
                                style="-fx-font-size: 14;"/>
                     </StackPane>
 
-                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                    <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">
                         <Label fx:id="userNameLabel" text="User"
-                               styleClass="user-name"/>
+                               styleClass="user-name"
+                               maxWidth="Infinity"
+                               textOverrun="ELLIPSIS"/>
                         <HBox spacing="6" alignment="CENTER_LEFT">
                             <Label fx:id="userRoleBadge" text="BIDDER"
                                    styleClass="role-badge"/>
@@ -57,16 +60,17 @@
                                    styleClass="status-active"/>
                         </HBox>
                     </VBox>
-
-                    <Button fx:id="logoutBtn"
-                            text="Logout"
-                            onAction="#onLogout"
-                            styleClass="logout-btn">
-                        <tooltip>
-                            <Tooltip text="Logout"/>
-                        </tooltip>
-                    </Button>
                 </HBox>
+
+                <Button fx:id="logoutBtn"
+                        text="Logout"
+                        maxWidth="Infinity"
+                        onAction="#onLogout"
+                        styleClass="logout-btn">
+                    <tooltip>
+                        <Tooltip text="Logout"/>
+                    </tooltip>
+                </Button>
             </VBox>
         </VBox>
     </left>
