@@ -28,6 +28,7 @@ public class AddProductDialogController implements Initializable {
     @FXML
     private void onSave() {
         errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
         String n = nameField.getText().trim();
         String c = categoryBox.getValue();
         String pStr = priceField.getText().trim();
@@ -86,6 +87,7 @@ public class AddProductDialogController implements Initializable {
 
     private void showError(String msg) {
         errorLabel.setText(msg);
+        errorLabel.setManaged(true);
         errorLabel.setVisible(true);
     }
 

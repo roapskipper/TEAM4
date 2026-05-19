@@ -73,7 +73,7 @@ public class AdminDashboardController implements Initializable {
         sb.append("1. Suspected shill bidding on Item #1042\n");
         sb.append("2. Non-responsive seller (User: art_collector)\n");
         sb.append("3. Counterfeit item report on Auction #89\n");
-        sb.append("4. Abusive language in chat (User: spammer_1)\n");
+        sb.append("4. Suspicious bidding pattern on Auction #117\n");
         sb.append("5. Payment not received for Auction #12\n");
         
         alert.setContentText(sb.toString());
@@ -242,7 +242,7 @@ public class AdminDashboardController implements Initializable {
         Label titleLbl = new Label(title);
         titleLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
         Label descLbl = new Label(desc);
-        descLbl.setStyle("-fx-font-size: 12; -fx-text-fill: #9ca3af;");
+        descLbl.setStyle("-fx-font-size: 12; -fx-text-fill: #E5E7EB;");
         
         text.getChildren().addAll(titleLbl, descLbl);
 

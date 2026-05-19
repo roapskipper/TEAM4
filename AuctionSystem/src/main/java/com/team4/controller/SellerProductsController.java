@@ -130,7 +130,6 @@ public class SellerProductsController implements Initializable {
     }
 
     private void setupTable() {
-        productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         productsTable.setPlaceholder(new Label("No products found"));
 
         colProduct.setCellValueFactory(param -> new SimpleStringProperty(nullSafe(param.getValue().getName())));

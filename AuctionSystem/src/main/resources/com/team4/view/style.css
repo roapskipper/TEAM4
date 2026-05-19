@@ -179,6 +179,41 @@
     -fx-text-fill: #111827;
 }
 
+.admin-button-primary {
+    -fx-background-color: #722F37;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-background-radius: 12;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.admin-button-primary:hover {
+    -fx-background-color: #5F2630;
+}
+
+.admin-button-secondary {
+    -fx-background-color: #FBF9F6;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-text-fill: #2C2C2C;
+    -fx-font-family: "Lato";
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.admin-button-secondary:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-border-color: rgba(114, 47, 55, 0.25);
+    -fx-text-fill: #722F37;
+}
+
 .sidebar-sep {
     -fx-background-color: #E5E5E5;
 }
@@ -505,21 +540,6 @@
     -fx-font-size: 13px;
 }
 
-.chat-list {
-    -fx-background-color: #FBF9F6;
-    -fx-background-radius: 10;
-    -fx-border-color: #E5E5E5;
-    -fx-padding: 8;
-}
-
-.chat-list .list-cell {
-    -fx-background-color: transparent;
-    -fx-padding: 6 0;
-    -fx-text-fill: #555555;
-    -fx-font-family: "Lato";
-    -fx-font-size: 13px;
-}
-
 .table-view {
     -fx-background-color: transparent;
     -fx-border-color: #E5E5E5;
@@ -604,10 +624,50 @@
     -fx-background-radius: 12;
 }
 
+.alert-green {
+    -fx-background-color: rgba(21, 128, 61, 0.1);
+    -fx-border-color: rgba(21, 128, 61, 0.2);
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
 .alert-purple {
     -fx-background-color: rgba(114, 47, 55, 0.1);
     -fx-border-color: rgba(114, 47, 55, 0.2);
     -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.dialog-root {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: #E5E5E5;
+    -fx-border-radius: 16;
+}
+
+.dialog-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.dialog-help {
+    -fx-font-size: 11px;
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+}
+
+.dialog-actions {
+    -fx-padding: 8 0 0 0;
+}
+
+.text-area.input-field {
+    -fx-padding: 0;
+}
+
+.text-area.input-field .content {
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 12;
 }
 
@@ -694,6 +754,15 @@
     -fx-border-color: transparent transparent #E5E5E5 transparent;
 }
 
+.user-footer {
+    -fx-padding: 14 16 16 16;
+    -fx-border-color: #E5E5E5 transparent transparent transparent;
+}
+
+.user-summary {
+    -fx-min-height: 42;
+}
+
 .section-title {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -756,7 +825,7 @@
     -fx-text-fill: #722F37;
     -fx-background-color: rgba(114, 47, 55, 0.12);
     -fx-background-radius: 20;
-    -fx-padding: 3 12;
+    -fx-padding: 3 10;
 }
 
 .user-name {
@@ -796,9 +865,11 @@
     -fx-background-color: rgba(114, 47, 55, 0.06);
     -fx-background-radius: 10;
     -fx-text-fill: #2C2C2C;
-    -fx-font-size: 18px;
-    -fx-padding: 10;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 12;
     -fx-cursor: hand;
+    -fx-alignment: CENTER;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }

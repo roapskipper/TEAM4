@@ -31,8 +31,6 @@ public class BiddingRoomController implements Initializable {
     @FXML private ToggleButton autoBidToggle;
     @FXML private VBox autoBidPanel;
     @FXML private TextField autoBidMax, autoBidIncrement;
-    @FXML private ListView<String> chatList;
-    @FXML private TextField chatInput;
 
     private double currentBid = 28500000;
     private LocalDateTime auctionEndTime = LocalDateTime.now().plusMinutes(5);
@@ -42,7 +40,6 @@ public class BiddingRoomController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         loadChart();
         loadBidHistory();
-        loadChat();
         updateBidInfo();
         startCountdown();
     }
@@ -144,14 +141,6 @@ public class BiddingRoomController implements Initializable {
         autoBidPanel.setVisible(active);
     }
 
-    @FXML private void onSendChat() {
-        String msg = chatInput.getText().trim();
-        if (!msg.isEmpty()) {
-            chatList.getItems().add(0, "You: " + msg);
-            chatInput.clear();
-        }
-    }
-
     private void loadChart() {
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Bid price");
@@ -184,14 +173,6 @@ public class BiddingRoomController implements Initializable {
 
     private void addBidToHistory(String bidder, double amount) {
         bidHistoryList.getItems().add(0, bidder + " - " + formatPrice(amount) + " - Just now");
-    }
-
-    private void loadChat() {
-        chatList.getItems().addAll(
-                "Nguyen Van A: Beautiful item!",
-                "Tran Thi B: This price is reasonable",
-                "Le Van C: Anyone else bidding?"
-        );
     }
 
     private void showBidError(String msg) {
