@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox prefWidth="1100" spacing="20" style="-fx-background-color: transparent;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.SellerProductsController">
+<VBox prefWidth="1100" spacing="18" style="-fx-background-color: transparent;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.SellerProductsController">
 
     <HBox spacing="14">
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
@@ -32,22 +32,22 @@
     </HBox>
 
     <HBox alignment="CENTER_LEFT" spacing="12">
-        <TextField fx:id="searchField" prefWidth="280" promptText="🔍 Search..." styleClass="admin-input" />
-        <ComboBox fx:id="categoryFilter" prefWidth="180" promptText="All Categories" styleClass="admin-combo" />
+        <TextField fx:id="searchField" prefWidth="300" promptText="Search products..." styleClass="admin-input" />
+        <ComboBox fx:id="categoryFilter" prefWidth="190" promptText="All Categories" styleClass="admin-combo" />
         <Region HBox.hgrow="ALWAYS" />
-        <Button fx:id="addProductBtn" onAction="#onAddProduct" styleClass="btn-primary" text="➕ Add Product" />
+        <Button fx:id="addProductBtn" minWidth="120" onAction="#onAddProduct" styleClass="btn-primary" text="Add Product" />
     </HBox>
 
-    <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
-        <TableView fx:id="productsTable" styleClass="admin-table" VBox.vgrow="ALWAYS">
+    <VBox minHeight="420" styleClass="admin-card table-card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="productsTable" fixedCellSize="44" minHeight="360" styleClass="admin-table products-table" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="colProduct" prefWidth="300" text="Product" />
-                <TableColumn fx:id="colCategory" prefWidth="120" text="Category" />
-                <TableColumn fx:id="colStartPrice" prefWidth="130" text="Start Price" />
-                <TableColumn fx:id="colCurrentPrice" prefWidth="130" text="Current Price" />
-                <TableColumn fx:id="colStatus" prefWidth="110" text="Status" />
-                <TableColumn fx:id="colDate" prefWidth="100" text="Date" />
-                <TableColumn fx:id="colAction" prefWidth="120" text="Action" />
+                <TableColumn fx:id="colProduct" minWidth="220" prefWidth="280" text="Product" />
+                <TableColumn fx:id="colCategory" minWidth="110" prefWidth="130" text="Category" />
+                <TableColumn fx:id="colStartPrice" minWidth="145" prefWidth="160" text="Start Price" />
+                <TableColumn fx:id="colCurrentPrice" minWidth="145" prefWidth="160" text="Current Price" />
+                <TableColumn fx:id="colStatus" minWidth="110" prefWidth="120" text="Status" />
+                <TableColumn fx:id="colDate" minWidth="105" prefWidth="120" text="Date" />
+                <TableColumn fx:id="colAction" minWidth="85" prefWidth="95" text="Action" />
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
