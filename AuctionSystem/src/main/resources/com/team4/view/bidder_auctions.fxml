@@ -13,19 +13,19 @@
 
     <HBox spacing="14">
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="liveCount" text="12" styleClass="stat-number-accent"/>
+            <Label fx:id="liveCount" text="0" styleClass="stat-number-accent"/>
             <Label text="Live" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="upcomingCount" text="8" styleClass="stat-number-neutral"/>
-            <Label text="Upcoming" styleClass="muted-text"/>
+            <Label fx:id="upcomingCount" text="0" styleClass="stat-number-neutral"/>
+            <Label text="Categories" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="endedCount" text="156" styleClass="stat-number-muted"/>
-            <Label text="Ended" styleClass="muted-text"/>
+            <Label fx:id="endedCount" text="0" styleClass="stat-number-muted"/>
+            <Label text="Sellers" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label fx:id="totalBids" text="2.4K" styleClass="stat-number-accent"/>
+            <Label fx:id="totalBids" text="0" styleClass="stat-number-accent"/>
             <Label text="Total Bids" styleClass="muted-text"/>
         </VBox>
     </HBox>
@@ -49,8 +49,6 @@
         <HBox fx:id="statusPills" spacing="8">
             <Button text="All" styleClass="filter-pill-active"/>
             <Button text="Live" styleClass="filter-pill"/>
-            <Button text="Upcoming" styleClass="filter-pill"/>
-            <Button text="Ended" styleClass="filter-pill"/>
         </HBox>
     </VBox>
 

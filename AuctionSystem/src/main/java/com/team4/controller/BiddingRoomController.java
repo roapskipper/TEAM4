@@ -1,29 +1,42 @@
 package com.team4.controller;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.team4.client.ApiClient;
+import com.team4.client.Client;
+import com.team4.util.UserSession;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.VBox;
-
-import java.net.URL;
-import java.util.ResourceBundle;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import javafx.application.Platform;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.util.Duration;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+
+import java.math.BigDecimal;
+import java.net.URL;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class BiddingRoomController implements Initializable {
 
-    private static final double MAX_BID = 50000000;
-
-    @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating;
-    @FXML private Label currentPrice, bidCount, timeLeft, minBidLabel, bidError;
+    @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating, itemDescription;
+    @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
     @FXML private AreaChart<Number, Number> priceChart;
     @FXML private ListView<String> bidHistoryList;
     @FXML private TextField bidAmountField;
@@ -32,93 +45,228 @@ public class BiddingRoomController implements Initializable {
     @FXML private VBox autoBidPanel;
     @FXML private TextField autoBidMax, autoBidIncrement;
 
-    private double currentBid = 28500000;
-    private LocalDateTime auctionEndTime = LocalDateTime.now().plusMinutes(5);
+    private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
+    private static final DateTimeFormatter HISTORY_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
+
+    private String auctionId;
+    private double currentBid;
+    private double bidIncrement = 100000;
+    private LocalDateTime auctionEndTime;
     private Timeline countdownTimeline;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        loadChart();
-        loadBidHistory();
-        updateBidInfo();
-        startCountdown();
+        priceChart.setAnimated(false);
+        priceChart.setLegendVisible(false);
+        bidHistoryList.setPlaceholder(new Label("No bids yet"));
+        hideBidError();
+        setRoomLoadingState();
     }
 
-    private void startCountdown() {
-        KeyFrame frame = new KeyFrame(Duration.seconds(1), event -> {
-            long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
-            if (secondsBetween <= 0) {
-                timeLeft.setText("00:00:00 (Ended)");
-            } else {
-                long h = secondsBetween / 3600;
-                long m = (secondsBetween % 3600) / 60;
-                long s = secondsBetween % 60;
-                timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+    public void loadAuction(String auctionId) {
+        this.auctionId = auctionId;
+        setRoomLoadingState();
+
+        Task<JsonObject> task = new Task<JsonObject>() {
+            @Override
+            protected JsonObject call() throws Exception {
+                return new ApiClient().getAuctionDetail(auctionId);
             }
-        });
-        countdownTimeline = new Timeline(frame);
-        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
-        countdownTimeline.play();
+        };
+
+        task.setOnSucceeded(e -> applyAuctionData(task.getValue()));
+        task.setOnFailed(e -> showBidError("Could not load auction. " + ApiClient.toDisplayMessage(task.getException())));
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
-    public void startNetworkListener(com.team4.client.Client client) {
-        client.startListening(message -> {
-            Platform.runLater(() -> {
-                try {
-                    JsonObject json = JsonParser.parseString(message).getAsJsonObject();
-                    if (json.has("action") && "BID_UPDATE".equals(json.get("action").getAsString())) {
-                        if (json.has("data")) {
-                            JsonObject data = json.getAsJsonObject("data");
-                            
-                            if (data.has("amount")) {
-                                double newAmount = data.get("amount").getAsDouble();
-                                currentBid = newAmount;
-                                updateBidInfo();
-                                addBidToHistory(data.has("bidderId") ? data.get("bidderId").getAsString() : "Unknown", newAmount);
-                                addChartPoint(newAmount);
-                            }
-                            
-                            if (data.has("endTime")) {
-                                String endTimeStr = data.get("endTime").getAsString();
-                                auctionEndTime = LocalDateTime.parse(endTimeStr);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        });
+    private void setRoomLoadingState() {
+        itemName.setText("Loading auction...");
+        if (itemDescription != null) {
+            itemDescription.setText("");
+        }
+        sellerName.setText("");
+        currentPrice.setText("...");
+        bidCount.setText("0 bids");
+        timeLeft.setText("--:--:--");
+        bidAmountField.clear();
+        bidHistoryList.getItems().clear();
+        priceChart.getData().clear();
     }
 
-    private void updateBidInfo() {
-        currentPrice.setText(formatPrice(currentBid));
-        double minNext = currentBid + 100000;
-        bidAmountField.setText(String.valueOf((int)minNext));
-        minBidLabel.setText(formatPrice(minNext));
-    }
-
-    @FXML private void onQuickBid() {
-        int increment = 100000;
-        double newBid = currentBid + increment;
-
-        if (newBid > MAX_BID) {
-            showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
+    private void applyAuctionData(JsonObject data) {
+        if (data == null) {
+            showBidError("Auction data is empty.");
             return;
         }
 
-        placeBid(newBid);
+        auctionId = stringValue(data, "id", auctionId);
+        currentBid = doubleValue(data, "currentPrice", 0);
+        bidIncrement = doubleValue(data, "bidIncrement", 100000);
+        auctionEndTime = parseTime(stringValue(data, "endTime", null));
+
+        itemName.setText(stringValue(data, "itemName", "Untitled item"));
+        itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
+        itemCondition.setText(formatStatus(stringValue(data, "status", "")));
+        sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
+        if (sellerRating != null) {
+            double rating = doubleValue(data, "sellerRating", 0);
+            sellerRating.setText(rating > 0 ? String.format(Locale.US, "%.1f Rating", rating) : "");
+        }
+        if (itemDescription != null) {
+            itemDescription.setText(stringValue(data, "itemDescription", ""));
+        }
+
+        currentPrice.setText(formatPrice(currentBid));
+        if (startingPriceLabel != null) {
+            startingPriceLabel.setText(formatPrice(doubleValue(data, "startingPrice", currentBid)));
+        }
+        if (bidIncrementLabel != null) {
+            bidIncrementLabel.setText(formatPrice(bidIncrement));
+        }
+        if (bidStepLabel != null) {
+            bidStepLabel.setText(formatPrice(bidIncrement));
+        }
+
+        JsonArray history = data.has("bidHistory") && data.get("bidHistory").isJsonArray()
+                ? data.getAsJsonArray("bidHistory")
+                : new JsonArray();
+
+        bidCount.setText(history.size() + " bids");
+        updateBidInfo();
+        updateQuickBidButtons();
+        renderBidHistory(history);
+        renderPriceChart(data, history);
+        startCountdown();
+        ensureSocketListener();
+    }
+
+    private void startCountdown() {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        KeyFrame frame = new KeyFrame(Duration.seconds(1), event -> updateCountdownLabel());
+        countdownTimeline = new Timeline(frame);
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline.play();
+        updateCountdownLabel();
+    }
+
+    private void updateCountdownLabel() {
+        if (auctionEndTime == null) {
+            timeLeft.setText("--:--:--");
+            return;
+        }
+        long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
+        if (secondsBetween <= 0) {
+            timeLeft.setText("00:00:00 (Ended)");
+            placeBidBtn.setDisable(true);
+            return;
+        }
+
+        long days = secondsBetween / 86400;
+        long h = (secondsBetween % 86400) / 3600;
+        long m = (secondsBetween % 3600) / 60;
+        long s = secondsBetween % 60;
+        if (days > 0) {
+            timeLeft.setText(String.format("%dd %02d:%02d:%02d", days, h, m, s));
+        } else {
+            timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
+        }
+        placeBidBtn.setDisable(false);
+    }
+
+    private void ensureSocketListener() {
+        Client client = Client.getInstance();
+        if (!client.isConnected()) {
+            if (!client.connect()) {
+                showBidError("Cannot connect to bidding server. Please start the server and try again.");
+                return;
+            }
+            UserSession session = UserSession.getInstance();
+            if (session != null && session.getUserId() != null) {
+                client.sendLogin(session.getUserId());
+            }
+        }
+        client.startListening(message -> Platform.runLater(() -> handleSocketMessage(message)));
+    }
+
+    private void handleSocketMessage(String message) {
+        try {
+            JsonObject json = JsonParser.parseString(message).getAsJsonObject();
+            String action = stringValue(json, "action", "");
+            JsonObject data = json.has("data") && json.get("data").isJsonObject()
+                    ? json.getAsJsonObject("data")
+                    : new JsonObject();
+
+            String messageAuctionId = stringValue(data, "auctionId", "");
+            if (!messageAuctionId.isEmpty() && auctionId != null && !auctionId.equals(messageAuctionId)) {
+                return;
+            }
+
+            if ("BID_FAILED".equals(action)) {
+                placeBidBtn.setDisable(false);
+                showBidError(stringValue(json, "message", "Bid failed."));
+                return;
+            }
+
+            if ("BID_SUCCESS".equals(action) || "BID_UPDATE".equals(action)) {
+                placeBidBtn.setDisable(false);
+                hideBidError();
+                if (data.has("currentPrice")) {
+                    currentBid = data.get("currentPrice").getAsDouble();
+                    currentPrice.setText(formatPrice(currentBid));
+                    updateBidInfo();
+                } else if (data.has("amount")) {
+                    currentBid = data.get("amount").getAsDouble();
+                    currentPrice.setText(formatPrice(currentBid));
+                    updateBidInfo();
+                }
+                if (data.has("endTime")) {
+                    auctionEndTime = parseTime(data.get("endTime").getAsString());
+                    startCountdown();
+                }
+                if (auctionId != null) {
+                    loadAuction(auctionId);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void updateBidInfo() {
+        double minNext = currentBid + bidIncrement;
+        bidAmountField.setText(String.format(Locale.US, "%.0f", minNext));
+        minBidLabel.setText(formatPrice(minNext));
+    }
+
+    private void updateQuickBidButtons() {
+        quick100k.setText("+" + compactMoney(bidIncrement));
+        quick200k.setText("+" + compactMoney(bidIncrement * 2));
+        quick500k.setText("+" + compactMoney(bidIncrement * 5));
+        quick1m.setText("+" + compactMoney(bidIncrement * 10));
+    }
+
+    @FXML private void onQuickBid(ActionEvent event) {
+        double multiplier = 1;
+        Object source = event.getSource();
+        if (source == quick200k) {
+            multiplier = 2;
+        } else if (source == quick500k) {
+            multiplier = 5;
+        } else if (source == quick1m) {
+            multiplier = 10;
+        }
+        placeBid(currentBid + bidIncrement * multiplier);
     }
 
     @FXML private void onPlaceBid() {
         try {
-            double bid = Double.parseDouble(bidAmountField.getText());
-            if (bid > MAX_BID) {
-                showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
-                return;
-            }
-            if (bid <= currentBid) {
-                showBidError("Bid must be higher than current price");
+            double bid = Double.parseDouble(bidAmountField.getText().trim());
+            if (bid < currentBid + bidIncrement) {
+                showBidError("Bid must be at least " + formatPrice(currentBid + bidIncrement));
                 return;
             }
             placeBid(bid);
@@ -128,11 +276,24 @@ public class BiddingRoomController implements Initializable {
     }
 
     private void placeBid(double amount) {
-        currentBid = amount;
-        updateBidInfo();
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+            showBidError("Please log in as a bidder before placing a bid.");
+            return;
+        }
+        if (auctionId == null || auctionId.isBlank()) {
+            showBidError("Auction is not ready yet.");
+            return;
+        }
+
         hideBidError();
-        addBidToHistory("You", amount);
-        addChartPoint(amount);
+        placeBidBtn.setDisable(true);
+        ensureSocketListener();
+        if (Client.getInstance().isConnected()) {
+            Client.getInstance().sendBid(auctionId, session.getUserId(), amount);
+        } else {
+            placeBidBtn.setDisable(false);
+        }
     }
 
     @FXML private void onAutoBidToggle() {
@@ -141,38 +302,36 @@ public class BiddingRoomController implements Initializable {
         autoBidPanel.setVisible(active);
     }
 
-    private void loadChart() {
+    private void renderBidHistory(JsonArray history) {
+        bidHistoryList.getItems().clear();
+        for (int i = history.size() - 1; i >= 0; i--) {
+            JsonObject bid = history.get(i).getAsJsonObject();
+            String bidder = stringValue(bid, "bidderName", "Unknown Bidder");
+            double amount = doubleValue(bid, "bidAmount", 0);
+            LocalDateTime bidTime = parseTime(stringValue(bid, "bidTime", null));
+            String time = bidTime == null ? "" : " - " + bidTime.format(HISTORY_TIME_FORMAT);
+            bidHistoryList.getItems().add(bidder + " - " + formatPrice(amount) + time);
+        }
+    }
+
+    private void renderPriceChart(JsonObject auction, JsonArray history) {
+        priceChart.getData().clear();
         XYChart.Series<Number, Number> series = new XYChart.Series<>();
         series.setName("Bid price");
-        series.getData().add(new XYChart.Data<>(0, 25000000));
-        series.getData().add(new XYChart.Data<>(1, 25500000));
-        series.getData().add(new XYChart.Data<>(2, 26000000));
-        series.getData().add(new XYChart.Data<>(3, 27000000));
-        series.getData().add(new XYChart.Data<>(4, 27500000));
-        series.getData().add(new XYChart.Data<>(5, 28000000));
-        series.getData().add(new XYChart.Data<>(6, 28500000));
+
+        double startPrice = doubleValue(auction, "startingPrice", currentBid);
+        series.getData().add(new XYChart.Data<>(0, startPrice));
+
+        for (int i = 0; i < history.size(); i++) {
+            JsonObject bid = history.get(i).getAsJsonObject();
+            series.getData().add(new XYChart.Data<>(i + 1, doubleValue(bid, "bidAmount", startPrice)));
+        }
+
+        if (history.isEmpty() && currentBid != startPrice) {
+            series.getData().add(new XYChart.Data<>(1, currentBid));
+        }
+
         priceChart.getData().add(series);
-    }
-
-    private void addChartPoint(double price) {
-        int nextIndex = priceChart.getData().get(0).getData().size();
-        priceChart.getData().get(0).getData().add(
-                new XYChart.Data<>(nextIndex, price)
-        );
-    }
-
-    private void loadBidHistory() {
-        bidHistoryList.getItems().addAll(
-                "You - 28,500,000 - Just now",
-                "Tran Thi B - 28,000,000 - 5 min ago",
-                "Le Van C - 27,500,000 - 8 min ago",
-                "Pham Thi D - 27,000,000 - 12 min ago",
-                "Hoang Van E - 26,000,000 - 15 min ago"
-        );
-    }
-
-    private void addBidToHistory(String bidder, double amount) {
-        bidHistoryList.getItems().add(0, bidder + " - " + formatPrice(amount) + " - Just now");
     }
 
     private void showBidError(String msg) {
@@ -187,6 +346,56 @@ public class BiddingRoomController implements Initializable {
     }
 
     private String formatPrice(double price) {
-        return String.format("%,d VND", (int)price);
+        return MONEY_FORMAT.format(BigDecimal.valueOf(price)) + " VND";
+    }
+
+    private String compactMoney(double value) {
+        if (value >= 1_000_000) {
+            double millions = value / 1_000_000;
+            return millions == Math.floor(millions)
+                    ? String.format(Locale.US, "%.0fM", millions)
+                    : String.format(Locale.US, "%.1fM", millions);
+        }
+        if (value >= 1_000) {
+            return String.format(Locale.US, "%.0fK", value / 1_000);
+        }
+        return String.format(Locale.US, "%.0f", value);
+    }
+
+    private String formatCategory(String value) {
+        if (value == null || value.isBlank()) {
+            return "Other";
+        }
+        String lower = value.replace("_", " ").toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+    }
+
+    private String formatStatus(String value) {
+        if ("RUNNING".equalsIgnoreCase(value)) {
+            return "Live";
+        }
+        if ("FINISHED".equalsIgnoreCase(value)) {
+            return "Ended";
+        }
+        return value == null ? "" : value;
+    }
+
+    private String stringValue(JsonObject obj, String key, String fallback) {
+        return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : fallback;
+    }
+
+    private double doubleValue(JsonObject obj, String key, double fallback) {
+        return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : fallback;
+    }
+
+    private LocalDateTime parseTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(value);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }
