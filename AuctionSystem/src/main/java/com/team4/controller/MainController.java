@@ -120,7 +120,15 @@ public class MainController implements Initializable {
         pageSubtitle.setText(subtitle);
 
         try {
-            Parent page = FXMLLoader.load(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
+            Parent page = loader.load();
+
+            // Inject MainController reference into supported controllers
+            Object controller = loader.getController();
+            if (controller instanceof BidderAuctionsController) {
+                ((BidderAuctionsController) controller).setMainController(this);
+            }
+
             contentArea.getChildren().clear();
             contentArea.getChildren().add(page);
         } catch (Exception ex) {
@@ -129,6 +137,14 @@ public class MainController implements Initializable {
             contentArea.getChildren().clear();
             contentArea.getChildren().add(placeholder);
         }
+    }
+
+    /** Navigate to an already-loaded page (used by child controllers). */
+    public void navigateTo(Parent page, String title, String subtitle) {
+        pageTitle.setText(title);
+        pageSubtitle.setText(subtitle);
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(page);
     }
 
     @FXML private void onLogout() {

@@ -82,6 +82,9 @@ public class ItemDAOImpl implements ItemDAO {
             }
         } catch (SQLException e) {
             logger.error("Không thể tìm item với id={}", id, e);
+        } catch (Exception e) {
+            // Bắt IllegalArgumentException từ constructor subclass (VD: condition trống)
+            logger.warn("Item id={} có dữ liệu không hợp lệ, bỏ qua: {}", id, e.getMessage());
         }
         return null;
     }

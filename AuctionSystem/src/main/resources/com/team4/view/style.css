@@ -255,7 +255,11 @@
     -fx-faint-focus-color: transparent;
 }
 
-.card, .admin-card, .stat-card, .bidding-card, .profile-card {
+.card,
+.admin-card,
+.stat-card,
+.bidding-card,
+.profile-card {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 16;
     -fx-border-color: transparent;
@@ -264,7 +268,8 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 15, 0, 0, 4);
 }
 
-.card:hover, .admin-card:hover {
+.card:hover,
+.admin-card:hover {
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 6);
 }
 
@@ -757,6 +762,7 @@
     -fx-background-color: rgba(114, 47, 55, 0.15);
     -fx-text-fill: #722F37;
 }
+
 .admin-toggle-link {
     -fx-text-fill: rgba(44, 44, 44, 0.65);
     -fx-font-family: "Lato";
@@ -995,7 +1001,7 @@
     -fx-padding: 0;
 }
 
-.content-scroll-pane > .viewport {
+.content-scroll-pane>.viewport {
     -fx-background-color: #FBF9F6;
 }
 
@@ -1021,6 +1027,7 @@
 .content-scroll-pane .corner {
     -fx-background-color: transparent;
 }
+
 .stat-icon-primary {
     -fx-background-color: rgba(114, 47, 55, 0.12);
     -fx-background-radius: 12;
