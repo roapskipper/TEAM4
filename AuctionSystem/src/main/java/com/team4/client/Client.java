@@ -43,11 +43,16 @@ public class Client {
         }
     }
 
+    public boolean isConnected() {
+        return socket != null && socket.isConnected() && !socket.isClosed() && out != null && in != null;
+    }
+
     private MessageListener currentListener;
     private Thread readThread;
 
     public void startListening(MessageListener listener) {
         this.currentListener = listener;
+        if (!isConnected()) return;
         if (readThread != null && readThread.isAlive()) return; // Chỉ start 1 thread duy nhất
 
         readThread = new Thread(() -> {

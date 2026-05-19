@@ -57,8 +57,7 @@ public class MainController implements Initializable {
             addNavItem("My Auctions", "bidder_auctions", "Sessions you created");
             addNavItem("Profile", "profile", "Update your information");
         } else {
-            addNavItem("Auctions", "bidder_auctions", "Explore auction sessions");
-            addNavItem("My Auctions", "bidding_room", "Sessions you joined");
+            addNavItem("Auction Room", "bidder_auctions", "Explore active auction sessions");
             addNavItem("Profile", "profile", "Update your information");
         }
 
