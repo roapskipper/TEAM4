@@ -20,7 +20,7 @@ import com.google.gson.JsonParser;
 
 public class BiddingRoomController implements Initializable {
 
-    private static final double MAX_BID = 500000000;
+    private static final double MAX_BID = com.team4.util.BidRules.ABSOLUTE_MAX.doubleValue();
 
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating;
     @FXML private Label currentPrice, bidCount, timeLeft, minBidLabel, bidError;
@@ -107,8 +107,9 @@ public class BiddingRoomController implements Initializable {
         int increment = 100000;
         double newBid = currentBid + increment;
 
-        if (newBid > MAX_BID) {
-            showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
+        double allowedMax = com.team4.util.BidRules.allowedMaxFor(java.math.BigDecimal.valueOf(currentBid)).doubleValue();
+        if (newBid > allowedMax || newBid > MAX_BID) {
+            showBidError("Bid exceeds allowed maximum for current price (policy limit).");
             return;
         }
 
@@ -118,8 +119,9 @@ public class BiddingRoomController implements Initializable {
     @FXML private void onPlaceBid() {
         try {
             double bid = Double.parseDouble(bidAmountField.getText());
-            if (bid > MAX_BID) {
-                showBidError("Bid cannot exceed " + formatPrice(MAX_BID));
+            double allowedMax = com.team4.util.BidRules.allowedMaxFor(java.math.BigDecimal.valueOf(currentBid)).doubleValue();
+            if (bid > allowedMax || bid > MAX_BID) {
+                showBidError("Bid exceeds allowed maximum for current price (policy limit).");
                 return;
             }
             if (bid <= currentBid) {
