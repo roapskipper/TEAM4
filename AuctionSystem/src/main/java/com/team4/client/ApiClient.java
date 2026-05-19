@@ -1,9 +1,5 @@
 package com.team4.client;
 
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-import com.team4.model.Item;
-
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,16 +11,68 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
+import com.team4.model.Item;
+import com.team4.model.Art;
+import com.team4.model.Collectible;
+import com.team4.model.Electronics;
+import com.team4.model.Fashion;
+import com.team4.model.Vehicle;
+
 public class ApiClient {
     private static final String API_URL = "http://localhost:8080/api/";
     private final HttpClient client;
     private final Gson gson;
 
     public ApiClient() {
-        this.client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
+        this(HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build());
+    }
+
+    public ApiClient(HttpClient client) {
+        this.client = client;
         this.gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .registerTypeAdapter(Item.class, new ItemDeserializer())
                 .create();
+    }
+
+    private static class ItemDeserializer implements JsonDeserializer<Item> {
+        @Override
+        public Item deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            String category = jsonObject.get("category").getAsString();
+            switch (category) {
+                case "ART":
+                    return context.deserialize(jsonObject, Art.class);
+                case "COLLECTIBLE":
+                    return context.deserialize(jsonObject, Collectible.class);
+                case "ELECTRONICS":
+                    return context.deserialize(jsonObject, Electronics.class);
+                case "FASHION":
+                    return context.deserialize(jsonObject, Fashion.class);
+                case "VEHICLE":
+                    return context.deserialize(jsonObject, Vehicle.class);
+                default:
+                    throw new JsonParseException("Unknown category: " + category);
+            }
+        }
+    }
+
+    /** URL-encodes a value using UTF-8. */
+    private static String enc(String value) {
+        return java.net.URLEncoder.encode(value != null ? value : "", StandardCharsets.UTF_8);
     }
 
     private static class LocalDateTimeAdapter
@@ -43,75 +91,62 @@ public class ApiClient {
         }
     }
 
-    public String login(String username, String password, String adminCode) {
-        try {
-            String body = "username=" + username + "&password=" + password;
-            if (adminCode != null && !adminCode.trim().isEmpty()) {
-                body += "&adminCode=" + java.net.URLEncoder.encode(adminCode, StandardCharsets.UTF_8);
-            }
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "login"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            return null;
-        } catch (Exception e) {
-            return null;
+    public String login(String username, String password, String adminCode) throws Exception {
+        String body = "username=" + enc(username) + "&password=" + enc(password);
+        if (adminCode != null && !adminCode.trim().isEmpty()) {
+            body += "&adminCode=" + enc(adminCode);
         }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "login"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
     public String registerBidder(String username, String password, String fullName, String email,
-            String shippingAddress, String phoneNumber) {
-        try {
-            String body = "username=" + username
-                    + "&password=" + password
-                    + "&fullName=" + fullName
-                    + "&email=" + email
-                    + "&shippingAddress=" + shippingAddress
-                    + "&phoneNumber=" + phoneNumber;
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "register/bidder"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            System.out.println("Dang ky that bai. Status: " + response.statusCode());
-            return null;
-        } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
-        }
+            String shippingAddress, String phoneNumber) throws Exception {
+        String body = "username=" + enc(username)
+                + "&password=" + enc(password)
+                + "&fullName=" + enc(fullName)
+                + "&email=" + enc(email)
+                + "&shippingAddress=" + enc(shippingAddress)
+                + "&phoneNumber=" + enc(phoneNumber);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "register/bidder"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
-    public String registerSeller(String username, String password, String fullName, String email, String storeName) {
-        try {
-            String body = "username=" + username
-                    + "&password=" + password
-                    + "&fullName=" + fullName
-                    + "&email=" + email
-                    + "&storeName=" + storeName;
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL + "register/seller"))
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                    .build();
-            HttpResponse<String> response = client.send(request,
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            if (response.statusCode() == 200)
-                return response.body();
-            System.out.println("Dang ky that bai. Status: " + response.statusCode());
-            return null;
-        } catch (Exception e) {
-            System.out.println("Loi ket noi API: " + e.getMessage());
-            return null;
-        }
+    public String registerSeller(String username, String password, String fullName, String email, String storeName) throws Exception {
+        String body = "username=" + enc(username)
+                + "&password=" + enc(password)
+                + "&fullName=" + enc(fullName)
+                + "&email=" + enc(email)
+                + "&storeName=" + enc(storeName);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "register/seller"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request,
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200)
+            return response.body();
+        throw new Exception(response.body() != null && !response.body().isEmpty()
+                ? response.body() : "HTTP " + response.statusCode());
     }
 
     public List<Item> getItems() {
@@ -138,7 +173,297 @@ public class ApiClient {
         return new ArrayList<>();
     }
 
+    public List<Item> getSellerItems(String sellerId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "seller/" + java.net.URLEncoder.encode(sellerId, StandardCharsets.UTF_8) + "/items"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        
+        if (response.statusCode() == 200) {
+            JsonObject responseObj = JsonParser.parseString(response.body()).getAsJsonObject();
+            if (responseObj.has("status") && "SUCCESS".equals(responseObj.get("status").getAsString())) {
+                JsonArray dataArray = responseObj.getAsJsonArray("data");
+                Type listType = new TypeToken<ArrayList<Item>>() {}.getType();
+                return gson.fromJson(dataArray, listType);
+            } else if (responseObj.has("message")) {
+                throw new Exception(responseObj.get("message").getAsString());
+            } else {
+                Type listType = new TypeToken<ArrayList<Item>>() {}.getType();
+                return gson.fromJson(response.body(), listType);
+            }
+        } else {
+            throw new Exception("Server returned status " + response.statusCode());
+        }
+    }
+
     public Gson getGson() {
         return this.gson;
+    }
+
+    public String changePassword(String userId, String oldPassword, String newPassword) throws Exception {
+        String body = "oldPassword=" + java.net.URLEncoder.encode(oldPassword, StandardCharsets.UTF_8)
+                + "&newPassword=" + java.net.URLEncoder.encode(newPassword, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + userId + "/password"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public String updateProfile(String userId, String fullName, String email, String phone) throws Exception {
+        String body = "fullName=" + java.net.URLEncoder.encode(fullName, StandardCharsets.UTF_8)
+                + "&email=" + java.net.URLEncoder.encode(email, StandardCharsets.UTF_8)
+                + "&phone=" + java.net.URLEncoder.encode(phone, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + userId + "/profile"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonObject getUserProfile(String userId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "/profile"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+            }
+            return new JsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonObject getSellerStats(String sellerId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "seller/" + sellerId + "/stats"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return JsonParser.parseString(response.body()).getAsJsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
+    public String createItem(String sellerId, String name, String category, double startingPrice, String description) throws Exception {
+        String body = "sellerId=" + enc(sellerId)
+                + "&name=" + enc(name)
+                + "&category=" + enc(category)
+                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&description=" + enc(description);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "items"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200 || response.statusCode() == 201) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public String updateItem(String itemId, String name, String category, double startingPrice, String description) throws Exception {
+        String body = "name=" + enc(name)
+                + "&category=" + enc(category)
+                + "&startingPrice=" + enc(String.valueOf(startingPrice))
+                + "&description=" + enc(description);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "items/" + itemId))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonArray getAuctions(String filter) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/auctions?filter=" + java.net.URLEncoder.encode(filter, StandardCharsets.UTF_8)))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+                    return responseObj.getAsJsonArray("data");
+                }
+            }
+            if (parsed.isJsonArray()) {
+                return parsed.getAsJsonArray();
+            }
+            return new JsonArray();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
+    public String approveAuction(String auctionId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/auctions/" + auctionId + "/approve"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public String rejectAuction(String auctionId, String reason) throws Exception {
+        String body = "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/auctions/" + auctionId + "/reject"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonArray getAllUsers() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/users"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+                    return responseObj.getAsJsonArray("data");
+                }
+            }
+            if (parsed.isJsonArray()) {
+                return parsed.getAsJsonArray();
+            }
+            return new JsonArray();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonArray searchUsers(String query) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/users/search?q=" + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8)))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+                    return responseObj.getAsJsonArray("data");
+                }
+            }
+            if (parsed.isJsonArray()) {
+                return parsed.getAsJsonArray();
+            }
+            return new JsonArray();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
+    }
+
+    public String suspendUser(String userId, String reason) throws Exception {
+        String body = reason != null ? "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8) : "";
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/users/" + userId + "/suspend"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public String banUser(String userId, String reason) throws Exception {
+        String body = reason != null ? "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8) : "";
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/users/" + userId + "/ban"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public String unsuspendUser(String userId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/users/" + userId + "/unsuspend"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception(response.body() != null && !response.body().isEmpty() ? response.body() : "HTTP " + response.statusCode());
+        }
+    }
+
+    public JsonObject getDashboardStats() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/dashboard/stats"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        } else {
+            throw new Exception("HTTP " + response.statusCode());
+        }
     }
 }

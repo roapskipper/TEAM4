@@ -26,7 +26,21 @@ public final class DatabaseManager {
     private static int connectionTimeout;
     private static int idleTimeout;
     private static int maxLifetime;
-    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    private static final Dotenv dotenv = loadDotenv();
+
+    private static Dotenv loadDotenv() {
+        // Thử load từ working directory (AuctionSystem/ khi chạy từ IntelliJ)
+        try {
+            Dotenv d = Dotenv.configure().ignoreIfMissing().load();
+            if (d.get("DB_URL") != null) return d;
+        } catch (Exception ignored) {}
+        // Fallback: thử từ thư mục cha (TEAM4/ khi run từ root)
+        try {
+            Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
+            if (d.get("DB_URL") != null) return d;
+        } catch (Exception ignored) {}
+        return Dotenv.configure().ignoreIfMissing().load();
+    }
 
     // Không cho tạo instance
     private DatabaseManager() {}

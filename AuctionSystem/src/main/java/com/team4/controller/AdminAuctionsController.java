@@ -21,10 +21,9 @@ public class AdminAuctionsController implements Initializable {
     private ObservableList<AuctionRow> allAuctions = FXCollections.observableArrayList();
     private String currentFilter = "all";
 
-    @Override
     public void initialize(URL url, ResourceBundle rb) {
         setupTable();
-        loadMockData();
+        loadDataFromServer();
         setupFilters();
     }
 
@@ -37,13 +36,54 @@ public class AdminAuctionsController implements Initializable {
         colAction.setCellValueFactory(new PropertyValueFactory<>("action"));
     }
 
-    private void loadMockData() {
-        allAuctions.add(new AuctionRow("A1", "iPhone 15 Pro Max", "tech_store", "25,000,000", "pending", "0", "Pending approval"));
-        allAuctions.add(new AuctionRow("A2", "Buc tranh son dau", "art_collector", "5,000,000", "pending", "0", "Pending approval"));
-        allAuctions.add(new AuctionRow("A3", "Honda Civic 2020", "seller_pro", "450,000,000", "live", "0", "Live"));
-        allAuctions.add(new AuctionRow("A4", "San pham la", "spammer_1", "1,000", "rejected", "5", "Violation"));
-        allAuctions.add(new AuctionRow("A5", "Rolex Datejust", "seller_pro", "120,000,000", "approved", "0", "Approved"));
-        applyFilter();
+    private void loadDataFromServer() {
+        auctionsTable.setPlaceholder(new Label("Loading..."));
+        javafx.concurrent.Task<com.google.gson.JsonArray> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected com.google.gson.JsonArray call() throws Exception {
+                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+                return apiClient.getAuctions(currentFilter);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            allAuctions.clear();
+            com.google.gson.JsonArray array = task.getValue();
+            java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(java.util.Locale.US);
+
+            for (com.google.gson.JsonElement el : array) {
+                com.google.gson.JsonObject obj = el.getAsJsonObject();
+                String id = obj.has("id") ? obj.get("id").getAsString() : "";
+                String name = obj.has("itemName") ? obj.get("itemName").getAsString() : "";
+                String seller = obj.has("sellerName") ? obj.get("sellerName").getAsString() : "";
+                
+                String startPrice = "0";
+                if (obj.has("startPrice")) {
+                    double price = obj.get("startPrice").getAsDouble();
+                    startPrice = formatter.format(price);
+                }
+                
+                String status = obj.has("status") ? obj.get("status").getAsString() : "PENDING_APPROVAL";
+                String reportCount = obj.has("reportCount") ? obj.get("reportCount").getAsString() : "0";
+                
+                allAuctions.add(new AuctionRow(id, name, seller, startPrice, status, reportCount, "Action"));
+            }
+            
+            if (allAuctions.isEmpty()) {
+                auctionsTable.setPlaceholder(new Label("No auctions found."));
+            }
+            applyFilter();
+        });
+
+        task.setOnFailed(e -> {
+            allAuctions.clear();
+            auctionsTable.setPlaceholder(new Label("Failed to load: " + task.getException().getMessage()));
+            applyFilter();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "API Failure: Could not load auctions. " + task.getException().getMessage());
+            alert.show();
+        });
+
+        new Thread(task).start();
     }
 
     private void setupFilters() {
@@ -58,7 +98,7 @@ public class AdminAuctionsController implements Initializable {
     private void setFilter(String f) {
         currentFilter = f;
         updateFilterButtons();
-        applyFilter();
+        loadDataFromServer();
     }
 
     private void updateFilterButtons() {
@@ -75,9 +115,7 @@ public class AdminAuctionsController implements Initializable {
     private void applyFilter() {
         String search = searchField.getText().toLowerCase();
         ObservableList<AuctionRow> filtered = allAuctions.filtered(a -> {
-            boolean matchSearch = a.itemName.toLowerCase().contains(search);
-            boolean matchFilter = currentFilter.equals("all") || a.statusRaw.equals(currentFilter);
-            return matchSearch && matchFilter;
+            return a.itemName.toLowerCase().contains(search);
         });
         auctionsTable.setItems(filtered);
         resultCount.setText(filtered.size() + " auctions");
@@ -105,11 +143,12 @@ public class AdminAuctionsController implements Initializable {
         public String getSeller() { return seller; }
         public String getStartPrice() { return startPrice; }
         public String getStatus() {
-            return switch(statusRaw) {
-                case "pending" -> "🟡 Pending";
-                case "approved" -> "🔵 Approved";
-                case "live" -> "🟢 Live";
-                case "rejected" -> "🔴 Violation";
+            return switch(statusRaw.toUpperCase()) {
+                case "PENDING_APPROVAL" -> "🟡 Pending";
+                case "APPROVED" -> "🔵 Approved";
+                case "LIVE" -> "🟢 Live";
+                case "REJECTED" -> "🔴 Rejected";
+                case "ENDED" -> "⚫ Ended";
                 default -> "⚪ " + statusRaw;
             };
         }

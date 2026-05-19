@@ -50,6 +50,7 @@ public class LoginHandler implements HttpHandler {
             }
             JsonObject data = new JsonObject();
             data.addProperty("userId", user.getId());
+            data.addProperty("username", user.getUsername());
             data.addProperty("role", user.getRole().name());
             data.addProperty("fullName", user.getFullName());
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));

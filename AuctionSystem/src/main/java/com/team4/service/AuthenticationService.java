@@ -34,7 +34,11 @@ public class AuthenticationService {
         String hashedPassword = PasswordHasher.hashPassword(rawPassword);
         Bidder bidder = new Bidder(username, hashedPassword, fullName, email, shippingAddress, phoneNumber);
         // Lưu vào DB
-        userDAO.insert(bidder);
+        boolean saved = userDAO.insert(bidder);
+        if (!saved) {
+            logger.error("Đăng ký bidder thất bại do lỗi lưu DB username={}", username);
+            throw new BusinessException("Không thể tạo tài khoản, vui lòng thử lại");
+        }
         logger.info("Đã đăng ký tài khoản bidder userId={} username={}", bidder.getId(), username);
     }
 
@@ -47,7 +51,11 @@ public class AuthenticationService {
         }
         String hashedPassword = PasswordHasher.hashPassword(rawPassword);
         Seller seller = new Seller(username, hashedPassword, fullName, email, storeName);
-        userDAO.insert(seller);
+        boolean saved = userDAO.insert(seller);
+        if (!saved) {
+            logger.error("Đăng ký seller thất bại do lỗi lưu DB username={}", username);
+            throw new BusinessException("Không thể tạo tài khoản, vui lòng thử lại");
+        }
         logger.info("Đã đăng ký tài khoản seller userId={} username={}", seller.getId(), username);
     }
 

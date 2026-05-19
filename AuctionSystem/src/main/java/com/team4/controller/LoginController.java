@@ -177,6 +177,33 @@ public class LoginController {
                 loginError.setStyle("-fx-text-fill: #10b981;");
                 System.out.println("Server response: " + response);
 
+                com.team4.client.Client socketClient = com.team4.client.Client.getInstance();
+                if (socketClient.connect()) {
+                    System.out.println("Socket connected successfully!");
+                    try {
+                        com.google.gson.JsonObject resObj = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
+                        String userId = resObj.getAsJsonObject("data").get("userId").getAsString();
+                        socketClient.sendLogin(userId);
+                        
+                        // Đăng ký sự kiện bị ép đăng xuất (Tách logic UI ra khỏi Client.java)
+                        socketClient.setOnForceLogout(() -> {
+                            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                            alert.setTitle("Cảnh báo");
+                            alert.setHeaderText("Đăng xuất bắt buộc");
+                            alert.setContentText("Tài khoản của bạn vừa đăng nhập từ thiết bị khác. Ứng dụng sẽ thoát.");
+                            alert.showAndWait();
+                            javafx.application.Platform.exit();
+                            System.exit(0);
+                        });
+
+                        socketClient.startListening(null); // Bắt đầu lắng nghe các event global ngay lập tức
+                    } catch (Exception e) {
+                        System.out.println("Loi parse userId tu response: " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Failed to connect to Socket server!");
+                }
+
                 try {
                     javafx.stage.Stage stage = (javafx.stage.Stage) loginForm.getScene().getWindow();
                     javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/main.fxml"));
@@ -185,12 +212,21 @@ public class LoginController {
                     MainController mainController = loader.getController();
 
                     String role = "bidder";
-                    if (response.contains("\"role\":\"SELLER\"") || response.contains("\"role\":\"seller\"")) {
-                        role = "seller";
-                    } else if (response.contains("\"role\":\"ADMIN\"") || response.contains("\"role\":\"admin\"")) {
-                        boolean isSuperAdmin = response.contains("\"accessLevel\":1")
-                                || response.contains("\"access_level\":1");
-                        role = isSuperAdmin ? "admin_super" : "admin_regular";
+                    com.google.gson.JsonObject jsonResponse = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
+                    if (jsonResponse.has("data")) {
+                        com.google.gson.JsonObject data = jsonResponse.getAsJsonObject("data");
+                        String r = data.has("role") ? data.get("role").getAsString().toUpperCase() : "";
+                        if ("SELLER".equals(r)) role = "seller";
+                        else if ("ADMIN".equals(r)) {
+                            boolean isSuperAdmin = data.has("accessLevel") && data.get("accessLevel").getAsInt() == 1;
+                            role = isSuperAdmin ? "admin_super" : "admin_regular";
+                        }
+                        
+                        String userId = data.has("userId") ? data.get("userId").getAsString() : null;
+                        String uName = data.has("username") ? data.get("username").getAsString() : username;
+                        if (userId != null) {
+                            com.team4.util.UserSession.createSession(userId, uName, role);
+                        }
                     }
 
                     mainController.setUserRole(role);

@@ -27,6 +27,11 @@ public class ClientHandler implements Runnable, BidObserver {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private String userId;
+
+    public String getUserId() {
+        return userId;
+    }
 
     private static final BiddingService biddingService = new BiddingService(
             new AuctionDAOImpl(),
@@ -88,6 +93,9 @@ public class ClientHandler implements Runnable, BidObserver {
     private void handleRequest(NetworkMessage netMsg) {
         String command = netMsg.getCommand();
         switch (command) {
+            case "LOGIN":
+                handleLogin(netMsg.getData());
+                break;
             case "BID":
                 handleBid(netMsg.getData());
                 break;
@@ -100,6 +108,17 @@ public class ClientHandler implements Runnable, BidObserver {
             default:
                 System.out.println("Unknown command: " + command);
                 break;
+        }
+    }
+
+    private void handleLogin(String dataJson) {
+        if (dataJson == null || dataJson.isEmpty()) return;
+        try {
+            JsonObject data = JsonParser.parseString(dataJson).getAsJsonObject();
+            this.userId = data.get("userId").getAsString();
+            Server.registerUser(this.userId, this);
+        } catch (JsonSyntaxException | IllegalStateException e) {
+            System.out.println("Loi parse JSON trong handleLogin: " + e.getMessage());
         }
     }
 
@@ -176,6 +195,17 @@ public class ClientHandler implements Runnable, BidObserver {
     public void sendResponse(NetworkMessage msg) {
         if (msg != null) {
             sendMessage(Server.getGson().toJson(msg));
+        }
+    }
+
+    public void forceLogout() {
+        sendMessage(buildResponse("ERROR", "Tài khoản của bạn đã được đăng nhập ở thiết bị khác.", "FORCE_LOGOUT", null));
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

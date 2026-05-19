@@ -68,6 +68,13 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+    @Override
+    public void stop() throws Exception {
+        System.out.println("[Main] Closing application... Disconnecting socket.");
+        com.team4.client.Client.getInstance().disconnect();
+        super.stop();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
