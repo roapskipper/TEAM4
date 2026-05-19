@@ -32,7 +32,7 @@ public class Auction extends Entity {
         this.currentPrice = money(startingPrice);
         this.startTime = LocalDateTime.now();
         this.endTime = endTime;
-        this.status = AuctionStatus.PENDING; // Mă định là "Đang chờ duyệt"
+        this.status = AuctionStatus.PENDING; // Mă định là "Pending approval"
         validateAuctionInfo();
     }
     // Constructor khi nạp cuộc đấu giá lên từ DB
@@ -59,25 +59,25 @@ public class Auction extends Entity {
     // Validate và chuẩn hóa các field
     private void validateAuctionInfo() {
         if (itemId == null)
-            throw new IllegalArgumentException("ItemId không được null");
+            throw new IllegalArgumentException("ItemId must not be null");
         if (sellerId == null)
-            throw new IllegalArgumentException("SellerId không được null");
+            throw new IllegalArgumentException("SellerId must not be null");
         if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
+            throw new IllegalArgumentException("Starting price must be greater than 0");
         if (bidIncrement == null || bidIncrement.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
+            throw new IllegalArgumentException("Bid increment must be greater than 0");
         if (startTime == null)
-            throw new IllegalArgumentException("Thời gian bắt đầu không được null");
+            throw new IllegalArgumentException("Start time must not be null");
         if (endTime == null)
-            throw new IllegalArgumentException("Thời gian kết thúc không được null");
+            throw new IllegalArgumentException("End time must not be null");
         if (currentPrice.compareTo(startingPrice) < 0)
-            throw new IllegalArgumentException("Giá hiện tại không thể thấp hơn giá khởi điểm");
+            throw new IllegalArgumentException("Current price cannot be lower than the starting price");
         if (status == null)
-            throw new IllegalArgumentException("Trạng thái đấu giá không được null");
+            throw new IllegalArgumentException("Auction status must not be null");
     }
     // Làm tròn tiền đến phần trăm
     private static BigDecimal money(BigDecimal amount) {
-        if (amount == null) throw new IllegalArgumentException("Amount không được null."); // Tránh NPE
+        if (amount == null) throw new IllegalArgumentException("Amount must not be null."); // Tránh NPE
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
     /** Các method dưới đây đều public,do service sẽ cần gọi tới*/
@@ -92,11 +92,11 @@ public class Auction extends Entity {
     // Cập nhật giá mới và người dẫn đầu
     public void applyBid(String bidderId, BigDecimal amount) {
         if (!canBid())
-            throw new IllegalStateException("Phiên không thể nhận bid lúc này");
+            throw new IllegalStateException("This auction cannot accept bids at this time");
         if (bidderId == null)
-            throw new IllegalArgumentException("BidderId không được null");
+            throw new IllegalArgumentException("BidderId must not be null");
         if (amount == null)
-            throw new IllegalArgumentException("Amount không được null");
+            throw new IllegalArgumentException("Amount must not be null");
 
         this.currentPrice = money(amount);
         this.currentHighestBidderId = bidderId;
@@ -104,19 +104,19 @@ public class Auction extends Entity {
     // RUNNING -> CLOSED
     public void close() {
         if (status != AuctionStatus.RUNNING)
-            throw new IllegalStateException("Chỉ có thể close từ RUNNING");
+            throw new IllegalStateException("Can only close from RUNNING");
         this.status = AuctionStatus.FINISHED;
     }
     // CLOSED -> PAID, Dùng khi: bidder thanh toán thành công
     public void markPaid() {
         if (status != AuctionStatus.FINISHED)
-            throw new IllegalStateException("Chỉ có thể markPaid từ FINISHED");
+            throw new IllegalStateException("Can only mark paid from FINISHED");
         this.status = AuctionStatus.PAID;
     }
     //  CANCELLED (từ PENDING hoặc ACTIVE), Dùng khi: admin từ chối hoặc seller hủy
     public void cancel() {
         if (status == AuctionStatus.PAID)
-            throw new IllegalStateException("Không thể hủy phiên đã thanh toán");
+            throw new IllegalStateException("Cannot cancel an auction that has already been paid");
         this.status = AuctionStatus.CANCELLED;
     }
     // Chuyển từ PENDING sang ACTIVE
@@ -167,7 +167,7 @@ public class Auction extends Entity {
     }
     public void setBidIncrement(BigDecimal bidIncrement) {
         if (bidIncrement.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Bước giá phải lớn hơn 0");
+            throw new IllegalArgumentException("Bid increment must be greater than 0");
         this.bidIncrement = money(bidIncrement);
     }
      @Override

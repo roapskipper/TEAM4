@@ -122,30 +122,30 @@ public class Fashion extends Item {
     private static void validateBrand(String brand) {
         if (brand == null) return; // optional
         if (brand.length() > 120) {
-            throw new IllegalArgumentException("Brand không được vượt quá 120 ký tự.");
+            throw new IllegalArgumentException("Brand must not exceed 120 characters.");
         }
     }
     private static void validateSize(Size size) {
         if  (size == null)
-            throw new IllegalArgumentException("Size không được null.");
+            throw new IllegalArgumentException("Size must not be null.");
     }
     private static void validateMaterial(String material) {
         if (material == null) return;
         if (material.length() > 120) {
-            throw new IllegalArgumentException("Material không được vượt quá 120 ký tự.");
+            throw new IllegalArgumentException("Material must not exceed 120 characters.");
         }
     }
     private static void validateColor(String color) {
         if (color == null) return;
         if (color.length() > 50) {
-            throw new IllegalArgumentException("Color không được vượt quá 50 ký tự.");
+            throw new IllegalArgumentException("Color must not exceed 50 characters.");
         }
     }
     private static void validateGender(Gender gender) {
-        if (gender == null) throw new IllegalArgumentException("Gender không được null.");
+        if (gender == null) throw new IllegalArgumentException("Gender must not be null.");
     }
     private static void validateCondition(ConditionGrade condition) {
-        if (condition == null) throw new IllegalArgumentException("Condition grade không được null.");
+        if (condition == null) throw new IllegalArgumentException("Condition grade must not be null.");
     }
     // Summary / toString
     @Override
@@ -153,7 +153,7 @@ public class Fashion extends Item {
         return brand + " - " + size +
                 " - " + gender.name() +
                 " - " + condition.name() +
-                (authentic ? " (Hàng thật)" : " (Không xác thực)");
+                (authentic ? " (Authentic)" : " (Not authenticated)");
     }
     @Override
     public String toString() {

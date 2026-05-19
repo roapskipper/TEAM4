@@ -88,23 +88,23 @@ public class Electronics extends Item {
     private static void validateBrand(String brand) {
         if (brand == null || brand.isEmpty()) return;
         if (brand.length() > 50) {
-            throw new IllegalArgumentException("Brand không được vượt quá 50 ký tự.");
+            throw new IllegalArgumentException("Brand must not exceed 50 characters.");
         }
     }
     private static void validateModel(String model) {
         if (model == null || model.isEmpty()) return;
         if (model.length() > 50) {
-            throw new IllegalArgumentException("Model không được vượt quá 50 ký tự.");
+            throw new IllegalArgumentException("Model must not exceed 50 characters.");
         }
     }
     private static void validateItemCondition(ConditionGrade cond) {
         if (cond == null) {
-            throw new IllegalArgumentException("Item condition không được để trống.");
+            throw new IllegalArgumentException("Item condition must not be blank.");
         }
     }
     private static void validateWarrantyMonths(int months) {
         if (months < 0) {
-            throw new IllegalArgumentException("Warranty months phải >= 0.");
+            throw new IllegalArgumentException("Warranty months must be >= 0.");
         }
     }
     // Summary / toString
@@ -112,8 +112,8 @@ public class Electronics extends Item {
     public String summary() {
         return brand + " " + model +
                 " - " + itemCondition.name() +
-                " - Bảo hành: " + warrantyMonths + " tháng" +
-                (fullyFunctional ? "" : " (Không hoạt động đầy đủ)");
+                " - Warranty: " + warrantyMonths + " months" +
+                (fullyFunctional ? "" : " (Not fully functional)");
     }
     @Override
     public String toString() {

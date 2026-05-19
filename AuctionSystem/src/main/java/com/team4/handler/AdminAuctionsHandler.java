@@ -98,7 +98,7 @@ public class AdminAuctionsHandler implements HttpHandler {
                 }
             }
             
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lấy danh sách phiên đấu giá (admin) thành công!", dataArr));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Admin auction list loaded successfully!", dataArr));
         } catch (Exception e) {
             e.printStackTrace();
             ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", e.getMessage(), null));
