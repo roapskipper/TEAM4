@@ -22,7 +22,7 @@
             <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 24 20 16 20;">
                 <StackPane styleClass="brand-icon-bg"
                            prefWidth="40" prefHeight="40">
-                    <Label text="⚡" style="-fx-font-size: 20; -fx-text-fill: white;"/>
+                    <Label text="AS" style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: white;"/>
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" styleClass="brand-name"/>
@@ -53,13 +53,13 @@
                         <HBox spacing="6" alignment="CENTER_LEFT">
                             <Label fx:id="userRoleBadge" text="BIDDER"
                                    styleClass="role-badge"/>
-                            <Label fx:id="userStatusDot" text="●"
-                                   styleClass="status-dot-active"/>
+                            <Label fx:id="userStatusDot" text="Active"
+                                   styleClass="status-active"/>
                         </HBox>
                     </VBox>
 
                     <Button fx:id="logoutBtn"
-                            text="↩"
+                            text="Logout"
                             onAction="#onLogout"
                             styleClass="logout-btn">
                         <tooltip>
@@ -89,7 +89,7 @@
 
                 <StackPane>
                     <Button fx:id="notiBtn"
-                            text="🔔"
+                            text="Alerts"
                             onAction="#onNotificationClick"
                             styleClass="icon-btn"/>
                     <Label fx:id="notiBadge" text="3"

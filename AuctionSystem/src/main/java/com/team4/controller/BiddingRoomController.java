@@ -73,7 +73,6 @@ public class BiddingRoomController implements Initializable {
                         if (json.has("data")) {
                             JsonObject data = json.getAsJsonObject("data");
                             
-                            // Cập nhật giá mới
                             if (data.has("amount")) {
                                 double newAmount = data.get("amount").getAsDouble();
                                 currentBid = newAmount;
@@ -82,7 +81,6 @@ public class BiddingRoomController implements Initializable {
                                 addChartPoint(newAmount);
                             }
                             
-                            // Anti-sniping: Cập nhật thời gian kết thúc mới
                             if (data.has("endTime")) {
                                 String endTimeStr = data.get("endTime").getAsString();
                                 auctionEndTime = LocalDateTime.parse(endTimeStr);
@@ -178,16 +176,16 @@ public class BiddingRoomController implements Initializable {
 
     private void loadBidHistory() {
         bidHistoryList.getItems().addAll(
-                "🥇 You - 28,500,000 - Just now",
-                "🥈 Tran Thi B - 28,000,000 - 5 min ago",
-                "🥉 Le Van C - 27,500,000 - 8 min ago",
-                "4. Pham Thi D - 27,000,000 - 12 min ago",
-                "5. Hoang Van E - 26,000,000 - 15 min ago"
+                "You - 28,500,000 - Just now",
+                "Tran Thi B - 28,000,000 - 5 min ago",
+                "Le Van C - 27,500,000 - 8 min ago",
+                "Pham Thi D - 27,000,000 - 12 min ago",
+                "Hoang Van E - 26,000,000 - 15 min ago"
         );
     }
 
     private void addBidToHistory(String bidder, double amount) {
-        bidHistoryList.getItems().add(0, "🥇 " + bidder + " - " + formatPrice(amount) + " - Just now");
+        bidHistoryList.getItems().add(0, bidder + " - " + formatPrice(amount) + " - Just now");
     }
 
     private void loadChat() {
@@ -199,7 +197,7 @@ public class BiddingRoomController implements Initializable {
     }
 
     private void showBidError(String msg) {
-        bidError.setText("⚠ " + msg);
+        bidError.setText(msg);
         bidError.setManaged(true);
         bidError.setVisible(true);
     }

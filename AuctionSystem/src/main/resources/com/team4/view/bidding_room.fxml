@@ -17,7 +17,7 @@
             <HBox spacing="16" alignment="CENTER_LEFT">
                 <StackPane styleClass="brand-icon-bg"
                            prefWidth="80" prefHeight="80">
-                    <Label text="📱" style="-fx-font-size: 40;"/>
+                    <Label text="ITEM" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
                 </StackPane>
                 <VBox spacing="4">
                     <Label fx:id="itemName" text="iPhone 15 Pro Max 256GB"
@@ -31,8 +31,8 @@
                         <Label fx:id="sellerName" text="TechStore Official"
                                styleClass="muted-text"
                                style="-fx-font-size: 13;"/>
-                        <Label text="⭐ 4.8" styleClass="rating-star"/>
-                        <Label text="✓ Verified" styleClass="verified-mark"/>
+                        <Label text="4.8 Rating" styleClass="rating-star"/>
+                        <Label text="Verified" styleClass="verified-mark"/>
                     </HBox>
                 </VBox>
             </HBox>
@@ -43,17 +43,17 @@
             <Label fx:id="currentPrice" text="28,500,000 VND" styleClass="price-display"/>
             <HBox spacing="12" alignment="CENTER">
                 <HBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="👥" style="-fx-font-size: 14;"/>
+                    <Label text="Bids" styleClass="muted-text"/>
                     <Label fx:id="bidCount" text="24 bids"
                            styleClass="muted-text"
                            style="-fx-font-size: 13;"/>
                 </HBox>
-                <Label text="•" styleClass="dot-separator"/>
+                <Label text="-" styleClass="dot-separator"/>
                 <HBox spacing="4" alignment="CENTER_LEFT">
-                    <Label text="⏱" style="-fx-font-size: 14;"/>
+                    <Label text="Time" styleClass="muted-text"/>
                     <Label fx:id="timeLeft" text="02:34:15" styleClass="timer-urgent"/>
                 </HBox>
-                <Label text="•" styleClass="dot-separator"/>
+                <Label text="-" styleClass="dot-separator"/>
                 <Label text="Limit: " styleClass="muted-text"/>
                 <Label text="50,000,000" styleClass="price-mini-value" style="-fx-font-size: 12;"/>
             </HBox>
@@ -64,7 +64,7 @@
 
         <VBox spacing="16" HBox.hgrow="ALWAYS" prefWidth="700">
             <VBox styleClass="bidding-card" prefHeight="320">
-                <Label text="📈 Price Chart" styleClass="section-title"/>
+                <Label text="Price Chart" styleClass="section-title"/>
                 <AreaChart fx:id="priceChart" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent;">
                     <xAxis><NumberAxis label="Time" style="-fx-tick-label-fill: #555555;"/></xAxis>
                     <yAxis><NumberAxis label="Price (VND)" style="-fx-tick-label-fill: #555555;"/></yAxis>
@@ -72,7 +72,7 @@
             </VBox>
 
             <VBox styleClass="bidding-card" prefHeight="220">
-                <Label text="📋 Bid History" styleClass="section-title"/>
+                <Label text="Bid History" styleClass="section-title"/>
                 <ListView fx:id="bidHistoryList" VBox.vgrow="ALWAYS" styleClass="bid-list"/>
             </VBox>
         </VBox>
@@ -80,7 +80,7 @@
         <VBox spacing="16" prefWidth="380">
 
             <VBox styleClass="bidding-card" spacing="14">
-                <Label text="💰 Place Bid" styleClass="section-title"/>
+                <Label text="Place Bid" styleClass="section-title"/>
 
                 <HBox spacing="8">
                     <Button fx:id="quick100k" text="+100K" onAction="#onQuickBid" styleClass="quick-bid-btn" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
@@ -103,11 +103,11 @@
 
                 <Label fx:id="bidError" text="" managed="false" visible="false" styleClass="error-message"/>
 
-                <Button fx:id="placeBidBtn" text="🎯 Place Bid Now" onAction="#onPlaceBid" styleClass="btn-primary"/>
+                <Button fx:id="placeBidBtn" text="Place Bid Now" onAction="#onPlaceBid" styleClass="btn-primary"/>
 
                 <VBox spacing="8" style="-fx-padding: 8 0 0 0;">
                     <HBox spacing="8" alignment="CENTER_LEFT">
-                        <ToggleButton fx:id="autoBidToggle" text="⚡ Auto Bid" onAction="#onAutoBidToggle" styleClass="auto-bid-toggle"/>
+                        <ToggleButton fx:id="autoBidToggle" text="Auto Bid" onAction="#onAutoBidToggle" styleClass="auto-bid-toggle"/>
                     </HBox>
                     <VBox fx:id="autoBidPanel" spacing="6" managed="false" visible="false">
                         <TextField fx:id="autoBidMax" promptText="Max price (VND)" styleClass="input-field"/>
@@ -118,11 +118,11 @@
             </VBox>
 
             <VBox styleClass="bidding-card" prefHeight="300">
-                <Label text="💬 Chat" styleClass="section-title"/>
+                <Label text="Chat" styleClass="section-title"/>
                 <ListView fx:id="chatList" VBox.vgrow="ALWAYS" styleClass="chat-list"/>
                 <HBox spacing="8" style="-fx-padding: 8 0 0 0;">
                     <TextField fx:id="chatInput" promptText="Type a message..." styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="sendChatBtn" text="➤" onAction="#onSendChat" styleClass="btn-primary"/>
+                    <Button fx:id="sendChatBtn" text="Send" onAction="#onSendChat" styleClass="btn-primary"/>
                 </HBox>
             </VBox>
         </VBox>
