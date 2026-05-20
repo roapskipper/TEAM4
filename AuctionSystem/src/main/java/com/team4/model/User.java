@@ -40,9 +40,9 @@ public abstract class User extends Entity {
         super();
         this.username = normalizeUsername(username);
         this.passwordHash = requirePasswordHash(passwordHash);
-        this.fullName = Objects.requireNonNull(fullName,"fullName không được null");
+        this.fullName = Objects.requireNonNull(fullName,"fullName must not be null");
         this.email = normalizeEmail(email);
-        this.role = Objects.requireNonNull(role, "role không được null");
+        this.role = Objects.requireNonNull(role, "role must not be null");
         this.balance = money(BigDecimal.ZERO);
 
         validateBaseInfo();
@@ -55,9 +55,9 @@ public abstract class User extends Entity {
         super(id, createdAt);
         this.username = normalizeUsername(username);
         this.passwordHash = requirePasswordHash(passwordHash);
-        this.fullName = Objects.requireNonNull(fullName,"fullName không được null");
+        this.fullName = Objects.requireNonNull(fullName,"fullName must not be null");
         this.email = normalizeEmail(email);
-        this.role = Objects.requireNonNull(role, "role không được null" );
+        this.role = Objects.requireNonNull(role, "role must not be null" );
         this.balance = money(balance);
 
         validateBaseInfo();
@@ -68,20 +68,20 @@ public abstract class User extends Entity {
         // Nếu tên đăng nhập không đúng với regex thì ném ra lỗi
         if (!USERNAME_PATTERN.matcher(username).matches()) {
             throw new IllegalArgumentException(
-                    "Tên đăng nhập phải dài từ 4–30 ký tự và chỉ được chứa chữ cái, số, dấu chấm (.), gạch dưới (_) và gạch ngang (-)."
+                    "Username must be 4-30 characters and may contain only letters, digits, dots (.), underscores (_), and hyphens (-)."
             );
         }
         // Email cũng vậy
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("Email không hợp lệ.");
+            throw new IllegalArgumentException("Invalid email.");
         }
         // Họ tên không được rỗng và dài không quá 50 kí tự
         if (fullName != null && fullName.length() > 50) {
-            throw new IllegalArgumentException("Họ và tên không được vượt quá 100 ký tự.");
+            throw new IllegalArgumentException("Full name must not exceed 100 characters.");
         }
         // Số dư không được âm
         if (balance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Số dư không thể âm.");
+            throw new IllegalArgumentException("Balance cannot be negative.");
         }
     }
 
@@ -100,7 +100,7 @@ public abstract class User extends Entity {
     public final void deposit(BigDecimal amount) {
         BigDecimal normalizedAmount = money(amount);
         if (normalizedAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Số tền nạp va phải dương.");
+            throw new IllegalArgumentException("Deposit amount must be positive.");
         }
 
         this.balance = this.balance.add(normalizedAmount);
@@ -110,7 +110,7 @@ public abstract class User extends Entity {
     public final boolean withdraw(BigDecimal amount) {
         BigDecimal normalizedAmount = money(amount);
         if (normalizedAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Số tiền rút phải dương.");
+            throw new IllegalArgumentException("Withdrawal amount must be positive.");
         }
 
         if (this.balance.compareTo(normalizedAmount) < 0) {
@@ -184,14 +184,14 @@ public abstract class User extends Entity {
      */
     protected static String normalizeUsername(String username) {
         if (username == null) {
-            throw new IllegalArgumentException("Username không được bỏ trống.");
+            throw new IllegalArgumentException("Username must not be blank.");
         }
         return username.trim();
     }
 
     protected static String normalizeEmail(String email) {
         if (email == null) {
-            throw new IllegalArgumentException("Email không được bỏ trống.");
+            throw new IllegalArgumentException("Email must not be blank.");
         }
         return email.trim().toLowerCase();
     }
@@ -208,7 +208,7 @@ public abstract class User extends Entity {
     // Mật khẩu không được null
     private static String requirePasswordHash(String passwordHash) {
         if (passwordHash == null || passwordHash.isBlank()) {
-            throw new IllegalArgumentException("Mật khẩu không hợp lệ.");
+            throw new IllegalArgumentException("Invalid password.");
         }
         return passwordHash.trim();
     }
@@ -216,7 +216,7 @@ public abstract class User extends Entity {
     // Làm tròn tiền đến phần trăm
     private static BigDecimal money(BigDecimal amount) {
         if (amount == null) {
-            throw new IllegalArgumentException("Amount không được bỏ trống.");
+            throw new IllegalArgumentException("Amount must not be blank.");
         }
         return amount.setScale(2, RoundingMode.HALF_UP);
     }

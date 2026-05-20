@@ -9,6 +9,7 @@ public interface UserDAO {
     User findById(String id);// tìm theo id
     User findById(Connection conn, String id);
     User findByUsername(String username); // tìm khi login
+    User findByEmail(String email); // kiểm tra trùng email
     List<User> findAll();
     boolean insert(User user); // đăng kí tài khoản mới
     boolean update(User user); // cập nhật profile

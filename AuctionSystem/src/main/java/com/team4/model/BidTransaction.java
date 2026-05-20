@@ -38,11 +38,11 @@ public class BidTransaction extends Entity{
     // Kiểm tra tính hợp lệ của giao dịch
     public void validateBidTransaction() {
         if (auctionId == null)
-            throw new IllegalArgumentException("AuctionId không được null");
+            throw new IllegalArgumentException("AuctionId must not be null");
         if (bidderId == null)
-            throw new IllegalArgumentException("BidderId không được null");
+            throw new IllegalArgumentException("BidderId must not be null");
         if (bidAmount == null || bidAmount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("BidAmount phải lớn hơn 0");
+            throw new IllegalArgumentException("BidAmount must be greater than 0");
     }
 
     @Override

@@ -59,13 +59,13 @@ public class Admin extends User {
     // Kiểm tra định dạng của accessLevel và adminCode
     private void validateAdminInfo() {
         if (accessLevel == null) {
-            throw new IllegalArgumentException("accessLevel không được null.");
+            throw new IllegalArgumentException("accessLevel must not be null.");
         }
         // Admincode phải có ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số, 1 ký tự đặc
         // biệt; không chứa khoảng trắng
         if (adminCodeHash == null || !ADMIN_CODE_PATTERN.matcher(adminCodeHash.trim()).matches()) {
             throw new IllegalArgumentException(
-                    "adminCode phải gồm 8-128 kí tự, chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt; không chứa khoảng trắng.");
+                    "adminCode must be 8-128 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character; spaces are not allowed.");
         }
     }
 

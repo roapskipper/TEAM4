@@ -89,7 +89,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.registerBidder(username, "Pass", "Name", "e@test.com", "Adr", "01235748768")
             );
-            assertEquals("Tên đăng nhập đã tồn tại", ex.getMessage());
+            assertEquals("Username already exists", ex.getMessage());
             verify(userDAO, never()).insert(any());
         }
     }
@@ -131,7 +131,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.login(username, "WrongPass")
             );
-            assertEquals("Mật khẩu không đúng", ex.getMessage());
+            assertEquals("Incorrect password", ex.getMessage());
         }
 
         @Test
@@ -188,7 +188,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.loginAdmin(username, rawPass, "WrongCode@123")
             );
-            assertEquals("Mã admin không đúng", ex.getMessage());
+            assertEquals("Incorrect admin code", ex.getMessage());
         }
 
         @Test
@@ -202,7 +202,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.loginAdmin(username, "pass", "code")
             );
-            assertEquals("Tài khoản không có quyền admin", ex.getMessage());
+            assertEquals("Account does not have admin privileges", ex.getMessage());
         }
     }
 
@@ -240,7 +240,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.changePassword(userId, "WrongOld", "NewPass")
             );
-            assertEquals("Mật khẩu cũ không đúng", ex.getMessage());
+            assertEquals("Old password is incorrect", ex.getMessage());
             verify(userDAO, never()).update(any());
         }
     }

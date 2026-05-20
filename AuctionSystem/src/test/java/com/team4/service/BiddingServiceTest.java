@@ -113,7 +113,7 @@ public class BiddingServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 biddingService.placeBid("auc-1", sellerId, new BigDecimal("500.00"))
             );
-            assertTrue(ex.getMessage().contains("Người bán không được đặt giá"));
+            assertTrue(ex.getMessage().contains("Seller cannot bid"));
         }
 
         @Test
@@ -142,6 +142,61 @@ public class BiddingServiceTest {
 
             assertThrows(BusinessException.class, () -> 
                 biddingService.placeBid("auc-1", "bidder-1", new BigDecimal("200.00"))
+            );
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giá đặt vượt quá giới hạn multiplier của chính sách")
+        void testPlaceBid_BidExceedsMultiplierPolicy() throws SQLException {
+            // currentPrice = 1,000,000 (1M) -> multiplier = 4 -> allowedMax = 4,000,000 (4M)
+            Auction auction = createRealAuction("item-1", "seller-1", "bidder-old", "1000000.00");
+            User bidder = createRealBidder("bidder-new", "10000000.00");
+
+            when(auctionDAO.findById(mockConn, "auc-1")).thenReturn(auction);
+            when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("4000001.00"))
+            );
+            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giá đặt vượt quá giới hạn tuyệt đối ABSOLUTE_MAX")
+        void testPlaceBid_BidExceedsAbsoluteMax() throws SQLException {
+            // currentPrice = 400,000,000 (400M) -> allowedMax would be 400M * 1.3 = 520M, but clamped to ABSOLUTE_MAX (500M)
+            Auction auction = createRealAuction("item-1", "seller-1", "bidder-old", "400000000.00");
+            User bidder = createRealBidder("bidder-new", "600000000.00");
+
+            when(auctionDAO.findById(mockConn, "auc-1")).thenReturn(auction);
+            when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("500000001.00"))
+            );
+            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+        }
+
+        @Test
+        @DisplayName("Thành công - Giá đặt nằm trong giới hạn cho phép (bằng allowedMax)")
+        void testPlaceBid_BidWithinAllowedMax() throws SQLException {
+            // currentPrice = 1,000,000 (1M) -> multiplier = 4 -> allowedMax = 4,000,000 (4M)
+            Auction auction = createRealAuction("item-1", "seller-1", "bidder-old", "1000000.00");
+            User bidder = createRealBidder("bidder-new", "10000000.00");
+
+            when(auctionDAO.findById(mockConn, "auc-1")).thenReturn(auction);
+            when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
+            when(autoBiddingDAO.findByAuctionAndBidder(mockConn, "auc-1", "bidder-new")).thenReturn(null);
+            when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
+            
+            AutoBidding config = new AutoBidding("auc-1", "bidder-new", new BigDecimal("4000000.00"));
+            when(autoBiddingDAO.findActiveByAuctionId(mockConn, "auc-1")).thenReturn(List.of(config));
+
+            when(auctionDAO.updateCurrentBid(eq(mockConn), eq("auc-1"), any(), eq("bidder-new"))).thenReturn(true);
+            when(bidTransactionDAO.insert(eq(mockConn), any())).thenReturn(true);
+
+            assertDoesNotThrow(() -> 
+                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("4000000.00"))
             );
         }
     }
@@ -213,6 +268,40 @@ public class BiddingServiceTest {
 
             // THEN: B dẫn đầu, giá hiển thị = maxLimit của A (200) + increment (10) = 210
             verify(auctionDAO).updateCurrentBid(mockConn, auctionId, new BigDecimal("210.00"), bidderB);
+        }
+
+        @Test
+        @DisplayName("Cạnh tranh Proxy Bidding - Hai cấu hình nằm trong allowedMax, tắt cấu hình đã hết hạn")
+        void testPlaceBid_TwoAutoBidders_ExhaustedDeactivated() throws SQLException {
+            String auctionId = "auc-1";
+            String bidderA = "bidder-A";
+            String bidderB = "bidder-B";
+
+            // Price = 100,000 (100k) -> allowedMax = 500k
+            Auction auction = createRealAuction("item-1", "seller-1", bidderA, "100000.00");
+            User userB = createRealBidder(bidderB, "1000000.00");
+
+            when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
+            when(userDAO.findById(mockConn, bidderB)).thenReturn(userB);
+
+            when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, bidderB)).thenReturn(null);
+            when(autoBiddingDAO.insert(eq(mockConn), any())).thenReturn(true);
+
+            AutoBidding configA = new AutoBidding("conf-A", LocalDateTime.now(), auctionId, bidderA, new BigDecimal("200000.00"), true); // max 200k
+            AutoBidding configB = new AutoBidding("conf-B", LocalDateTime.now(), auctionId, bidderB, new BigDecimal("400000.00"), true); // max 400k
+
+            when(autoBiddingDAO.findActiveByAuctionId(mockConn, auctionId)).thenReturn(List.of(configA, configB));
+            when(auctionDAO.updateCurrentBid(eq(mockConn), anyString(), any(), anyString())).thenReturn(true);
+            when(bidTransactionDAO.insert(eq(mockConn), any())).thenReturn(true);
+            when(autoBiddingDAO.updateActive(eq(mockConn), eq("conf-A"), eq(false))).thenReturn(true);
+
+            // WHEN
+            biddingService.placeBid(auctionId, bidderB, new BigDecimal("400000.00"));
+
+            // THEN: Winner is B, displayPrice = A's max (200k) + increment (10k) = 210k
+            // A (max 200k) is exhausted because 200k <= 210k. A must be deactivated.
+            verify(autoBiddingDAO).updateActive(mockConn, "conf-A", false);
+            assertFalse(configA.isActive());
         }
     }
 

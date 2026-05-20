@@ -73,7 +73,6 @@
     -fx-faint-focus-color: transparent;
 }
 
-/* Reset và ÉP CỨNG màu cho nút Toggle (Bidder/Seller) */
 .role-btn-active,
 .role-btn-active:focused,
 .role-btn-active:selected {
@@ -82,7 +81,7 @@
     -fx-border-width: 1.5 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #722F37 !important; /* Ép cứng chữ màu đỏ rượu vang */
+    -fx-text-fill: #722F37 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;
@@ -101,7 +100,7 @@
     -fx-border-width: 1 !important;
     -fx-border-radius: 10 !important;
     -fx-background-radius: 10 !important;
-    -fx-text-fill: #555555 !important; /* Ép cứng chữ màu xám */
+    -fx-text-fill: #555555 !important;
     -fx-font-family: "Lato" !important;
     -fx-padding: 14 !important;
     -fx-cursor: hand !important;
@@ -180,6 +179,41 @@
     -fx-text-fill: #111827;
 }
 
+.admin-button-primary {
+    -fx-background-color: #722F37;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-background-radius: 12;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.admin-button-primary:hover {
+    -fx-background-color: #5F2630;
+}
+
+.admin-button-secondary {
+    -fx-background-color: #FBF9F6;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-text-fill: #2C2C2C;
+    -fx-font-family: "Lato";
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.admin-button-secondary:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-border-color: rgba(114, 47, 55, 0.25);
+    -fx-text-fill: #722F37;
+}
+
 .sidebar-sep {
     -fx-background-color: #E5E5E5;
 }
@@ -221,7 +255,11 @@
     -fx-faint-focus-color: transparent;
 }
 
-.card, .admin-card, .stat-card, .bidding-card, .profile-card {
+.card,
+.admin-card,
+.stat-card,
+.bidding-card,
+.profile-card {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 16;
     -fx-border-color: transparent;
@@ -230,7 +268,8 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 15, 0, 0, 4);
 }
 
-.card:hover, .admin-card:hover {
+.card:hover,
+.admin-card:hover {
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.12), 20, 0, 0, 6);
 }
 
@@ -252,7 +291,7 @@
     -fx-padding: 24 32;
     -fx-alignment: CENTER;
     -fx-spacing: 8;
-    -fx-min-width: 340;
+    -fx-min-width: 360;
 }
 
 .profile-card {
@@ -340,9 +379,29 @@
     -fx-border-color: transparent;
 }
 
+.table-card {
+    -fx-padding: 14;
+}
+
+.products-table {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E5E5;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.products-table .column-header-background {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.products-table .filler {
+    -fx-background-color: #FBF9F6;
+}
+
 .admin-table .column-header {
     -fx-background-color: #FBF9F6;
-    -fx-padding: 14 16;
+    -fx-padding: 12 14;
     -fx-border-color: transparent transparent #E5E5E5 transparent;
 }
 
@@ -356,18 +415,43 @@
 .admin-table .table-row-cell {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #F3F4F6 transparent;
-    -fx-padding: 2 0;
+    -fx-padding: 0;
+    -fx-cell-size: 44px;
 }
 
 .admin-table .table-row-cell:hover {
     -fx-background-color: #FBF9F6;
 }
 
+.admin-table .table-row-cell:selected {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+}
+
 .admin-table .table-cell {
     -fx-text-fill: #2C2C2C;
     -fx-font-family: "Lato";
-    -fx-padding: 12 16;
+    -fx-padding: 10 14;
     -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-color: transparent transparent #F3F4F6 transparent;
+}
+
+.table-action-btn {
+    -fx-background-color: #F3F4F6;
+    -fx-text-fill: #2C2C2C;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 5 12;
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.table-action-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.12);
+    -fx-text-fill: #722F37;
 }
 
 .filter-pill {
@@ -403,6 +487,41 @@
     -fx-padding: 16 20;
     -fx-spacing: 12;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
+}
+
+.auction-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14;
+    -fx-border-color: #E5E5E5;
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.07), 12, 0, 0, 3);
+}
+
+.auction-card:hover {
+    -fx-border-color: rgba(114, 47, 55, 0.28);
+    -fx-effect: dropshadow(three-pass-box, rgba(114, 47, 55, 0.14), 16, 0, 0, 5);
+}
+
+.auction-card-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.auction-card-desc {
+    -fx-font-size: 12px;
+    -fx-font-family: "Lato";
+    -fx-text-fill: #555555;
+}
+
+.auction-card-price {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #722F37;
 }
 
 .quick-bid-btn {
@@ -457,21 +576,6 @@
     -fx-background-color: transparent;
     -fx-padding: 8 0;
     -fx-text-fill: #2C2C2C;
-    -fx-font-family: "Lato";
-    -fx-font-size: 13px;
-}
-
-.chat-list {
-    -fx-background-color: #FBF9F6;
-    -fx-background-radius: 10;
-    -fx-border-color: #E5E5E5;
-    -fx-padding: 8;
-}
-
-.chat-list .list-cell {
-    -fx-background-color: transparent;
-    -fx-padding: 6 0;
-    -fx-text-fill: #555555;
     -fx-font-family: "Lato";
     -fx-font-size: 13px;
 }
@@ -560,10 +664,50 @@
     -fx-background-radius: 12;
 }
 
+.alert-green {
+    -fx-background-color: rgba(21, 128, 61, 0.1);
+    -fx-border-color: rgba(21, 128, 61, 0.2);
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
 .alert-purple {
     -fx-background-color: rgba(114, 47, 55, 0.1);
     -fx-border-color: rgba(114, 47, 55, 0.2);
     -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.dialog-root {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: #E5E5E5;
+    -fx-border-radius: 16;
+}
+
+.dialog-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.dialog-help {
+    -fx-font-size: 11px;
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+}
+
+.dialog-actions {
+    -fx-padding: 8 0 0 0;
+}
+
+.text-area.input-field {
+    -fx-padding: 0;
+}
+
+.text-area.input-field .content {
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 12;
 }
 
@@ -618,6 +762,7 @@
     -fx-background-color: rgba(114, 47, 55, 0.15);
     -fx-text-fill: #722F37;
 }
+
 .admin-toggle-link {
     -fx-text-fill: rgba(44, 44, 44, 0.65);
     -fx-font-family: "Lato";
@@ -648,6 +793,15 @@
 .surface-header {
     -fx-background-color: #FFFFFF;
     -fx-border-color: transparent transparent #E5E5E5 transparent;
+}
+
+.user-footer {
+    -fx-padding: 14 16 16 16;
+    -fx-border-color: #E5E5E5 transparent transparent transparent;
+}
+
+.user-summary {
+    -fx-min-height: 42;
 }
 
 .section-title {
@@ -712,7 +866,7 @@
     -fx-text-fill: #722F37;
     -fx-background-color: rgba(114, 47, 55, 0.12);
     -fx-background-radius: 20;
-    -fx-padding: 3 12;
+    -fx-padding: 3 10;
 }
 
 .user-name {
@@ -752,9 +906,11 @@
     -fx-background-color: rgba(114, 47, 55, 0.06);
     -fx-background-radius: 10;
     -fx-text-fill: #2C2C2C;
-    -fx-font-size: 18px;
-    -fx-padding: 10;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 12;
     -fx-cursor: hand;
+    -fx-alignment: CENTER;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
@@ -845,7 +1001,7 @@
     -fx-padding: 0;
 }
 
-.content-scroll-pane > .viewport {
+.content-scroll-pane>.viewport {
     -fx-background-color: #FBF9F6;
 }
 
@@ -871,6 +1027,7 @@
 .content-scroll-pane .corner {
     -fx-background-color: transparent;
 }
+
 .stat-icon-primary {
     -fx-background-color: rgba(114, 47, 55, 0.12);
     -fx-background-radius: 12;
@@ -889,4 +1046,27 @@
 .stat-icon-danger {
     -fx-background-color: rgba(185, 28, 28, 0.15);
     -fx-background-radius: 12;
+}
+
+.alert-box {
+    -fx-padding: 14;
+    -fx-spacing: 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.alert-icon {
+    -fx-font-size: 20px;
+}
+
+.alert-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.alert-desc {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
 }

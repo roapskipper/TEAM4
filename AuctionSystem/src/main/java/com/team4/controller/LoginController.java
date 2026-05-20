@@ -38,7 +38,6 @@ public class LoginController {
     @FXML private javafx.scene.control.Button loginBtn;
     @FXML private javafx.scene.control.Button regBtn;
 
-    // ✅ Fix: khai báo roleGroup là field, không phải local variable
     private ToggleGroup roleGroup;
 
     @FXML
@@ -58,7 +57,6 @@ public class LoginController {
             roleBidder.setSelected(true);
         }
 
-        // ✅ Fix: chặn deselect trong listener
         roleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
             if (newToggle == null) {
                 oldToggle.setSelected(true);
@@ -70,13 +68,11 @@ public class LoginController {
         updateRoleStyle();
     }
 
-    // ✅ Fix: FXML gọi method này (có ActionEvent), chỉ delegate sang updateRoleStyle()
     @FXML
     private void onRoleChanged(ActionEvent event) {
         updateRoleStyle();
     }
 
-    // Logic thực sự - tách riêng để initialize() cũng gọi được
     private void updateRoleStyle() {
         if (roleGroup == null || roleBidder == null || roleSeller == null) return;
 
@@ -148,7 +144,6 @@ public class LoginController {
             if (loginAdminCode != null) loginAdminCode.requestFocus();
         } else {
             if (toggleAdminCodeLink != null) toggleAdminCodeLink.setText("Login as admin?");
-            // Clear giá trị khi ẩn để tránh gửi adminCode mà user không thực sự muốn dùng
             if (loginAdminCode != null) loginAdminCode.clear();
         }
     }
@@ -157,7 +152,6 @@ public class LoginController {
     private void onLoginSubmit() {
         String username = loginUsername.getText();
         String password = loginPassword.getText();
-        // Chỉ lấy adminCode khi ô đang hiện; nếu ẩn thì coi như rỗng
         String adminCode = "";
         if (adminCodeBox != null && adminCodeBox.isVisible()
                 && loginAdminCode != null && loginAdminCode.getText() != null) {
@@ -185,18 +179,17 @@ public class LoginController {
                         String userId = resObj.getAsJsonObject("data").get("userId").getAsString();
                         socketClient.sendLogin(userId);
                         
-                        // Đăng ký sự kiện bị ép đăng xuất (Tách logic UI ra khỏi Client.java)
                         socketClient.setOnForceLogout(() -> {
                             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                            alert.setTitle("Cảnh báo");
-                            alert.setHeaderText("Đăng xuất bắt buộc");
-                            alert.setContentText("Tài khoản của bạn vừa đăng nhập từ thiết bị khác. Ứng dụng sẽ thoát.");
+                            alert.setTitle("Warning");
+                            alert.setHeaderText("Forced logout");
+                            alert.setContentText("Your account has just signed in from another device. The application will close.");
                             alert.showAndWait();
                             javafx.application.Platform.exit();
                             System.exit(0);
                         });
 
-                        socketClient.startListening(null); // Bắt đầu lắng nghe các event global ngay lập tức
+                        socketClient.startListening(null);
                     } catch (Exception e) {
                         System.out.println("Loi parse userId tu response: " + e.getMessage());
                     }
@@ -253,7 +246,7 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            showError(loginError, "Server connection error: " + e.getMessage());
+            showError(loginError, "Login failed. " + ApiClient.toDisplayMessage(e));
             loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
@@ -283,7 +276,6 @@ public class LoginController {
             showError(regError, "Please fill in all required fields!");
             return;
         }
-        // Vietnamese phone: starts with 0 (10 digits) or +84 (followed by 9 digits)
         if (!phone.matches("^(0\\d{9}|\\+84\\d{9})$")) {
             showError(regError, "Invalid phone number! Use format 0xxxxxxxxx or +84xxxxxxxxx.");
             return;
@@ -321,7 +313,7 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            showError(regError, "Server connection error: " + e.getMessage());
+            showError(regError, "Registration failed. " + ApiClient.toDisplayMessage(e));
             regError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }

@@ -121,10 +121,8 @@ public class ProfileController implements Initializable {
 
                 com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
                 
-                // Profile Update
                 apiClient.updateProfile(userId, name, email, phone);
 
-                // Password Update
                 if (!newPass.isEmpty()) {
                     apiClient.changePassword(userId, oldPass, newPass);
                 }
@@ -153,7 +151,6 @@ public class ProfileController implements Initializable {
                 currentPassword.clear();
                 newPassword.clear();
                 confirmPassword.clear();
-                // Requirement 6: Reload profile data after successful update
                 loadProfile(); 
             });
             delay.play();

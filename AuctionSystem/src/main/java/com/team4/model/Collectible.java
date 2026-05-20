@@ -99,28 +99,28 @@ public class Collectible extends Item {
         int current = LocalDate.now().getYear();
         final int MIN_YEAR = -3000;
         if (year < MIN_YEAR || year > current) {
-            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
-                    MIN_YEAR + " .. " + current + " (Nếu không rõ năm sản xuất có thể điền '0').");
+            throw new IllegalArgumentException("Invalid production year. Valid range: " +
+                    MIN_YEAR + " .. " + current + " (Use '0' if the production year is unknown).");
         }
     }
     private static void validateRarityLevel(RarityLevel rarity) {
         if (rarity == null)
-           throw new IllegalArgumentException("Rarity level không được để trống.");
+           throw new IllegalArgumentException("Rarity level must not be blank.");
     }
     private static void validateConditionGrade(ConditionGrade grade) {
         if (grade == null)
-            throw new IllegalArgumentException("Condition grade không được để trống.");
+            throw new IllegalArgumentException("Condition grade must not be blank.");
     }
     private static void validateOrigin(String origin) {
         if (origin == null) return;
         String o = origin.trim();
-        if (o.length() > 120) throw new IllegalArgumentException("Origin quá dài (tối đa 120 ký tự).");
+        if (o.length() > 120) throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
     }
     // Summary / toString
     @Override
     public String summary() {
         return rarityLevel.name() + " - " + conditionGrade.name() +
-                (hasCertificate ? " (Có chứng chỉ)" : "");
+                (hasCertificate ? " (Certified)" : "");
     }
     @Override
     public String toString() {

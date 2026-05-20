@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.net.URI;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,10 +34,14 @@ import static org.mockito.Mockito.*;
 public class AuctionsHandlerTest {
 
     @Mock
-    private AuctionService auctionService;
+    private com.team4.dao.AuctionDAO auctionDAO;
 
     @Mock
     private HttpExchange exchange;
+
+    @Mock private com.team4.dao.ItemDAO itemDAO;
+    @Mock private com.team4.dao.UserDAO userDAO;
+    @Mock private com.team4.dao.BidTransactionDAO bidTransactionDAO;
 
     private AuctionsHandler handler;
     private ByteArrayOutputStream responseBody;
@@ -46,9 +51,21 @@ public class AuctionsHandlerTest {
         handler = new AuctionsHandler();
 
         // Inject mock AuctionService qua reflection
-        Field field = AuctionsHandler.class.getDeclaredField("auctionService");
+        Field field = AuctionsHandler.class.getDeclaredField("auctionDAO");
         field.setAccessible(true);
-        field.set(handler, auctionService);
+        field.set(handler, auctionDAO);
+
+        Field itemDaoField = AuctionsHandler.class.getDeclaredField("itemDAO");
+        itemDaoField.setAccessible(true);
+        itemDaoField.set(handler, itemDAO);
+
+        Field userDaoField = AuctionsHandler.class.getDeclaredField("userDAO");
+        userDaoField.setAccessible(true);
+        userDaoField.set(handler, userDAO);
+
+        Field bidDaoField = AuctionsHandler.class.getDeclaredField("bidTransactionDAO");
+        bidDaoField.setAccessible(true);
+        bidDaoField.set(handler, bidTransactionDAO);
 
         responseBody = new ByteArrayOutputStream();
         Headers headers = new Headers();
@@ -87,7 +104,7 @@ public class AuctionsHandlerTest {
         handler.handle(exchange);
 
         verify(exchange).sendResponseHeaders(eq(204), anyLong());
-        verifyNoInteractions(auctionService);
+        verifyNoInteractions(auctionDAO);
     }
 
     // =========================================================================
@@ -101,7 +118,7 @@ public class AuctionsHandlerTest {
         handler.handle(exchange);
 
         verify(exchange).sendResponseHeaders(405, -1);
-        verifyNoInteractions(auctionService);
+        verifyNoInteractions(auctionDAO);
     }
 
     // =========================================================================
@@ -115,8 +132,10 @@ public class AuctionsHandlerTest {
         @DisplayName("Có phiên → 200 + SUCCESS + danh sách không rỗng")
         void getAuctions_hasResults_returns200() throws IOException {
             List<Auction> auctions = List.of(realAuction("auction-1", Auction.AuctionStatus.RUNNING));
-            when(auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(auctions);
+            when(auctionDAO.findAll()).thenReturn(auctions);
             when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
+            when(bidTransactionDAO.findByAuctionId(anyString())).thenReturn(Collections.emptyList());
 
             handler.handle(exchange);
 
@@ -129,9 +148,10 @@ public class AuctionsHandlerTest {
         @Test
         @DisplayName("Không có phiên nào → 200 + mảng rỗng")
         void getAuctions_empty_returns200() throws IOException {
-            when(auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING))
+            when(auctionDAO.findAll())
                     .thenReturn(Collections.emptyList());
             when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
 
             handler.handle(exchange);
 
@@ -151,9 +171,10 @@ public class AuctionsHandlerTest {
         @Test
         @DisplayName("BusinessException → 400 + ERROR")
         void getAuctions_businessException_returns400() throws IOException {
-            when(auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING))
+            when(auctionDAO.findAll())
                     .thenThrow(new BusinessException("Lỗi nghiệp vụ"));
             when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
 
             handler.handle(exchange);
 
@@ -165,9 +186,10 @@ public class AuctionsHandlerTest {
         @Test
         @DisplayName("RuntimeException → 500 + ERROR")
         void getAuctions_runtimeException_returns500() throws IOException {
-            when(auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING))
+            when(auctionDAO.findAll())
                     .thenThrow(new RuntimeException("DB crash"));
             when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
 
             handler.handle(exchange);
 

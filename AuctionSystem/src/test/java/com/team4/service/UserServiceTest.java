@@ -128,7 +128,7 @@ public class UserServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 userService.updateProfile("unknown", "Name", "email@test.com", "0987654321")
             );
-            assertEquals("Người dùng không tồn tại", ex.getMessage());
+            assertEquals("User does not exist", ex.getMessage());
             verify(userDAO, never()).update(any());
         }
 

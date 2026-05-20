@@ -4,31 +4,33 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" prefWidth="400" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.team4.controller.AddProductDialogController">
+<VBox spacing="12" prefWidth="460" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.AddProductDialogController"
+      stylesheets="@style.css"
+      styleClass="dialog-root">
     <padding>
-        <Insets top="20" right="20" bottom="20" left="20"/>
+        <Insets top="24" right="24" bottom="24" left="24"/>
     </padding>
 
-    <Label text="Add New Product" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+    <Label text="Add New Product" styleClass="dialog-title"/>
     
-    <Label text="Product Name *"/>
-    <TextField fx:id="nameField" promptText="Enter product name (max 100 chars)"/>
+    <Label text="Product Name *" styleClass="form-label"/>
+    <TextField fx:id="nameField" promptText="Enter product name (max 100 chars)" styleClass="input-field"/>
     
-    <Label text="Category *"/>
-    <ComboBox fx:id="categoryBox" prefWidth="360" promptText="Select a category"/>
+    <Label text="Category *" styleClass="form-label"/>
+    <ComboBox fx:id="categoryBox" maxWidth="Infinity" promptText="Select a category" styleClass="admin-combo"/>
     
-    <Label text="Starting Price *"/>
-    <TextField fx:id="priceField" promptText="Min 50000 (multiples of 1000)"/>
-    <Label text="Min: 50K VND. Multiple of 1,000. Max: Electronics (5B), Vehicle (10B), Art/Collectible (2B), Fashion (500M)." style="-fx-font-size: 10px; -fx-text-fill: gray;" wrapText="true"/>
+    <Label text="Starting Price *" styleClass="form-label"/>
+    <TextField fx:id="priceField" promptText="Min 50000 (multiples of 1000)" styleClass="input-field"/>
+    <Label text="Min: 50K VND. Multiple of 1,000. Max: Electronics (5B), Vehicle (10B), Art/Collectible (2B), Fashion (500M)." styleClass="dialog-help" wrapText="true"/>
     
-    <Label text="Description"/>
-    <TextArea fx:id="descArea" prefRowCount="4" wrapText="true" promptText="Optional description (max 500 chars)"/>
+    <Label text="Description" styleClass="form-label"/>
+    <TextArea fx:id="descArea" prefRowCount="4" wrapText="true" promptText="Optional description (max 500 chars)" styleClass="input-field"/>
     
-    <Label fx:id="errorLabel" textFill="red" visible="false"/>
+    <Label fx:id="errorLabel" styleClass="error-message" visible="false" managed="false" wrapText="true"/>
     
-    <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button text="Cancel" onAction="#onCancel" style="-fx-background-color: #f44336; -fx-text-fill: white;"/>
-        <Button text="Save Product" onAction="#onSave" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+    <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="dialog-actions">
+        <Button text="Cancel" onAction="#onCancel" styleClass="btn-secondary" minWidth="96"/>
+        <Button text="Save Product" onAction="#onSave" styleClass="btn-primary" minWidth="132"/>
     </HBox>
 </VBox>
