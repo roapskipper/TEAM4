@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * Fashion: model cho nhóm hàng thời trang.
  */
 public class Fashion extends Item {
-    private static final long serialVersionUID = 1L;
+
     public enum Size {
         XS, S, M, L, XL, XXL, XXXL, OTHER
     }

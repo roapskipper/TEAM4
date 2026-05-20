@@ -1,8 +1,11 @@
 package com.team4.service;
 
-import com.team4.dao.impl.AuctionDAOImpl;
-import com.team4.model.Admin;
 import com.team4.dao.AuctionDAO;
+import com.team4.dto.auction.AuctionResponseDTO;
+import com.team4.dto.auth.UserResponseDTO;
+import com.team4.mapper.AuctionMapper;
+import com.team4.mapper.UserMapper;
+import com.team4.model.Admin;
 import com.team4.model.Auction;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
@@ -10,15 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Mục đích: Gom các use case quản trị cấp cao. Gọi AuctionService, UserService, ItemService thay vì tự viết lại logic.
- * Admin service điều phối, không copy nghiệp vụ của service khác.
+ * Điều phối các nghiệp vụ quản trị cấp cao.
  */
 public class AdminService {
-    private UserService userService;
-    private AuctionService auctionService;
-    private AuctionDAO auctionDAO;
+    private final UserService userService;
+    private final AuctionService auctionService;
+    private final AuctionDAO auctionDAO;
+    private static final Logger logger = LoggerFactory.getLogger(AdminService.class);
 
     public AdminService(UserService userService, AuctionService auctionService, AuctionDAO auctionDAO) {
         this.userService = userService;
@@ -26,68 +30,69 @@ public class AdminService {
         this.auctionDAO = auctionDAO;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(AdminService.class);
-
     /**
-     * Duyệt phiên đấu giá: ủy quyền cho AuctionService.approveAuction(...), kiểm tra admin có đủ quyền không
+     * Admin duyệt phiên đấu giá.
      */
     public void approveAuction(String adminId, String auctionId) {
         logger.info("Admin is approving auction: adminId={}, auctionId={}", adminId, auctionId);
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != User.Role.ADMIN) {
-            logger.warn("Auction approval failed: user does not have admin privileges. adminId={}", adminId);
-            throw new IllegalArgumentException("User is not an admin");
+        User admin = userService.getRawUserById(adminId);
+        if (admin.getRole() != User.Role.ADMIN) {
+            logger.warn("Approval failed: User is not an admin. adminId={}", adminId);
+            throw new BusinessException("User does not have admin privileges");
         }
         auctionService.approveAuction(auctionId);
         logger.info("Auction approved successfully: auctionId={} by adminId={}", auctionId, adminId);
     }
 
     /**
-     * Từ chối phiên đấu giá: ghi lý do từ chối, chuyển status → CANCELLED qua AuctionService
+     * Admin từ chối phê duyệt phiên đấu giá.
      */
     public void rejectAuction(String adminId, String auctionId) {
         logger.info("Admin is rejecting auction: adminId={}, auctionId={}", adminId, auctionId);
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != User.Role.ADMIN) {
-            logger.warn("Auction rejection failed: user does not have admin privileges. adminId={}", adminId);
-            throw new IllegalArgumentException("User is not an admin");
+        User admin = userService.getRawUserById(adminId);
+        if (admin.getRole() != User.Role.ADMIN) {
+            logger.warn("Rejection failed: User is not an admin. adminId={}", adminId);
+            throw new BusinessException("User does not have admin privileges");
         }
         auctionService.rejectAuction(auctionId);
         logger.info("Auction rejected successfully: auctionId={} by adminId={}", auctionId, adminId);
     }
 
     /**
-     * Admin hủy phiên đang chạy: kiểm tra quyền SUPER_ADMIN, gọi AuctionService.cancelAuction(...)
+     * Admin hủy phiên đấu giá đang chạy (Yêu cầu quyền SUPER_ADMIN).
      */
-    public void cancelAuctionByAdmin(String auctionId, String adminId) {
+    public void cancelAuctionByAdmin(String adminId, String auctionId) {
         logger.info("Admin is requesting auction cancellation: adminId={}, auctionId={}", adminId, auctionId);
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != User.Role.ADMIN) {
-            logger.warn("Auction cancellation failed: user does not have admin privileges. adminId={}", adminId);
-            throw new BusinessException("User is not an admin");
+        User admin = userService.getRawUserById(adminId);
+        if (admin.getRole() != User.Role.ADMIN) {
+            throw new BusinessException("User does not have admin privileges");
         }
+        
         Admin adm = (Admin) admin;
         if (adm.getAccessLevel() != Admin.AccessLevel.SUPER_ADMIN) {
-            logger.warn("Auction cancellation failed: SUPER_ADMIN privileges required. adminId={}, accessLevel={}", adminId, adm.getAccessLevel());
-            throw new BusinessException("Only Super Admin can cancel auctions");
+            logger.warn("Cancellation failed: SUPER_ADMIN privileges required. adminId={}", adminId);
+            throw new BusinessException("Only Super Admin can cancel active auctions");
         }
+        
         auctionService.cancelAuction(auctionId);
         logger.info("Super Admin cancelled auction successfully: auctionId={} by adminId={}", auctionId, adminId);
     }
 
     /**
-     * Xem toàn bộ danh sách user: ủy quyền cho UserService.getAllUsers()
+     * Xem danh sách tất cả người dùng trong hệ thống (DTO).
      */
-    public List<User> viewSystemUsers() {
-        logger.debug("Admin is viewing the system user list");
+    public List<UserResponseDTO> viewSystemUsers() {
+        logger.debug("Admin is viewing all system users");
         return userService.getAllUsers();
     }
 
     /**
-     * Xem toàn bộ phiên đấu giá: ủy quyền cho AuctionService.findByStatus(...) hoặc lấy tất cả
+     * Xem danh sách tất cả các phiên đấu giá trong hệ thống (DTO).
      */
-    public List<Auction> viewAllAuctions() {
+    public List<AuctionResponseDTO> viewAllAuctions() {
         logger.debug("Admin is viewing all auctions");
-        return auctionDAO.findAll();
+        return auctionDAO.findAll().stream()
+                .map(AuctionMapper::toAuctionResponseDTO)
+                .collect(Collectors.toList());
     }
 }
