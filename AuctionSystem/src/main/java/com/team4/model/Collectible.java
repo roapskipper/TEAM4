@@ -38,11 +38,34 @@ public class Collectible extends Item {
             return null;
         }
     }
+    private static final int ORIGIN_MAX_LENGTH = 120;
+    private static final int YEAR_MIN = -3000;
+
     private int yearOfOrigin;       // năm xuất xứ
     private RarityLevel rarityLevel;     // độ hiếm
     private ConditionGrade conditionGrade; // tình trạng
     private boolean hasCertificate;  // có chứng chỉ không
     private String origin;           // xuất xứ (quốc gia/vùng)
+
+    /**
+     * Validates required Collectible fields (rarity, condition) and optional year rules.
+     */
+    public static void validateCollectibleFields(
+            RarityLevel rarityLevel,
+            ConditionGrade conditionGrade,
+            int yearOfOrigin,
+            String origin) {
+        validateRarityLevel(rarityLevel);
+        validateConditionGrade(conditionGrade);
+        validateYearOfOrigin(yearOfOrigin);
+        if (origin != null) {
+            validateOrigin(origin);
+        }
+    }
+
+    private void validateCollectibleCategory() {
+        validateCollectibleFields(rarityLevel, conditionGrade, yearOfOrigin, origin);
+    }
 
     // Constructor dùng khi tạo Collectible mới (Seller đăng sản phẩm)
     public Collectible(String name,
@@ -62,10 +85,7 @@ public class Collectible extends Item {
         this.origin = (origin == null || origin.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(origin);
-        validateYearOfOrigin(this.yearOfOrigin);
-        validateRarityLevel(this.rarityLevel);
-        validateConditionGrade(this.conditionGrade);
-        validateOrigin(this.origin);
+        validateCollectibleCategory();
     }
 
     // Constructor dùng khi nạp từ DB
@@ -88,34 +108,33 @@ public class Collectible extends Item {
         this.origin = (origin == null || origin.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(origin);
-        validateYearOfOrigin(this.yearOfOrigin);
-        validateRarityLevel(this.rarityLevel);
-        validateConditionGrade(this.conditionGrade);
-        validateOrigin(this.origin);
+        validateCollectibleCategory();
     }
 
-    // Validate
     private static void validateYearOfOrigin(int year) {
         if (year == 0) return; // unknown
         int current = LocalDate.now().getYear();
-        final int MIN_YEAR = -3000;
-        if (year < MIN_YEAR || year > current) {
+        if (year < YEAR_MIN || year > current) {
             throw new IllegalArgumentException("Invalid production year. Valid range: " +
-                    MIN_YEAR + " .. " + current + " (Use '0' if the production year is unknown).");
+                    YEAR_MIN + " .. " + current + " (Use '0' if the production year is unknown).");
         }
     }
     private static void validateRarityLevel(RarityLevel rarity) {
-        if (rarity == null)
-           throw new IllegalArgumentException("Rarity level must not be blank.");
+        if (rarity == null) {
+            throw new IllegalArgumentException("Rarity level must not be blank.");
+        }
     }
     private static void validateConditionGrade(ConditionGrade grade) {
-        if (grade == null)
+        if (grade == null) {
             throw new IllegalArgumentException("Condition grade must not be blank.");
+        }
     }
     private static void validateOrigin(String origin) {
         if (origin == null) return;
         String o = origin.trim();
-        if (o.length() > 120) throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
+        if (o.length() > ORIGIN_MAX_LENGTH) {
+            throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
+        }
     }
     // Summary / toString
     @Override
