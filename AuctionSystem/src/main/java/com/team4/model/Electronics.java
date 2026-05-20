@@ -42,9 +42,11 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
+        // Default blank brand to Unknown
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Default blank model to Unknown
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
@@ -72,9 +74,11 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
+        // Default blank brand to Unknown
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Default blank model to Unknown
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
