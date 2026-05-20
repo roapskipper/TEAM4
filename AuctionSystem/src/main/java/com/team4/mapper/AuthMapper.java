@@ -1,18 +1,23 @@
 package com.team4.mapper;
 
-import com.team4.dto.auth.*;
-import com.team4.model.*;
+import com.team4.dto.auth.LoginResponseDTO;
+import com.team4.model.User;
 
 public class AuthMapper {
     /**
-     * Chuyển User từ model về dto
+     * Chuyển đổi từ User model sang LoginResponseDTO
      */
-    public static LoginResponseDTO loginResponseDTO(User user) {
+    public static LoginResponseDTO toLoginResponseDTO(User user, String token) {
         if (user == null) {
             return null;
         }
-        if (user instanceof Admin) {
-
-        }
+        return new LoginResponseDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getRole(),
+                user.getFullName(),
+                token
+        );
     }
+
 }

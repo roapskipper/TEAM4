@@ -1,4 +1,4 @@
-package com.team4.dto.socket;
+package com.team4.dto.bidding;
 
 import java.math.BigDecimal;
 

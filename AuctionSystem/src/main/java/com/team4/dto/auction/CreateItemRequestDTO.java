@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 
 public class CreateItemRequestDTO {
     private String name;
-    private String sellerId;
     private String description;
     private BigDecimal startingPrice;
     private Item.ItemCategory category;
@@ -14,9 +13,8 @@ public class CreateItemRequestDTO {
     private static final int OWNER_ID_MAX = 36;
 
     public CreateItemRequestDTO() {}
-    public CreateItemRequestDTO(String name,String sellerId, BigDecimal startingPrice, String description, Item.ItemCategory category) {
+    public CreateItemRequestDTO(String name, BigDecimal startingPrice, String description, Item.ItemCategory category) {
         this.name = name;
-        this.sellerId = sellerId;
         this.startingPrice = Item.money(startingPrice);
         this.description = description;
         this.category = category;
@@ -26,9 +24,6 @@ public class CreateItemRequestDTO {
     protected final void validateItemDTO() {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Tên mặt hàng không được để trống.");
-        }
-        if (sellerId == null || sellerId.isEmpty()) {
-            throw new IllegalArgumentException("sellerId không được null");
         }
         if (name.length() > NAME_MAX) {
             throw new IllegalArgumentException("Tên mặt hàng không được vượt quá " + NAME_MAX + " ký tự.");

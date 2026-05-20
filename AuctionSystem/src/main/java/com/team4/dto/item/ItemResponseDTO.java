@@ -1,8 +1,7 @@
-package com.team4.dto.auction;
+package com.team4.dto.item;
 
 import com.team4.model.Item;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 public class ItemResponseDTO {
     private String id;

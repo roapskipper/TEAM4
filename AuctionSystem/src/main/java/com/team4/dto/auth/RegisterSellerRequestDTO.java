@@ -38,10 +38,17 @@ public class RegisterSellerRequestDTO {
         if (storeName == null || storeName.isEmpty()) {
             throw new IllegalArgumentException("Tên cửa hàng khong được trống");
         }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu phải gồm 6 kí tự trở lên");
+        }
+
     }
 
     public String getUsername() {
         return username;
+    }
+    public String getPassword() {
+        return password;
     }
     public String getFullName() {
         return fullName;
@@ -55,6 +62,6 @@ public class RegisterSellerRequestDTO {
 
     @Override
     public String toString() {
-        return "RegisterBidderRequestDTO: username=" + username + ", fullName=" + fullName + ", email=" + email + ", storeName=" + storeName;
+        return "RegisterSellerRequestDTO: username=" + username + ", fullName=" + fullName + ", email=" + email + ", storeName=" + storeName;
     }
 }

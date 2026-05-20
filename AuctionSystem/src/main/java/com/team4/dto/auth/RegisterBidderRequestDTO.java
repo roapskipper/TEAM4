@@ -43,10 +43,19 @@ public class RegisterBidderRequestDTO {
         if (phoneNumber == null || !PHONE_PATTERN.matcher(phoneNumber).matches()) {
             throw new IllegalArgumentException("Số điện thoại không hợp lệ");
         }
+        if (shippingAddress == null || shippingAddress.isEmpty()) {
+            throw new IllegalArgumentException("Địa chỉ không được trống");
+        }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu phải gồm 6 kí tự trở lên");
+        }
     }
 
     public String getUsername() {
         return username;
+    }
+    public String getPassword() {
+        return password;
     }
     public String getFullName() {
         return fullName;

@@ -19,15 +19,4 @@ public class AuctionMapper {
                 auction.getEndTime().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), auction.getStatus(),
                 auction.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
     }
-
-    /**
-     * Chuyển Item từ Model về dto
-     */
-    public static ItemResponseDTO toItemResponseDTO(Item item) {
-        if (item == null) {
-            return null;
-        }
-        return new ItemResponseDTO(item.getId(), item.getName(), item.getStartingPrice(),
-                item.getCategory(), item.getOwnerId(), item.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-    }
 }

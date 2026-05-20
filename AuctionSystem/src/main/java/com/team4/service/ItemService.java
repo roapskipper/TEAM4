@@ -3,14 +3,15 @@ package com.team4.service;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.dto.auction.*;
+import com.team4.dto.item.*;
 import com.team4.factory.*;
-import com.team4.mapper.AuctionMapper;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.team4.mapper.ItemMapper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,16 +32,16 @@ public class ItemService {
     /**
      * Tạo mặt hàng mới: kiểm tra seller có tồn tại và đúng role không, tạo object Item qua Factory, lưu xuống DB
      */
-    public Item createItem(String sellerId, ItemRequest itemRequest) {
-        logger.info("Creating new item for seller: sellerId={}, itemName={}, category={}",
-                sellerId, itemRequest.getName(), itemRequest.getCategory());
+    public ItemResponseDTO createItem(String sellerId, CreateItemRequestDTO requestDTO) {
+        logger.info("Đang tạo mặt hàng mới cho người bán: sellerId={}, itemName={}, category={}", 
+                sellerId, requestDTO.getName(), requestDTO.getCategory());
         
         User seller = userDAO.findById(sellerId);
         if (seller == null || !(seller instanceof Seller)) {
-            logger.warn("Item creation failed: seller does not exist or is invalid. sellerId={}", sellerId);
-            throw new BusinessException("Seller does not exist.");
+            logger.warn("Tạo mặt hàng thất bại: Người bán không tồn tại hoặc không hợp lệ. sellerId={}", sellerId);
+            throw new BusinessException("Người bán không tồn tại.");
         }
-
+        
         // Map DTO to Factory Request
         ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
 
@@ -63,21 +64,21 @@ public class ItemService {
                 factory = new VehicleFactory();
                 break;
             default:
-                logger.warn("Item creation failed: invalid item category. category={}", itemRequest.getCategory());
-                throw new BusinessException("Invalid item category.");
+                logger.warn("Tạo mặt hàng thất bại: Loại mặt hàng không hợp lệ. category={}", itemRequest.getCategory());
+                throw new BusinessException("Loại mặt hàng không hợp lệ.");
         }
         // Tạo và lưu
         Item item = factory.createItem(itemRequest);
         if (!itemDAO.insert(item)) {
-            logger.error("System error: unable to save item to database. sellerId={}", sellerId);
-            throw new BusinessException("Unable to create item.");
+            logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+            throw new BusinessException("Không thể tạo mặt hàng.");
         }
         if (!item.getOwnerId().equals(sellerId)) {
-            logger.error("Security/data error: creator does not match item owner. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-            throw new BusinessException("ERROR: Seller is not the item owner.");
+            logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
+            throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
         }
         logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
-        return AuctionMapper.toItemResponseDTO(item);
+        return ItemMapper.toItemResponseDTO(item);
     }
 
     /**
@@ -87,45 +88,45 @@ public class ItemService {
         logger.info("Đang cập nhật mặt hàng: itemId={}, sellerId={}", itemId, sellerId);
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
-            logger.warn("Update failed: item does not exist. itemId={}", itemId);
-            throw new BusinessException("Item does not exist.");
+            logger.warn("Cập nhật thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
+            throw new BusinessException("Mặt hàng không tồn tại.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
-            logger.warn("Update failed: seller does not own this item. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Ownership error.");
+            logger.warn("Cập nhật thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
+            throw new BusinessException("Lỗi về quyền sở hữu.");
         }
         
         existingItem.setName(newName);
         existingItem.setDescription(newDescription);
         boolean updated = itemDAO.update(existingItem);
         if (updated) {
-            logger.info("Item updated successfully: itemId={}", itemId);
+            logger.info("Đã cập nhật thành công mặt hàng: itemId={}", itemId);
         } else {
-            logger.error("System error: unable to update item in database. itemId={}", itemId);
+            logger.error("Lỗi hệ thống: Không thể cập nhật mặt hàng vào database. itemId={}", itemId);
         }
-        return AuctionMapper.toItemResponseDTO(existingItem);
+        return ItemMapper.toItemResponseDTO(existingItem);
     }
 
     /**
      * Xóa mặt hàng
      */
     public void deleteItem(String itemId, String sellerId) {
-        logger.info("Deleting item: itemId={}, sellerId={}", itemId, sellerId);
+        logger.info("Đang xóa mặt hàng: itemId={}, sellerId={}", itemId, sellerId);
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
-            logger.warn("Delete failed: item does not exist. itemId={}", itemId);
-            throw new BusinessException("Item does not exist.");
+            logger.warn("Xóa thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
+            throw new BusinessException("Mặt hàng không tồn tại.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
-            logger.warn("Delete failed: seller does not own this item. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Ownership error.");
+            logger.warn("Xóa thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
+            throw new BusinessException("Lỗi về quyền sở hữu.");
         }
         
         boolean deleted = itemDAO.delete(itemId);
         if (deleted) {
-            logger.info("Item deleted successfully: itemId={}", itemId);
+            logger.info("Đã xóa thành công mặt hàng: itemId={}", itemId);
         } else {
-            logger.error("System error: unable to delete item in database. itemId={}", itemId);
+            logger.error("Lỗi hệ thống: Không thể xóa mặt hàng trong database. itemId={}", itemId);
         }
     }
 
@@ -135,8 +136,9 @@ public class ItemService {
     public List<ItemResponseDTO> getItemsByCategory(String category) {
         logger.debug("Đang lấy danh sách mặt hàng theo danh mục: category={}", category);
         return itemDAO.findByCategory(category).stream()
-                .map(AuctionMapper::toItemResponseDTO)
+                .map(ItemMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
+
     }
 
     /**
@@ -145,7 +147,7 @@ public class ItemService {
     public List<ItemResponseDTO> findByOwnerId(String sellerId) {
         logger.debug("Đang lấy danh sách mặt hàng của người sở hữu: sellerId={}", sellerId);
         return itemDAO.findByOwnerId(sellerId).stream()
-                .map(AuctionMapper::toItemResponseDTO)
+                .map(ItemMapper::toItemResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -157,11 +159,12 @@ public class ItemService {
         if (item == null) {
             throw new BusinessException("Mặt hàng không tồn tại.");
         }
-        return AuctionMapper.toItemResponseDTO(item);
+        return ItemMapper
+                .toItemResponseDTO(item);
     }
 
     /**
-     * Lấy đối tượng Item gốc (model) theo ID để sử dụng nội bộ trong server
+     * Lấy đối tượng Item gốc (model) theo ID để sử dụng nội bộ trong server (nếu cần)
      */
     public Item getRawItemById(String itemId) {
         return itemDAO.findById(itemId);

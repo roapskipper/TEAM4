@@ -1,12 +1,13 @@
-package com.team4.dto.auction;
+package com.team4.dto.item;
 
+import com.team4.dto.auction.CreateItemRequestDTO;
 import com.team4.model.Collectible;
 import com.team4.model.Item;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class CreateCollectibleRequestDTO extends CreateItemRequestDTO{
+public class CreateCollectibleRequestDTO extends CreateItemRequestDTO {
     private int yearOfOrigin;       // năm xuất xứ
     private Collectible.RarityLevel rarityLevel;     // độ hiếm
     private Collectible.ConditionGrade conditionGrade; // tình trạng

@@ -1,5 +1,6 @@
-package com.team4.dto.auction;
+package com.team4.dto.item;
 
+import com.team4.dto.auction.CreateItemRequestDTO;
 import com.team4.model.Electronics;
 import com.team4.model.Item;
 
