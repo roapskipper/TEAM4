@@ -37,6 +37,7 @@ public class ItemService {
             logger.warn("Item creation failed: seller does not exist or is invalid. sellerId={}", sellerId);
             throw new BusinessException("Seller does not exist.");
         }
+        validateCommonItemRequest(itemRequest);
         // Chọn Factory
         ItemFactory factory;
         switch (itemRequest.getCategory()) {
@@ -71,6 +72,23 @@ public class ItemService {
         }
         logger.info("Item created successfully: itemId={}, name={}", item.getId(), item.getName());
         return item;
+    }
+
+    /**
+     * Rejects invalid common item payloads before factory construction and DB insert.
+     */
+    private void validateCommonItemRequest(ItemRequest itemRequest) {
+        try {
+            Item.validateCommonFields(
+                    itemRequest.getName(),
+                    itemRequest.getStartingPrice(),
+                    itemRequest.getDescription(),
+                    itemRequest.getCategory(),
+                    itemRequest.getOwnerId());
+        } catch (IllegalArgumentException ex) {
+            logger.warn("Item creation failed: invalid common fields. reason={}", ex.getMessage());
+            throw new BusinessException(ex.getMessage());
+        }
     }
 
     /**
