@@ -182,6 +182,31 @@ public class ItemServiceTest {
                 itemService.createItem(sellerId, createArtRequest(sellerId, "Hỏng"))
             );
         }
+
+        @Test
+        @DisplayName("Kiểm tra flow tạo Item và validate error message consistency")
+        void testItemCreationFlow_ValidationOrderAndErrorConsistency() {
+            String sellerId = "seller-flow-1";
+            Seller realSeller = createRealSeller(sellerId);
+            when(userDAO.findById(sellerId)).thenReturn(realSeller);
+            
+            // 1. Common validation fails first
+            ItemRequest req = createArtRequest(sellerId, "   "); // Blank name
+            BusinessException ex1 = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals(Item.ValidationMessages.NAME_REQUIRED, ex1.getMessage());
+            
+            // 2. Fix common, category validation fails next
+            req.setName("Tranh hợp lệ");
+            req.setMedium(null); // Missing required field for ART
+            BusinessException ex2 = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Art medium is required.", ex2.getMessage()); // Message from Art validation
+            
+            // 3. Fix category, creation succeeds
+            req.setMedium(Art.Medium.OIL_PAINT);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+            Item result = itemService.createItem(sellerId, req);
+            assertNotNull(result);
+        }
     }
 
     @Nested

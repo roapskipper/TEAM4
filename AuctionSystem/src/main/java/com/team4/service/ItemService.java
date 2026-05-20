@@ -27,7 +27,19 @@ public class ItemService {
     }
 
     /**
-     * Tạo mặt hàng mới: kiểm tra seller có tồn tại và đúng role không, tạo object Item qua Factory, lưu xuống DB
+     * Tạo mặt hàng mới.
+     * <p>
+     * Validation Flow:
+     * 1. Check if the user is a valid Seller.
+     * 2. Common validation via Item.validateCommonFields().
+     * 3. Apply defaults via ItemRequestDefaults.apply().
+     * 4. Category-specific validation occurs in the Model constructors during ItemFactory.createItem().
+     * <p>
+     * Any validation failure (IllegalArgumentException) is caught and wrapped in a consistent BusinessException.
+     * 
+     * @param sellerId ID người bán
+     * @param itemRequest Dữ liệu yêu cầu tạo item
+     * @return Item đã được tạo và lưu vào DB
      */
     public Item createItem(String sellerId, ItemRequest itemRequest) {
         logger.info("Creating new item for seller: sellerId={}, itemName={}, category={}", 
@@ -38,39 +50,19 @@ public class ItemService {
             logger.warn("Item creation failed: seller does not exist or is invalid. sellerId={}", sellerId);
             throw new BusinessException("Seller does not exist.");
         }
-        validateCommonItemRequest(itemRequest);
-        validateCategorySpecificRequest(itemRequest);
-        ItemRequestDefaults.apply(itemRequest);
-        // Chọn Factory
-        ItemFactory factory;
-        switch (itemRequest.getCategory()) {
-            case ART:
-                factory = new ArtFactory();
-                break;
-            case COLLECTIBLE:
-                factory = new CollectibleFactory();
-                break;
-            case ELECTRONICS:
-                factory = new ElectronicsFactory();
-                break;
-            case FASHION:
-                factory = new FashionFactory();
-                break;
-            case VEHICLE:
-                factory = new VehicleFactory();
-                break;
-            default:
-                logger.warn("Item creation failed: invalid item category. category={}", itemRequest.getCategory());
-                throw new BusinessException("Invalid item category.");
-        }
-        // Tạo và lưu
+
         Item item;
         try {
+            validateCommonItemRequest(itemRequest);
+            ItemRequestDefaults.apply(itemRequest);
+            
+            ItemFactory factory = getFactory(itemRequest.getCategory());
             item = factory.createItem(itemRequest);
         } catch (IllegalArgumentException ex) {
-            logger.warn("Item creation failed: invalid category specific fields. reason={}", ex.getMessage());
+            logger.warn("Item validation failed: {}", ex.getMessage());
             throw new BusinessException(ex.getMessage());
         }
+
         if (!itemDAO.insert(item)) {
             logger.error("System error: unable to save item to database. sellerId={}", sellerId);
             throw new BusinessException("Unable to create item.");
@@ -83,40 +75,36 @@ public class ItemService {
         return item;
     }
 
-    /**
-     * Rejects invalid category-specific payloads before factory construction.
-     */
-    private void validateCategorySpecificRequest(ItemRequest itemRequest) {
-        if (itemRequest.getCategory() != Item.ItemCategory.COLLECTIBLE) {
-            return;
+    private ItemFactory getFactory(Item.ItemCategory category) {
+        if (category == null) {
+            throw new IllegalArgumentException("Invalid item category.");
         }
-        try {
-            Collectible.validateCollectibleFields(
-                    itemRequest.getRarityLevel(),
-                    itemRequest.getConditionGrade(),
-                    itemRequest.getYearOfOrigin(),
-                    itemRequest.getOrigin());
-        } catch (IllegalArgumentException ex) {
-            logger.warn("Item creation failed: invalid Collectible fields. reason={}", ex.getMessage());
-            throw new BusinessException(ex.getMessage());
+        switch (category) {
+            case ART:
+                return new ArtFactory();
+            case COLLECTIBLE:
+                return new CollectibleFactory();
+            case ELECTRONICS:
+                return new ElectronicsFactory();
+            case FASHION:
+                return new FashionFactory();
+            case VEHICLE:
+                return new VehicleFactory();
+            default:
+                throw new IllegalArgumentException("Invalid item category.");
         }
     }
 
     /**
-     * Rejects invalid common item payloads before factory construction and DB insert.
+     * Rejects invalid common item payloads before factory construction.
      */
     private void validateCommonItemRequest(ItemRequest itemRequest) {
-        try {
-            Item.validateCommonFields(
-                    itemRequest.getName(),
-                    itemRequest.getStartingPrice(),
-                    itemRequest.getDescription(),
-                    itemRequest.getCategory(),
-                    itemRequest.getOwnerId());
-        } catch (IllegalArgumentException ex) {
-            logger.warn("Item creation failed: invalid common fields. reason={}", ex.getMessage());
-            throw new BusinessException(ex.getMessage());
-        }
+        Item.validateCommonFields(
+                itemRequest.getName(),
+                itemRequest.getStartingPrice(),
+                itemRequest.getDescription(),
+                itemRequest.getCategory(),
+                itemRequest.getOwnerId());
     }
 
     /**
