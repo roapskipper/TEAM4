@@ -40,6 +40,7 @@ public class ItemService {
         }
         validateCommonItemRequest(itemRequest);
         validateCategorySpecificRequest(itemRequest);
+        ItemRequestDefaults.apply(itemRequest);
         // Chọn Factory
         ItemFactory factory;
         switch (itemRequest.getCategory()) {

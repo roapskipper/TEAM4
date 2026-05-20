@@ -77,6 +77,42 @@ public class ItemServiceTest {
         return req;
     }
 
+    private ItemRequest createElectronicsRequest(String ownerId, String name) {
+        ItemRequest req = new ItemRequest();
+        req.setCategory(Item.ItemCategory.ELECTRONICS);
+        req.setName(name);
+        req.setDescription("Mô tả " + name);
+        req.setStartingPrice(new BigDecimal("1000.00"));
+        req.setOwnerId(ownerId);
+        req.setItemCondition(Electronics.ConditionGrade.GOOD);
+        req.setWarrantyMonths(12);
+        return req;
+    }
+
+    private ItemRequest createFashionRequest(String ownerId, String name) {
+        ItemRequest req = new ItemRequest();
+        req.setCategory(Item.ItemCategory.FASHION);
+        req.setName(name);
+        req.setDescription("Mô tả " + name);
+        req.setStartingPrice(new BigDecimal("200.00"));
+        req.setOwnerId(ownerId);
+        req.setSize(Fashion.Size.M);
+        req.setCondition(Fashion.ConditionGrade.GOOD);
+        return req;
+    }
+
+    private ItemRequest createVehicleRequest(String ownerId, String name) {
+        ItemRequest req = new ItemRequest();
+        req.setCategory(Item.ItemCategory.VEHICLE);
+        req.setName(name);
+        req.setDescription("Mô tả " + name);
+        req.setStartingPrice(new BigDecimal("50000.00"));
+        req.setOwnerId(ownerId);
+        req.setOdo(10000);
+        req.setEngineType(Vehicle.EngineType.GASOLINE);
+        return req;
+    }
+
     @Nested
     @DisplayName("Nghiệp vụ Tạo mặt hàng (Create Item)")
     class CreateItemTests {
@@ -272,6 +308,101 @@ public class ItemServiceTest {
             assertNotNull(result);
             assertEquals(0, result.getStartingPrice().compareTo(BigDecimal.ZERO));
             verify(itemDAO).insert(any(Item.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("Default normalization khi tạo mặt hàng")
+    class CategoryDefaultNormalizationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Art: artist trống -> Unknown")
+        void testCreateItem_Art_BlankArtistDefaultsToUnknown() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Tranh");
+            req.setArtist("  ");
+            req.setCreationYear(0);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Art art = (Art) itemService.createItem(sellerId, req);
+
+            assertEquals("Unknown", art.getArtist());
+            assertEquals(0, art.getCreationYear());
+        }
+
+        @Test
+        @DisplayName("Electronics: brand/model trống -> Unknown")
+        void testCreateItem_Electronics_BlankBrandModel() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createElectronicsRequest(sellerId, "Laptop");
+            req.setBrand("");
+            req.setModel(null);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Electronics elec = (Electronics) itemService.createItem(sellerId, req);
+
+            assertEquals("Unknown", elec.getBrand());
+            assertEquals("Unknown", elec.getModel());
+        }
+
+        @Test
+        @DisplayName("Fashion: gender null -> UNISEX")
+        void testCreateItem_Fashion_NullGenderDefaultsToUnisex() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createFashionRequest(sellerId, "Áo");
+            req.setGender(null);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Fashion fash = (Fashion) itemService.createItem(sellerId, req);
+
+            assertEquals(Fashion.Gender.UNISEX, fash.getGender());
+        }
+
+        @Test
+        @DisplayName("Vehicle: transmission null -> OTHER")
+        void testCreateItem_Vehicle_NullTransmissionDefaultsToOther() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createVehicleRequest(sellerId, "Xe");
+            req.setTransmission(null);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Vehicle veh = (Vehicle) itemService.createItem(sellerId, req);
+
+            assertEquals(Vehicle.Transmission.OTHER, veh.getTransmission());
+        }
+
+        @Test
+        @DisplayName("Art: default artist không bỏ qua validation medium bắt buộc")
+        void testCreateItem_Art_DefaultsDoNotBypassRequiredMedium() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Tranh lỗi");
+            req.setArtist(null);
+            req.setMedium(null);
+
+            assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Electronics: default brand không bỏ qua validation condition bắt buộc")
+        void testCreateItem_Electronics_DefaultsDoNotBypassRequiredCondition() {
+            String sellerId = "seller-def-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createElectronicsRequest(sellerId, "Máy hỏng");
+            req.setBrand("  ");
+            req.setItemCondition(null);
+
+            assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            verify(itemDAO, never()).insert(any());
         }
     }
 
