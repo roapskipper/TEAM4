@@ -135,7 +135,7 @@ public class Fashion extends Item {
     }
     private static void validateSize(Size size) {
         if  (size == null)
-            throw new IllegalArgumentException("Size must not be null.");
+            throw new IllegalArgumentException("Fashion size is required.");
     }
     private static void validateMaterial(String material) {
         if (material == null) return;
@@ -153,7 +153,7 @@ public class Fashion extends Item {
         if (gender == null) throw new IllegalArgumentException("Gender must not be null.");
     }
     private static void validateCondition(ConditionGrade condition) {
-        if (condition == null) throw new IllegalArgumentException("Condition grade must not be null.");
+        if (condition == null) throw new IllegalArgumentException("Fashion condition grade is required.");
     }
     // Summary / toString
     @Override
