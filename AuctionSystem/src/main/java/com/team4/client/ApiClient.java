@@ -25,6 +25,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
+import io.github.cdimascio.dotenv.Dotenv;
 import com.team4.model.Item;
 import com.team4.model.Art;
 import com.team4.model.Collectible;
@@ -33,7 +34,25 @@ import com.team4.model.Fashion;
 import com.team4.model.Vehicle;
 
 public class ApiClient {
-    private static final String API_URL = "http://localhost:8080/api/";
+    private static final String API_URL;
+
+    static {
+        Dotenv dotenv = loadDotenv();
+        String url = dotenv.get("API_BASE_URL", null);
+        API_URL = (url != null && !url.isBlank()) ? url : "http://localhost:8080/api/";
+    }
+
+    private static Dotenv loadDotenv() {
+        try {
+            Dotenv d = Dotenv.configure().ignoreIfMissing().load();
+            if (d.get("API_BASE_URL") != null) return d;
+        } catch (Exception ignored) {}
+        try {
+            Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
+            if (d.get("API_BASE_URL") != null) return d;
+        } catch (Exception ignored) {}
+        return Dotenv.configure().ignoreIfMissing().load();
+    }
     private final HttpClient client;
     private final Gson gson;
 
