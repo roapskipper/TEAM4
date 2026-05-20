@@ -47,11 +47,15 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(name, startingPrice, description, ItemCategory.ART, ownerId);
+        // Default blank artist to Unknown
         this.artist = (artist == null || artist.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(artist);
+        // Treat missing or zero creationYear as 0 (Unknown)
         this.creationYear = creationYear;
+        // Require medium
         this.medium = medium;
+        // Keep dimensions optional
         this.dimensions = normalizeOptional(dimensions);
         validateArtist(this.artist);
         validateDimensions(this.dimensions);
@@ -70,11 +74,15 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ART, ownerId);
+        // Default blank artist to Unknown
         this.artist = (artist == null || artist.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(artist);
+        // Treat missing or zero creationYear as 0 (Unknown)
         this.creationYear = creationYear;
+        // Require medium
         this.medium = medium;
+        // Keep dimensions optional
         this.dimensions = normalizeOptional(dimensions);
         validateArtist(this.artist);
         validateDimensions(this.dimensions);
