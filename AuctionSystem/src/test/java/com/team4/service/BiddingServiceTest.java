@@ -113,7 +113,7 @@ public class BiddingServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 biddingService.placeBid("auc-1", sellerId, new BigDecimal("500.00"))
             );
-            assertTrue(ex.getMessage().contains("Người bán không được đặt giá"));
+            assertTrue(ex.getMessage().contains("Seller cannot bid"));
         }
 
         @Test

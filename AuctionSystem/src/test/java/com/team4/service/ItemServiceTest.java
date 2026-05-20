@@ -102,7 +102,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 itemService.createItem(sellerId, req)
             );
-            assertEquals("Người bán không tồn tại.", ex.getMessage());
+            assertEquals("Seller does not exist.", ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -173,7 +173,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 itemService.updateItem(hackerId, itemId, "Hack", "Hack")
             );
-            assertEquals("Lỗi về quyền sở hữu.", ex.getMessage());
+            assertEquals("Ownership error.", ex.getMessage());
             verify(itemDAO, never()).update(any());
         }
     }
