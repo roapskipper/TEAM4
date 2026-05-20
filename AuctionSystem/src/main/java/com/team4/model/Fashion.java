@@ -4,6 +4,15 @@ import java.time.LocalDateTime;
 
 /**
  * Fashion: model cho nhóm hàng thời trang.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>size</b>: Required. Cannot be null.</li>
+ * <li><b>condition</b>: Required. Cannot be null.</li>
+ * <li><b>gender</b>: Required. Defaults to UNISEX if blank or missing.</li>
+ * <li><b>brand, material, color</b>: Optional. Defaults to "Unknown" if blank.</li>
+ * <li><b>authentic</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Fashion extends Item {
     private static final long serialVersionUID = 1L;
