@@ -125,6 +125,24 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    public User findByEmail(String email) {
+        String sql = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToUser(rs);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Unable to find user with email={}", email, e);
+        }
+        return null;
+    }
+
+    @Override
     public boolean insert(User user) {
         String sql = "INSERT INTO users (id, created_at, username, password_hash, full_name, email, role, balance, " +
                 "access_level, admin_code_hash, shipping_address, phone_number, store_name, rating) " +

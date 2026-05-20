@@ -29,6 +29,14 @@ public class AuthenticationService {
             logger.warn("Bidder registration failed because username already exists username={}", username);
             throw new BusinessException("Username already exists");
         }
+        if (userDAO.findByEmail(email) != null) {
+            logger.warn("Bidder registration failed because email already exists email={}", email);
+            throw new BusinessException("Email already exists");
+        }
+        if (rawPassword == null || rawPassword.length() < 8) {
+            logger.warn("Bidder registration failed because password is too short");
+            throw new BusinessException("Password must be at least 8 characters long");
+        }
         // Nếu username hợp lệ thì tạo bidder mới
         // model Bidder sẽ tự động validate fields
         String hashedPassword = PasswordHasher.hashPassword(rawPassword);
@@ -48,6 +56,14 @@ public class AuthenticationService {
         if (userDAO.findByUsername(username) != null) {
             logger.warn("Seller registration failed because username already exists username={}", username);
             throw new BusinessException("Username already exists");
+        }
+        if (userDAO.findByEmail(email) != null) {
+            logger.warn("Seller registration failed because email already exists email={}", email);
+            throw new BusinessException("Email already exists");
+        }
+        if (rawPassword == null || rawPassword.length() < 8) {
+            logger.warn("Seller registration failed because password is too short");
+            throw new BusinessException("Password must be at least 8 characters long");
         }
         String hashedPassword = PasswordHasher.hashPassword(rawPassword);
         Seller seller = new Seller(username, hashedPassword, fullName, email, storeName);

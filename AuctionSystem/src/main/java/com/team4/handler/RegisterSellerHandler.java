@@ -48,7 +48,7 @@ public class RegisterSellerHandler implements HttpHandler {
                     storeName != null ? storeName : ""
             );
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Seller thanh cong!", null));
-        } catch (BusinessException e) {
+        } catch (BusinessException | IllegalArgumentException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();
