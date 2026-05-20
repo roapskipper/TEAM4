@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 
 public class CreateItemRequestDTO {
     private String name;
+    private String sellerId;
     private String description;
     private BigDecimal startingPrice;
     private Item.ItemCategory category;
@@ -13,8 +14,9 @@ public class CreateItemRequestDTO {
     private static final int OWNER_ID_MAX = 36;
 
     public CreateItemRequestDTO() {}
-    public CreateItemRequestDTO(String name, BigDecimal startingPrice, String description, Item.ItemCategory category) {
+    public CreateItemRequestDTO(String name, String sellerId, BigDecimal startingPrice, String description, Item.ItemCategory category) {
         this.name = name;
+        this.sellerId = sellerId;
         this.startingPrice = Item.money(startingPrice);
         this.description = description;
         this.category = category;
@@ -57,7 +59,7 @@ public class CreateItemRequestDTO {
 
     @Override
     public String toString() {
-        return "Item: " +
+        return "ItemRequestDTO: " +
                 " | name: " + name +
                 " | startingPrice: " + (startingPrice==null ? "n/a" : startingPrice.toPlainString()) +
                 " | category: " + category ;

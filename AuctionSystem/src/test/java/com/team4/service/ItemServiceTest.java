@@ -49,18 +49,17 @@ public class ItemServiceTest {
     }
 
     // Helper tạo Request thật
-    private ItemRequest createArtRequest(String ownerId, String name) {
-        ItemRequest req = new ItemRequest();
-        req.setCategory(Item.ItemCategory.ART);
-        req.setName(name);
-        req.setDescription("Mô tả " + name);
-        req.setStartingPrice(new BigDecimal("100.00"));
-        req.setOwnerId(ownerId);
-        req.setArtist("Họa sĩ");
-        req.setCreationYear(2024);
-        req.setMedium(Art.Medium.OIL_PAINT);
-        req.setDimensions("50x50");
-        return req;
+    private CreateArtRequestDTO createArtRequest(String ownerId, String name) {
+        return new CreateArtRequestDTO(
+                name,
+                new BigDecimal("100.00"),
+                "Mô tả " + name,
+                Item.ItemCategory.ART,
+                "Họa sĩ",
+                2024,
+                Art.Medium.OIL_PAINT,
+                "50x50"
+        );
     }
 
     @Nested
@@ -73,18 +72,17 @@ public class ItemServiceTest {
             // GIVEN: Một Seller hợp lệ và một yêu cầu tạo tranh (ART)
             String sellerId = "seller-123";
             Seller realSeller = createRealSeller(sellerId);
-            ItemRequest req = createArtRequest(sellerId, "Bức tranh quý");
+            CreateArtRequestDTO req = createArtRequest(sellerId, "Bức tranh quý");
 
             when(userDAO.findById(sellerId)).thenReturn(realSeller);
             when(itemDAO.insert(any(Item.class))).thenReturn(true);
 
             // WHEN: Gọi nghiệp vụ tạo mặt hàng
-            Item result = itemService.createItem(sellerId, req);
+            ItemResponseDTO result = itemService.createItem(sellerId, req);
 
             // THEN: 
             // 1. Kết quả trả về không null và đúng loại Art
             assertNotNull(result);
-            assertTrue(result instanceof Art);
             assertEquals("Bức tranh quý", result.getName());
             // 2. Phải gọi DAO để lưu vào DB
             verify(itemDAO).insert(any(Item.class));
@@ -95,7 +93,7 @@ public class ItemServiceTest {
         void testCreateItem_SellerNotFound() {
             // GIVEN: Không tìm thấy user trong DB
             String sellerId = "unknown";
-            ItemRequest req = createArtRequest(sellerId, "Vô danh");
+            CreateArtRequestDTO req = createArtRequest(sellerId, "Vô danh");
             when(userDAO.findById(sellerId)).thenReturn(null);
 
             // WHEN & THEN: Kỳ vọng ném BusinessException
@@ -112,7 +110,7 @@ public class ItemServiceTest {
             // GIVEN: User tồn tại nhưng là Bidder (không có quyền bán)
             String bidderId = "bidder-456";
             Bidder realBidder = new Bidder(bidderId, LocalDateTime.now(), "bidder1", "hash", "Người mua", "b@test.com", BigDecimal.ZERO, "HN", "0912383838");
-            ItemRequest req = createArtRequest(bidderId, "Tranh lậu");
+            CreateArtRequestDTO req = createArtRequest(bidderId, "Tranh lậu");
 
             when(userDAO.findById(bidderId)).thenReturn(realBidder);
 
@@ -150,11 +148,10 @@ public class ItemServiceTest {
             when(itemDAO.update(any())).thenReturn(true);
 
             // WHEN: Cập nhật thông tin mới
-            Item result = itemService.updateItem(sellerId, itemId, "Mới", "Mô tả mới");
+            ItemResponseDTO result = itemService.updateItem(sellerId, itemId, "Mới", "Mô tả mới");
 
             // THEN: Thông tin trong đối tượng trả về phải thay đổi
             assertEquals("Mới", result.getName());
-            assertEquals("Mô tả mới", result.getDescription());
             verify(itemDAO).update(existingArt);
         }
 
@@ -221,7 +218,7 @@ public class ItemServiceTest {
             ));
 
             // WHEN
-            List<Item> results = itemService.getItemsByCategory("ART");
+            List<ItemResponseDTO> results = itemService.getItemsByCategory("ART");
 
             // THEN
             assertEquals(1, results.size());
@@ -233,7 +230,7 @@ public class ItemServiceTest {
         void testGetByCategory_Empty() {
             when(itemDAO.findByCategory("VEHICLE")).thenReturn(Collections.emptyList());
 
-            List<Item> results = itemService.getItemsByCategory("VEHICLE");
+            List<ItemResponseDTO> results = itemService.getItemsByCategory("VEHICLE");
 
             assertTrue(results.isEmpty());
         }
@@ -246,7 +243,7 @@ public class ItemServiceTest {
                 new Art("1", new BigDecimal("10"), "T1", ownerId, "A1", 2020, Art.Medium.OIL_PAINT, "10x10")
             ));
 
-            List<Item> results = itemService.findByOwnerId(ownerId);
+            List<ItemResponseDTO> results = itemService.findByOwnerId(ownerId);
 
             assertEquals(1, results.size());
             assertEquals(ownerId, results.get(0).getOwnerId());

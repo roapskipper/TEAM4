@@ -4,23 +4,28 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class CreateAuctionRequestDTO {
-    private final String itemId;
-    private final BigDecimal startingPrice;
-    private final BigDecimal bidIncrement;
-    private final LocalDateTime endTime;
+    private String itemId;
+    private String sellerId;
+    private BigDecimal startingPrice;
+    private BigDecimal bidIncrement;
+    private LocalDateTime endTime;
 
-    public CreateAuctionRequestDTO(String itemId, BigDecimal startingPrice, BigDecimal bidIncrement, LocalDateTime endTime) {
+    public CreateAuctionRequestDTO() {}
+    public CreateAuctionRequestDTO(String itemId, String sellerId, BigDecimal startingPrice, BigDecimal bidIncrement, LocalDateTime endTime) {
         this.itemId = itemId;
+        this.sellerId = sellerId;
         this.startingPrice = startingPrice;
         this.bidIncrement = bidIncrement;
         this.endTime = endTime;
-        validate();
+        validateAuctionRequestDTO();
     }
 
-    public void validate() {
+    public void validateAuctionRequestDTO() {
         if (itemId == null || itemId.trim().isEmpty()) {
             throw new IllegalArgumentException("ItemId không được để trống.");
         }
+        if (sellerId == null)
+            throw new IllegalArgumentException("SellerId không được để trống");
         if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0.");
         }
@@ -39,9 +44,10 @@ public class CreateAuctionRequestDTO {
     public BigDecimal getStartingPrice() { return startingPrice; }
     public BigDecimal getBidIncrement() { return bidIncrement; }
     public LocalDateTime getEndTime() { return endTime; }
+    public String getSellerId() { return sellerId; }
 
     @Override
     public String toString() {
-        return "CreateAuction: itemId=" + itemId + " | startingPrice=" + startingPrice;
+        return "CreateAuction: itemId=" + itemId + " , startingPrice=" + startingPrice + ", bidIncrement=" + bidIncrement;
     }
 }

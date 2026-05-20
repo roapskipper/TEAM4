@@ -4,12 +4,17 @@ import com.team4.dao.AuctionDAO;
 import com.team4.model.Auction;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.team4.mapper.AuctionMapper;
+
+import java.util.ArrayList;
 import java.util.List;
 import com.team4.dao.ItemDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.team4.model.Item;
 import com.team4.util.BusinessException;
+import com.team4.dto.auction.CreateAuctionRequestDTO;
+import com.team4.dto.auction.AuctionResponseDTO;
 
 /**
  * Mục đích: Quản lý vòng đời phiên đấu giá. Dùng AuctionDAO, ItemDAO, có thể dùng UserDAO.
@@ -29,10 +34,15 @@ public class AuctionService {
     /**
      * Tạo phiên đấu giá mới: kiểm tra item hợp lệ và thuộc về seller, tạo Auction với status PENDING, lưu DB
      */
-    public Auction createAuction(String itemId, String sellerId, BigDecimal startingPrice, BigDecimal bidIncrement, LocalDateTime endTime) {
+    public Auction createAuction(CreateAuctionRequestDTO createAuctionRequestDTO) {
+        String itemId            = createAuctionRequestDTO.getItemId();
+        String sellerId          = createAuctionRequestDTO.getSellerId();
+        BigDecimal startingPrice = createAuctionRequestDTO.getStartingPrice();
+        BigDecimal bidIncrement  = createAuctionRequestDTO.getBidIncrement();
+        LocalDateTime endTime    = createAuctionRequestDTO.getEndTime();
         // Kiểm tra
         logger.info("Đang tạo phiên đấu giá itemId={} sellerId={} startingPrice={} bidIncrement={} endTime={}",
-                itemId, sellerId, startingPrice, bidIncrement, endTime);
+        itemId, sellerId, startingPrice, bidIncrement, endTime);
         Item item = itemDAO.findById(itemId);
         if (item == null) {
             logger.warn("Tạo phiên đấu giá thất bại vì mặt hàng không tồn tại itemId={}", itemId);
@@ -51,6 +61,14 @@ public class AuctionService {
     }
 
     /**
+     * Phương thức chuyển model thành dto
+     * Hoạt động khi người dùng gọi response dto
+     */
+    public AuctionResponseDTO toAuctionResponseDTO(String auctionId) {
+        Auction auction = getAuctionById(auctionId);
+        return AuctionMapper.toAuctionResponseDTO(auction);
+    }
+    /**
      * Lấy thông tin chi tiết 1 phiên đấu giá theo id
      */
     public Auction getAuctionById(String auctionId) {
@@ -62,13 +80,27 @@ public class AuctionService {
         }
         return auction;
     }
-
     /**
-     * Lấy danh sách phiên theo trạng thái, dùng cho trang chủ (ACTIVE) hoặc scheduler (kiểm tra hết hạn)
+     * Lấy danh sách Auction theo status
+     * Dùng cho đội ngũ admin
      */
-    public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
+    public List<Auction> getAuctionByStatus(Auction.AuctionStatus status) {
         logger.debug("Đang lấy danh sách phiên đấu giá theo trạng thái status={}", status);
         return auctionDAO.findByStatus(status);
+
+    }
+    /**
+     * Lấy danh AuctionResponseDTO sách phiên theo trạng thái
+     * Dungf cho client
+     */
+    public List<AuctionResponseDTO> getAuctionResponseDTOByStatus(Auction.AuctionStatus status) {
+        logger.debug("Đang lấy danh sách phiên đấu giá theo trạng thái status={}", status);
+        List<Auction> auctionList = auctionDAO.findByStatus(status);
+        List<AuctionResponseDTO> auctionResponseDTOList = new ArrayList<>();
+        for  (Auction auction : auctionList) {
+            auctionResponseDTOList.add(AuctionMapper.toAuctionResponseDTO(auction));
+        }
+        return auctionResponseDTOList;
     }
 
     /**

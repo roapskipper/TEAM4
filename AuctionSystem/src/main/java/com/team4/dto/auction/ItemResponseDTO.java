@@ -7,21 +7,25 @@ import java.time.LocalDateTime;
 public class ItemResponseDTO {
     private String id;
     private String name;
-    private String description;
     private BigDecimal startingPrice;
     private Item.ItemCategory category;
     private String ownerId;
-    private LocalDateTime createdAt;
-    private String summary; // Chứa thông tin đặc thù của từng loại sản phẩm (từ model.summary())
+    private String createdAt;
 
     public ItemResponseDTO() {}
+    public ItemResponseDTO(String id, String name, BigDecimal startingPrice, Item.ItemCategory category, String ownerId, String createdAt) {
+        this.id = id;
+        this.name = name;
+        this.startingPrice = startingPrice;
+        this.category = category;
+        this.ownerId = ownerId;
+        this.createdAt = createdAt;
+    }
 
     // Getters and Setters
     public String getId() { return id; }
 
     public String getName() { return name; }
-
-    public String getDescription() { return description; }
 
     public BigDecimal getStartingPrice() { return startingPrice; }
 
@@ -29,7 +33,6 @@ public class ItemResponseDTO {
 
     public String getOwnerId() { return ownerId; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getCreatedAt() { return createdAt; }
 
-    public String getSummary() { return summary; }
 }

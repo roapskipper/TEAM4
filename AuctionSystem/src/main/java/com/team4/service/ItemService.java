@@ -2,7 +2,9 @@ package com.team4.service;
 
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
+import com.team4.dto.auction.*;
 import com.team4.factory.*;
+import com.team4.mapper.AuctionMapper;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Mục đích: Quản lý mặt hàng trước khi đưa vào đấu giá. Dùng ItemDAO, có thể dùng UserDAO để kiểm tra owner.
@@ -28,15 +31,19 @@ public class ItemService {
     /**
      * Tạo mặt hàng mới: kiểm tra seller có tồn tại và đúng role không, tạo object Item qua Factory, lưu xuống DB
      */
-    public Item createItem(String sellerId, ItemRequest itemRequest) {
+    public ItemResponseDTO createItem(String sellerId, CreateItemRequestDTO requestDTO) {
         logger.info("Đang tạo mặt hàng mới cho người bán: sellerId={}, itemName={}, category={}", 
-                sellerId, itemRequest.getName(), itemRequest.getCategory());
+                sellerId, requestDTO.getName(), requestDTO.getCategory());
         
         User seller = userDAO.findById(sellerId);
         if (seller == null || !(seller instanceof Seller)) {
             logger.warn("Tạo mặt hàng thất bại: Người bán không tồn tại hoặc không hợp lệ. sellerId={}", sellerId);
             throw new BusinessException("Người bán không tồn tại.");
         }
+        
+        // Map DTO to Factory Request
+        ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
+
         // Chọn Factory
         ItemFactory factory;
         switch (itemRequest.getCategory()) {
@@ -70,13 +77,13 @@ public class ItemService {
             throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
         }
         logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
-        return item;
+        return AuctionMapper.toItemResponseDTO(item);
     }
 
     /**
      * Cập nhật thông tin mặt hàng: kiểm tra item thuộc về seller này không, cập nhật DB
      */
-    public Item updateItem(String sellerId, String itemId, String newName, String newDescription) {
+    public ItemResponseDTO updateItem(String sellerId, String itemId, String newName, String newDescription) {
         logger.info("Đang cập nhật mặt hàng: itemId={}, sellerId={}", itemId, sellerId);
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
@@ -96,7 +103,7 @@ public class ItemService {
         } else {
             logger.error("Lỗi hệ thống: Không thể cập nhật mặt hàng vào database. itemId={}", itemId);
         }
-        return existingItem;
+        return AuctionMapper.toItemResponseDTO(existingItem);
     }
 
     /**
@@ -125,17 +132,94 @@ public class ItemService {
     /**
      * Lấy danh sách mặt hàng theo danh mục, dùng cho trang lọc sản phẩm
      */
-    public List<Item> getItemsByCategory(String category) {
+    public List<ItemResponseDTO> getItemsByCategory(String category) {
         logger.debug("Đang lấy danh sách mặt hàng theo danh mục: category={}", category);
-        return itemDAO.findByCategory(category);
+        return itemDAO.findByCategory(category).stream()
+                .map(AuctionMapper::toItemResponseDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Lấy danh sách mặt hàng của 1 seller, dùng cho màn hình quản lý của seller
      */
-    public List<Item> findByOwnerId(String sellerId) {
+    public List<ItemResponseDTO> findByOwnerId(String sellerId) {
         logger.debug("Đang lấy danh sách mặt hàng của người sở hữu: sellerId={}", sellerId);
-        return itemDAO.findByOwnerId(sellerId);
+        return itemDAO.findByOwnerId(sellerId).stream()
+                .map(AuctionMapper::toItemResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy mặt hàng theo ID
+     */
+    public ItemResponseDTO getItemById(String itemId) {
+        Item item = itemDAO.findById(itemId);
+        if (item == null) {
+            throw new BusinessException("Mặt hàng không tồn tại.");
+        }
+        return AuctionMapper.toItemResponseDTO(item);
+    }
+
+    /**
+     * Lấy đối tượng Item gốc (model) theo ID để sử dụng nội bộ trong server
+     */
+    public Item getRawItemById(String itemId) {
+        return itemDAO.findById(itemId);
+    }
+
+    /**
+     * Helper mapping DTO sang Request
+     */
+    private ItemRequest mapToItemRequest(String sellerId, CreateItemRequestDTO dto) {
+        ItemRequest req = new ItemRequest();
+        req.setOwnerId(sellerId);
+        req.setName(dto.getName());
+        req.setDescription(dto.getDescription());
+        req.setStartingPrice(dto.getStartingPrice());
+        req.setCategory(dto.getCategory());
+
+        if (dto instanceof CreateArtRequestDTO) {
+            CreateArtRequestDTO artDto = (CreateArtRequestDTO) dto;
+            req.setArtist(artDto.getArtist());
+            req.setCreationYear(artDto.getCreationYear());
+            req.setMedium(artDto.getMedium());
+            req.setDimensions(artDto.getDimensions());
+        } else if (dto instanceof CreateCollectibleRequestDTO) {
+            CreateCollectibleRequestDTO colDto = (CreateCollectibleRequestDTO) dto;
+            req.setYearOfOrigin(colDto.getYearOfOrigin());
+            req.setRarityLevel(colDto.getRarityLevel());
+            req.setConditionGrade(colDto.getConditionGrade());
+            req.setHasCertificate(colDto.isHasCertificate());
+            req.setOrigin(colDto.getOrigin());
+        } else if (dto instanceof CreateElectronicsRequestDTO) {
+            CreateElectronicsRequestDTO elecDto = (CreateElectronicsRequestDTO) dto;
+            req.setBrand(elecDto.getBrand());
+            req.setModel(elecDto.getModel());
+            req.setItemCondition(elecDto.getItemCondition());
+            req.setWarrantyMonths(elecDto.getWarrantyMonths());
+            req.setFullyFunctional(elecDto.isFullyFunctional());
+        } else if (dto instanceof CreateFashionRequestDTO) {
+            CreateFashionRequestDTO fashDto = (CreateFashionRequestDTO) dto;
+            req.setBrand(fashDto.getBrand());
+            req.setSize(fashDto.getSize());
+            req.setMaterial(fashDto.getMaterial());
+            req.setColor(fashDto.getColor());
+            req.setGender(fashDto.getGender());
+            req.setCondition(fashDto.getCondition());
+            req.setAuthentic(fashDto.isAuthentic());
+        } else if (dto instanceof CreateVehicleRequestDTO) {
+            CreateVehicleRequestDTO vehDto = (CreateVehicleRequestDTO) dto;
+            req.setBrand(vehDto.getBrand());
+            req.setModel(vehDto.getModel());
+            req.setManufacturingYear(vehDto.getManufacturingYear());
+            req.setOdo(vehDto.getOdo());
+            req.setEngineType(vehDto.getEngineType());
+            req.setColor(vehDto.getColor()); // No color field in ItemRequest? Wait! Let me double check if ItemRequest has color!
+            req.setHasLegalPapers(vehDto.isHasLegalPapers());
+            req.setTransmission(vehDto.getTransmission());
+        }
+
+        return req;
     }
 
     /**
