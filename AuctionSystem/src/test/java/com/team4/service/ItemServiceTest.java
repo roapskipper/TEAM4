@@ -293,7 +293,7 @@ public class ItemServiceTest {
 
             BusinessException ex = assertThrows(BusinessException.class,
                     () -> itemService.createItem(sellerId, req));
-            assertEquals("Rarity level must not be blank.", ex.getMessage());
+            assertEquals(Collectible.ValidationMessages.RARITY_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -307,7 +307,7 @@ public class ItemServiceTest {
 
             BusinessException ex = assertThrows(BusinessException.class,
                     () -> itemService.createItem(sellerId, req));
-            assertEquals("Condition grade must not be blank.", ex.getMessage());
+            assertEquals(Collectible.ValidationMessages.CONDITION_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 

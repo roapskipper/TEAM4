@@ -41,6 +41,18 @@ public class Collectible extends Item {
     private static final int ORIGIN_MAX_LENGTH = 120;
     private static final int YEAR_MIN = -3000;
 
+    /** Shared validation messages for Collectible entity and ItemService pre-checks. */
+    public static final class ValidationMessages {
+        public static final String RARITY_REQUIRED = "Rarity level is required.";
+        public static final String CONDITION_REQUIRED = "Condition grade is required.";
+        public static final String YEAR_OF_ORIGIN_INVALID =
+                "Year of origin must be between " + YEAR_MIN + " and the current year (use 0 if unknown).";
+        public static final String ORIGIN_TOO_LONG =
+                "Origin must not exceed " + ORIGIN_MAX_LENGTH + " characters.";
+
+        private ValidationMessages() {}
+    }
+
     private int yearOfOrigin;       // năm xuất xứ
     private RarityLevel rarityLevel;     // độ hiếm
     private ConditionGrade conditionGrade; // tình trạng
@@ -121,25 +133,24 @@ public class Collectible extends Item {
         if (year == 0) return; // unknown
         int current = LocalDate.now().getYear();
         if (year < YEAR_MIN || year > current) {
-            throw new IllegalArgumentException("Invalid production year. Valid range: " +
-                    YEAR_MIN + " .. " + current + " (Use '0' if the production year is unknown).");
+            throw new IllegalArgumentException(ValidationMessages.YEAR_OF_ORIGIN_INVALID);
         }
     }
     private static void validateRarityLevel(RarityLevel rarity) {
         if (rarity == null) {
-            throw new IllegalArgumentException("Rarity level must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.RARITY_REQUIRED);
         }
     }
     private static void validateConditionGrade(ConditionGrade grade) {
         if (grade == null) {
-            throw new IllegalArgumentException("Condition grade must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.CONDITION_REQUIRED);
         }
     }
     private static void validateOrigin(String origin) {
         if (origin == null) return;
         String o = origin.trim();
         if (o.length() > ORIGIN_MAX_LENGTH) {
-            throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
+            throw new IllegalArgumentException(ValidationMessages.ORIGIN_TOO_LONG);
         }
     }
     // Summary / toString
