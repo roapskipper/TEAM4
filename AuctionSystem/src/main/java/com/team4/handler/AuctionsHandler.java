@@ -53,17 +53,17 @@ public class AuctionsHandler implements HttpHandler {
                 ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse(
                         "SUCCESS",
                         "Lay chi tiet phien dau gia thanh cong!",
-                        buildAuctionJson(auction, true)
-                ));
+                        buildAuctionJson(auction, true)));
                 return;
             }
 
-            List<Auction> auctions = auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+            List<Auction> auctions = auctionDAO.findAll();
             JsonArray dataArr = new JsonArray();
             for (Auction auction : auctions) {
                 dataArr.add(buildAuctionJson(auction, false));
             }
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong!", dataArr));
+            ApiServer.sendResponse(exchange, 200,
+                    ApiServer.buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong!", dataArr));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {

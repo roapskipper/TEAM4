@@ -46,6 +46,11 @@ public class BidderAuctionsController implements Initializable {
 
     private String selectedCategory = "All";
     private String selectedStatus = "All";
+    private MainController mainController;
+
+    public void setMainController(MainController mc) {
+        this.mainController = mc;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -244,19 +249,25 @@ public class BidderAuctionsController implements Initializable {
             BiddingRoomController controller = loader.getController();
             controller.loadAuction(auctionId);
 
-            StackPane contentArea = (StackPane) auctionsGrid.getScene().getRoot().lookup("#contentArea");
-            if (contentArea == null) {
-                throw new IllegalStateException("Cannot find content area");
-            }
-            contentArea.getChildren().setAll(page);
+            if (mainController != null) {
+                // Path 1: Navigate via MainController (proper way)
+                mainController.navigateTo(page, "Auction Room", "Place bids in a live session");
+            } else {
+                // Path 2: Fallback — look up contentArea from scene (may be null if scene not ready)
+                javafx.scene.Scene scene = auctionsGrid.getScene();
+                if (scene == null) {
+                    throw new IllegalStateException("Scene not ready — cannot navigate");
+                }
+                StackPane contentArea = (StackPane) scene.getRoot().lookup("#contentArea");
+                if (contentArea == null) {
+                    throw new IllegalStateException("Cannot find #contentArea in scene");
+                }
+                contentArea.getChildren().setAll(page);
 
-            Label pageTitle = (Label) auctionsGrid.getScene().getRoot().lookup("#pageTitle");
-            Label pageSubtitle = (Label) auctionsGrid.getScene().getRoot().lookup("#pageSubtitle");
-            if (pageTitle != null) {
-                pageTitle.setText("Auction Room");
-            }
-            if (pageSubtitle != null) {
-                pageSubtitle.setText("Place bids in a live session");
+                Label pageTitle = (Label) scene.getRoot().lookup("#pageTitle");
+                Label pageSubtitle = (Label) scene.getRoot().lookup("#pageSubtitle");
+                if (pageTitle != null) pageTitle.setText("Auction Room");
+                if (pageSubtitle != null) pageSubtitle.setText("Place bids in a live session");
             }
         } catch (Exception ex) {
             Alert alert = new Alert(Alert.AlertType.ERROR);

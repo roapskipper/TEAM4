@@ -77,14 +77,6 @@ public class BiddingService {
                     throw new BusinessException("Current balance is not enough to cover this maximum bid.");
                 }
 
-                BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-                if (maxAmount.compareTo(allowedMax) > 0 || maxAmount.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-                    logger.warn("Đặt giá thất bại: Giá đặt ({}) vượt quá giới hạn cho phép ({}) cho giá hiện tại ({}).",
-                            maxAmount, allowedMax, auction.getCurrentPrice());
-                    throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
-                }
-
-
                 // 1. Upsert cấu hình auto-bid của bidder hiện tại
                 AutoBidding existing = autoBiddingDAO.findByAuctionAndBidder(conn, auctionId, bidderId);
                 // Nếu chưa có config thì tạo mới
@@ -115,18 +107,6 @@ public class BiddingService {
                         autoBiddingDAO.findActiveByAuctionId(conn, auctionId)
                 );
                 logger.debug("Found {} active Proxy Bidding candidates for auction {}", contenders.size(), auctionId);
-
-                // Clamp các config vi phạm luật do giá hiện tại thay đổi
-                BigDecimal currentAllowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-                for (AutoBidding cfg : contenders) {
-                    if (cfg.getMaxLimit().compareTo(currentAllowedMax) > 0 || cfg.getMaxLimit().compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-                        logger.info("Giảm mức tối đa của bidderId={} từ {} xuống {} để tuân thủ chính sách", cfg.getBidderId(), cfg.getMaxLimit(), currentAllowedMax);
-                        cfg.setMaxLimit(currentAllowedMax);
-                        if (!autoBiddingDAO.update(conn, cfg)) {
-                            throw new BusinessException("Lỗi hệ thống khi cập nhật cấu hình đặt giá vi phạm chính sách.");
-                        }
-                    }
-                }
 
                 ProxyBidResult result = resolveProxyBid(auction, contenders);
                 if (result == null) {

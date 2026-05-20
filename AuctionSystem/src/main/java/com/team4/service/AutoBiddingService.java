@@ -46,12 +46,6 @@ public class AutoBiddingService {
             logger.warn("Enable Auto-bid failed: max limit ({}) is less than or equal to current price ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Max limit must be greater than the current auction price.");
         }
-        
-        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-            logger.warn("Bật Auto-bid thất bại: Giới hạn tối đa ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
-            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
-        }
         User user = userDAO.findById(bidderId);
         if (user == null || user.getRole() != User.Role.BIDDER) {
             logger.warn("Enable Auto-bid failed: invalid or missing bidder. bidderId={}", bidderId);
@@ -107,12 +101,6 @@ public class AutoBiddingService {
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
             logger.warn("Auto-bid update failed: new limit ({}) is not greater than current price ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Max limit must be greater than the current price.");
-        }
-
-        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-            logger.warn("Cập nhật Auto-bid thất bại: Giới hạn mới ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
-            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
         }
 
         autoBidding.setMaxLimit(maxLimit);

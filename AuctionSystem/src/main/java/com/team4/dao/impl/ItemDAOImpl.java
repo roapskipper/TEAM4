@@ -59,7 +59,7 @@ public class ItemDAOImpl implements ItemDAO {
                         , rs.getBoolean("has_legal_papers"), Vehicle.fromNameTran(rs.getString("transmission")));
 
             default:
-                throw new SQLException("System error: Invalid category -> " + category);
+                throw new SQLException("Lỗi hệ thống: Category không hợp lệ -> " + category);
         }
     }
 
@@ -81,7 +81,10 @@ public class ItemDAOImpl implements ItemDAO {
                 if (rs.next()) return mapRowToItem(rs);
             }
         } catch (SQLException e) {
-            logger.error("Unable to find item with id={}", id, e);
+            logger.error("Không thể tìm item với id={}", id, e);
+        } catch (Exception e) {
+            // Bắt IllegalArgumentException từ constructor subclass (VD: condition trống)
+            logger.warn("Item id={} có dữ liệu không hợp lệ, bỏ qua: {}", id, e.getMessage());
         }
         return null;
     }
@@ -198,7 +201,7 @@ public class ItemDAOImpl implements ItemDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            logger.error("Unable to create item id={}", item.getId(), e);
+            logger.error("Không thể tạo item id={}", item.getId(), e);
             return false;
         }
     }
@@ -216,7 +219,7 @@ public class ItemDAOImpl implements ItemDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Unable to update item id={}", item.getId(), e);
+            logger.error("Không thể update item id={}", item.getId(), e);
             return false;
         }
     }
@@ -229,7 +232,7 @@ public class ItemDAOImpl implements ItemDAO {
             stmt.setString(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Unable to delete item id={}", id, e);
+            logger.error("Không thể xóa item id={}", id, e);
             return false;
         }
     }

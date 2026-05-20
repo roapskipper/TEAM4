@@ -3,6 +3,7 @@ package com.team4.client;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.server.Server; // Nếu dùng chung Gson cấu hình sẵn
+import io.github.cdimascio.dotenv.Dotenv;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -10,8 +11,28 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Client {
-    private static final String SERVER_ADDRESS = "127.0.0.1";
-    private static final int SERVER_PORT = 18368;
+    private static final Dotenv dotenv = loadDotenv();
+    private static final String SERVER_ADDRESS;
+    private static final int SERVER_PORT;
+
+    static {
+        String host = dotenv.get("SERVER_HOST", null);
+        String port = dotenv.get("SERVER_PORT", null);
+        SERVER_ADDRESS = (host != null && !host.isBlank()) ? host : "127.0.0.1";
+        SERVER_PORT    = (port != null && !port.isBlank()) ? Integer.parseInt(port) : 18368;
+    }
+
+    private static Dotenv loadDotenv() {
+        try {
+            Dotenv d = Dotenv.configure().ignoreIfMissing().load();
+            if (d.get("SERVER_HOST") != null) return d;
+        } catch (Exception ignored) {}
+        try {
+            Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
+            if (d.get("SERVER_HOST") != null) return d;
+        } catch (Exception ignored) {}
+        return Dotenv.configure().ignoreIfMissing().load();
+    }
 
     private static Client instance;
 
