@@ -6,6 +6,16 @@ import java.time.LocalDateTime;
 
 /**
  * Vehicle: model cho nhóm hàng phương tiện.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>engineType</b>: Required. Cannot be null.</li>
+ * <li><b>transmission</b>: Required. Defaults to OTHER if blank or missing.</li>
+ * <li><b>odo</b>: Required. Must be between 0 and 1,000,000.</li>
+ * <li><b>manufacturingYear</b>: Optional. Must be between 1886 and current year if provided.</li>
+ * <li><b>brand, model, color</b>: Optional. Defaults to "Unknown" (except color which stays null).</li>
+ * <li><b>hasLegalPapers</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Vehicle extends Item {
     private static final long serialVersionUID = 1L;
