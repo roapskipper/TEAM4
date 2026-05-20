@@ -253,7 +253,7 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            showError(loginError, "Server connection error: " + e.getMessage());
+            showError(loginError, getErrorMessage(e));
             loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
@@ -321,10 +321,29 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            showError(regError, "Server connection error: " + e.getMessage());
+            showError(regError, getErrorMessage(e));
             regError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
+    }
+
+    private String getErrorMessage(Exception e) {
+        if (e instanceof java.io.IOException || e.getCause() instanceof java.io.IOException) {
+            return "Server connection error: Cannot connect to server.";
+        }
+        String errorMsg = e.getMessage();
+        if (errorMsg == null || errorMsg.isEmpty()) {
+            return "An unknown error occurred.";
+        }
+        try {
+            com.google.gson.JsonObject errObj = com.google.gson.JsonParser.parseString(errorMsg).getAsJsonObject();
+            if (errObj.has("message")) {
+                return errObj.get("message").getAsString();
+            }
+        } catch (Exception ex) {
+            // Not a JSON
+        }
+        return errorMsg;
     }
 
     private void showError(Label errorLabel, String message) {
