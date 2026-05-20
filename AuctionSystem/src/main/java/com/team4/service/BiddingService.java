@@ -43,7 +43,7 @@ public class BiddingService {
      * - sau đó tính lại winner + currentPrice công khai
      */
     public void placeBid(String auctionId, String bidderId, BigDecimal maxAmount) {
-        logger.info("Yêu cầu đặt giá: auctionId={}, bidderId={}, maxAmount={}", auctionId, bidderId, maxAmount);
+        logger.info("Bid request: auctionId={}, bidderId={}, maxAmount={}", auctionId, bidderId, maxAmount);
         try (Connection conn = DatabaseManager.getConnection()) {
             try {
                 // Tắt autocommit
@@ -51,62 +51,60 @@ public class BiddingService {
                 Auction auction = auctionDAO.findById(conn, auctionId);
                 // Validate phiên đấu giá
                 if (auction == null || !auction.canBid()) {
-                    logger.warn("Đặt giá thất bại: Phiên đấu giá không tồn tại hoặc không thể nhận bid. auctionId={}", auctionId);
-                    throw new BusinessException("Phiên đấu giá không tồn tại hoặc không thể nhận bid.");
+                    logger.warn("Bid failed: auction does not exist or cannot accept bids. auctionId={}", auctionId);
+                    throw new BusinessException("Auction does not exist or cannot accept bids.");
                 }
 
                 User bidder = userDAO.findById(conn, bidderId);
                 if (bidder == null || bidder.getRole() != User.Role.BIDDER) {
-                    logger.warn("Đặt giá thất bại: Bidder không hợp lệ. bidderId={}", bidderId);
-                    throw new BusinessException("Chỉ bidder hợp lệ mới được đặt giá.");
+                    logger.warn("Bid failed: Invalid bidder. bidderId={}", bidderId);
+                    throw new BusinessException("Only valid bidders can place bids.");
                 }
 
                 if (auction.getSellerId().equals(bidderId)) {
-                    logger.warn("Đặt giá thất bại: Người bán không được phép đặt giá. bidderId={}, auctionId={}", bidderId, auctionId);
-                    throw new BusinessException("Người bán không được đặt giá trên phiên của mình.");
+                    logger.warn("Bid failed: seller cannot bid. bidderId={}, auctionId={}", bidderId, auctionId);
+                    throw new BusinessException("Seller cannot bid on their own auction.");
                 }
 
                 if (maxAmount == null || maxAmount.compareTo(auction.getCurrentPrice().add(auction.getBidIncrement())) < 0) {
-                    logger.warn("Đặt giá thất bại: Giá đặt ({}) không cao hơn giá hiện tại ({}) ít nhất một bước giá ({}).",
+                    logger.warn("Bid failed: bid amount ({}) is not higher than current price ({}) by at least one bid increment ({}).",
                             maxAmount, auction.getCurrentPrice(), auction.getBidIncrement());
-                    throw new BusinessException("Mức giá tối đa phải cao hơn giá hiện tại ít nhất một bước giá.");
-                }
-
-                if (!bidder.hasEnoughBalance(maxAmount)) {
-                    logger.warn("Đặt giá thất bại: Số dư tài khoản không đủ. balance={}, required={}", bidder.getBalance(), maxAmount);
-                    throw new BusinessException("Số dư hiện tại không đủ để bảo đảm cho mức giá tối đa này.");
+                    throw new BusinessException("Maximum bid must exceed the current price by at least one bid increment.");
                 }
 
                 BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-                if (maxAmount.compareTo(allowedMax) > 0 || maxAmount.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-                    logger.warn("Đặt giá thất bại: Giá đặt ({}) vượt quá giới hạn cho phép ({}) cho giá hiện tại ({}).",
-                            maxAmount, allowedMax, auction.getCurrentPrice());
-                    throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
+                if (maxAmount.compareTo(allowedMax) > 0) {
+                    logger.warn("Bid failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxAmount);
+                    throw new BusinessException("Bid exceeds the allowed maximum policy limit.");
                 }
 
+                if (!bidder.hasEnoughBalance(maxAmount)) {
+                    logger.warn("Bid failed: insufficient account balance. balance={}, required={}", bidder.getBalance(), maxAmount);
+                    throw new BusinessException("Current balance is not enough to cover this maximum bid.");
+                }
 
                 // 1. Upsert cấu hình auto-bid của bidder hiện tại
                 AutoBidding existing = autoBiddingDAO.findByAuctionAndBidder(conn, auctionId, bidderId);
                 // Nếu chưa có config thì tạo mới
                 if (existing == null) {
-                    logger.debug("Tạo mới cấu hình Auto-bid (proxy) cho bidderId={}", bidderId);
+                    logger.debug("Creating Auto-bid (proxy) configuration for bidderId={}", bidderId);
                     AutoBidding newConfig = new AutoBidding(auctionId, bidderId, maxAmount);
                     if (!autoBiddingDAO.insert(conn, newConfig)) {
-                        logger.error("Lỗi khi lưu cấu hình Auto-bid mới.");
-                        throw new BusinessException("Lỗi hệ thống khi lưu cấu hình đặt giá.");
+                        logger.error("Error while saving new Auto-bid configuration.");
+                        throw new BusinessException("System error while saving bid configuration.");
                     }
 
                     // Nếu đã có config rồi thì cập nhật maxLimit và bật nếu đang tắt
                 } else {
-                    logger.debug("Cập nhật giới hạn Auto-bid hiện tại cho bidderId={}, oldMax={}, newMax={}",
+                    logger.debug("Updating current Auto-bid limit for bidderId={}, oldMax={}, newMax={}",
                             bidderId, existing.getMaxLimit(), maxAmount);
                     existing.setMaxLimit(maxAmount);
                     if (!existing.isActive()) {
                         existing.activate();
                     }
                     if (!autoBiddingDAO.update(conn, existing)) {
-                        logger.error("Lỗi khi cập nhật cấu hình Auto-bid.");
-                        throw new BusinessException("Lỗi hệ thống khi cập nhật cấu hình đặt giá.");
+                        logger.error("Error while updating Auto-bid configuration.");
+                        throw new BusinessException("System error while updating bid configuration.");
                     }
                 }
 
@@ -114,23 +112,11 @@ public class BiddingService {
                 List<AutoBidding> contenders = new ArrayList<>(
                         autoBiddingDAO.findActiveByAuctionId(conn, auctionId)
                 );
-                logger.debug("Tìm thấy {} ứng cử viên đang tham gia Proxy Bidding cho phiên {}", contenders.size(), auctionId);
-
-                // Clamp các config vi phạm luật do giá hiện tại thay đổi
-                BigDecimal currentAllowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-                for (AutoBidding cfg : contenders) {
-                    if (cfg.getMaxLimit().compareTo(currentAllowedMax) > 0 || cfg.getMaxLimit().compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-                        logger.info("Giảm mức tối đa của bidderId={} từ {} xuống {} để tuân thủ chính sách", cfg.getBidderId(), cfg.getMaxLimit(), currentAllowedMax);
-                        cfg.setMaxLimit(currentAllowedMax);
-                        if (!autoBiddingDAO.update(conn, cfg)) {
-                            throw new BusinessException("Lỗi hệ thống khi cập nhật cấu hình đặt giá vi phạm chính sách.");
-                        }
-                    }
-                }
+                logger.debug("Found {} active Proxy Bidding candidates for auction {}", contenders.size(), auctionId);
 
                 ProxyBidResult result = resolveProxyBid(auction, contenders);
                 if (result == null) {
-                    logger.debug("Không tìm thấy kết quả Proxy Bid mới. Giữ nguyên trạng thái.");
+                    logger.debug("No new Proxy Bid result found. Keeping current state.");
                     DatabaseManager.commitTransaction(conn);
                     return;
                 }
@@ -143,18 +129,18 @@ public class BiddingService {
                     boolean isExtended = auction.applyAntiSniping(); // Kiểm tra và dời giờ trong Model
 
                     if (isExtended) {
-                        logger.info("Kích hoạt Anti-Sniping: Dời thời gian kết thúc phiên {} tới {}", auctionId, auction.getEndTime());
+                        logger.info("Anti-sniping activated: moving auction {} end time to {}", auctionId, auction.getEndTime());
                         // Cập nhật thời gian mới xuống Database
                         if (!auctionDAO.updateEndTime(conn, auctionId, auction.getEndTime())) {
-                            throw new BusinessException("Lỗi hệ thống khi gia hạn thời gian Anti-Sniping.");
+                            throw new BusinessException("System error while extending anti-sniping time.");
                         }
                     }
-                    logger.info("Cập nhật người dẫn đầu mới: auctionId={}, oldLeader={}, newLeader={}, oldPrice={}, newPrice={}",
+                    logger.info("Updating new leader: auctionId={}, oldLeader={}, newLeader={}, oldPrice={}, newPrice={}",
                             auctionId, auction.getCurrentHighestBidderId(), result.winnerBidderId(), auction.getCurrentPrice(), result.displayPrice());
                     if (!auctionDAO.updateCurrentBid(conn, auctionId, result.displayPrice(), result.winnerBidderId()) ||
                             !bidTransactionDAO.insert(conn, new BidTransaction(auctionId, result.winnerBidderId(), result.displayPrice()))) {
-                        logger.error("Lỗi khi cập nhật thông tin bid mới vào database.");
-                        throw new BusinessException("Lỗi hệ thống khi cập nhật kết quả đấu giá.");
+                        logger.error("Error while updating new bid information in the database.");
+                        throw new BusinessException("System error while updating auction result.");
                     }
                 }
 
@@ -164,25 +150,25 @@ public class BiddingService {
                     boolean exhausted = cfg.getMaxLimit().compareTo(result.displayPrice()) <= 0;
 
                     if (cfg.isActive() && losing && exhausted) {
-                        logger.info("Tự động tắt Auto-bid cho bidderId={} do đã đạt giới hạn tối đa {}", cfg.getBidderId(), cfg.getMaxLimit());
+                        logger.info("Automatically disabling Auto-bid for bidderId={} because max limit {} was reached", cfg.getBidderId(), cfg.getMaxLimit());
                         cfg.deactivate();
                         if (!autoBiddingDAO.updateActive(conn, cfg.getId(), false)) {
-                            logger.error("Lỗi khi tắt cấu hình Auto-bid đã hết hạn.");
-                            throw new BusinessException("Lỗi hệ thống khi tắt cấu hình đặt giá hết hạn.");
+                            logger.error("Error while disabling expired Auto-bid configuration.");
+                            throw new BusinessException("System error while disabling expired bid configuration.");
                         }
                     }
                 }
                 // Commit xuống DB
                 DatabaseManager.commitTransaction(conn);
-                logger.info("Giao dịch đặt giá hoàn tất thành công. auctionId={}", auctionId);
+                logger.info("Bid transaction completed successfully. auctionId={}", auctionId);
             } catch (Exception e) {
                 DatabaseManager.rollbackTransaction(conn);
-                logger.error("Lỗi trong quá trình đặt giá (đã rollback): {}", e.getMessage());
-                throw (e instanceof BusinessException) ? (BusinessException) e : new BusinessException("Đặt giá thất bại: " + e.getMessage());
+                logger.error("Error during bidding process (rolled back): {}", e.getMessage());
+                throw (e instanceof BusinessException) ? (BusinessException) e : new BusinessException("Bid failed: " + e.getMessage());
             }
         } catch (SQLException e) {
-            logger.error("Lỗi kết nối database khi đặt giá: {}", e.getMessage());
-            throw new BusinessException("Lỗi hệ thống khi xử lý bid: " + e.getMessage());
+            logger.error("Database connection error while bidding: {}", e.getMessage());
+            throw new BusinessException("System error while processing bid: " + e.getMessage());
         }
     }
 
@@ -235,10 +221,10 @@ public class BiddingService {
             displayPrice = runnerUp.getMaxLimit()
                     .add(increment)
                     .min(winner.getMaxLimit());
-            logger.debug("Tính toán Proxy Bid: winner={}, runnerUp={}, calculatedPrice={}",
+            logger.debug("Proxy Bid calculation: winner={}, runnerUp={}, calculatedPrice={}",
                     winner.getBidderId(), runnerUp.getBidderId(), displayPrice);
         } else {
-            logger.debug("Chỉ có một ứng cử viên dẫn đầu: bidderId={}, currentPrice={}", winner.getBidderId(), displayPrice);
+            logger.debug("Only one leading candidate: bidderId={}, currentPrice={}", winner.getBidderId(), displayPrice);
         }
 
         return new ProxyBidResult(winner.getBidderId(), displayPrice);
@@ -250,21 +236,21 @@ public class BiddingService {
      * Lấy toàn bộ lịch sử đặt giá của 1 phiên, dùng để hiển thị lịch sử cho người xem
      */
     public List<BidTransaction> getBidHistoryByAuction(String auctionId) {
-        logger.debug("Đang lấy lịch sử đấu giá cho auctionId={}", auctionId);
+        logger.debug("Loading bid history for auctionId={}", auctionId);
         return bidTransactionDAO.findByAuctionId(auctionId);
     }
     /**
      * Lấy lịch sử đặt giá của 1 bidder, dùng cho trang lịch sử cá nhân
      */
     public List<BidTransaction> getBidHistoryByBidder(String bidderId) {
-        logger.debug("Đang lấy lịch sử đặt giá cho bidderId={}", bidderId);
+        logger.debug("Loading bid history for bidderId={}", bidderId);
         return bidTransactionDAO.findByBidderId(bidderId);
     }
     /**
      * Lấy lần bid cao nhất hiện tại của phiên, dùng để xác định người thắng khi phiên kết thúc
      */
     public BidTransaction getBidHistoryByBidderAndAuction(String auctionId) {
-        logger.debug("Đang lấy bid cao nhất cho auctionId={}", auctionId);
+        logger.debug("Loading highest bid for auctionId={}", auctionId);
         return bidTransactionDAO.getHighestBid(auctionId);
     }
 }

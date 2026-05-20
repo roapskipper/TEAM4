@@ -82,6 +82,9 @@ public class ItemDAOImpl implements ItemDAO {
             }
         } catch (SQLException e) {
             logger.error("Không thể tìm item với id={}", id, e);
+        } catch (Exception e) {
+            // Bắt IllegalArgumentException từ constructor subclass (VD: condition trống)
+            logger.warn("Item id={} có dữ liệu không hợp lệ, bỏ qua: {}", id, e.getMessage());
         }
         return null;
     }
@@ -244,7 +247,11 @@ public class ItemDAOImpl implements ItemDAO {
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                items.add(mapRowToItem(rs));
+                try {
+                    items.add(mapRowToItem(rs));
+                } catch (Exception ex) {
+                    logger.warn("Skipping malformed item in DB: {}", ex.getMessage());
+                }
             }
         } catch (SQLException e) {
             logger.error("Cannot execute item list query", e);
@@ -259,7 +266,11 @@ public class ItemDAOImpl implements ItemDAO {
             stmt.setString(1, param);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    items.add(mapRowToItem(rs));
+                    try {
+                        items.add(mapRowToItem(rs));
+                    } catch (Exception ex) {
+                        logger.warn("Skipping malformed item in DB: {}", ex.getMessage());
+                    }
                 }
             }
         } catch (SQLException e) {

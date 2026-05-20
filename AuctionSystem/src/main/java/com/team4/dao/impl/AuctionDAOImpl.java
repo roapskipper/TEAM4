@@ -71,7 +71,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm auction với id={}", id, e);
+            logger.error("Unable to find auction with id={}", id, e);
         }
         return null;
     }
@@ -85,7 +85,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm auction với id={} trong transaction", id, e);
+            logger.error("Unable to find auction with id={} trong transaction", id, e);
         }
         return null;
     }
@@ -106,7 +106,7 @@ public class AuctionDAOImpl implements AuctionDAO {
                 if (rs.next()) return mapRowToAuction(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm auction với itemId={}", itemId, e);
+            logger.error("Unable to find auction with itemId={}", itemId, e);
         }
         return null;
     }
@@ -178,7 +178,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể tạo auction id={}", auction.getId(), e);
+            logger.error("Unable to create auction id={}", auction.getId(), e);
             return false;
         }
     }
@@ -196,7 +196,7 @@ public class AuctionDAOImpl implements AuctionDAO {
             stmt.setString(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update auction status auctionId={} newStatus={}", auctionId, newStatus, e);
+            logger.error("Unable to update auction status auctionId={} newStatus={}", auctionId, newStatus, e);
             return false;
         }
     }
@@ -215,7 +215,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={} trong transaction", id, currentPrice, highestBidderId, e);
+            logger.error("Unable to update current bid auctionId={} currentPrice={} highestBidderId={} in transaction", id, currentPrice, highestBidderId, e);
             return false;
         }
     }
@@ -229,7 +229,7 @@ public class AuctionDAOImpl implements AuctionDAO {
             stmt.setString(2, auctionId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update endTime auctionId={} newEndTime={} trong transaction", auctionId, newEndTime, e);
+            logger.error("Unable to update endTime auctionId={} newEndTime={} in transaction", auctionId, newEndTime, e);
             return false;
         }
     }
@@ -244,7 +244,7 @@ public class AuctionDAOImpl implements AuctionDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update currentbid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
+            logger.error("Unable to update current bid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
             return false;
         }
     }

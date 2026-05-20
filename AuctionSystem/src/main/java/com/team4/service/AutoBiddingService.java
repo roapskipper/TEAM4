@@ -31,60 +31,60 @@ public class AutoBiddingService {
      * Bật tính năng auto-bid: kiểm tra config chưa tồn tại, validate maxLimit > currentPrice, tạo và lưu config
      */
     public AutoBidding enableAutoBidding(String bidderId, String auctionId, BigDecimal maxLimit) {
-        logger.info("Đang bật tính năng Auto-bid: bidderId={}, auctionId={}, maxLimit={}", bidderId, auctionId, maxLimit);
+        logger.info("Enabling Auto-bid: bidderId={}, auctionId={}, maxLimit={}", bidderId, auctionId, maxLimit);
         Auction auction = auctionDAO.findById(auctionId);
         // Validate phiên đáu giá
         if (auction == null || auction.getStatus() != Auction.AuctionStatus.RUNNING) {
-            logger.warn("Bật Auto-bid thất bại: Phiên đấu giá không tồn tại hoặc không ở trạng thái RUNNING. auctionId={}", auctionId);
-            throw new BusinessException("Phiên đấu giá không hợp lệ.");
+            logger.warn("Enable Auto-bid failed: auction does not exist or is not RUNNING. auctionId={}", auctionId);
+            throw new BusinessException("Invalid auction.");
         }
         if (auction.getSellerId().equals(bidderId)) {
-            logger.warn("Bật Auto-bid thất bại: Người bán không được phép dùng Auto-bid. bidderId={}, auctionId={}", bidderId, auctionId);
-            throw new BusinessException("Người bán không được dùng Auto-bid.");
+            logger.warn("Enable Auto-bid failed: seller cannot use Auto-bid. bidderId={}, auctionId={}", bidderId, auctionId);
+            throw new BusinessException("Seller cannot use Auto-bid.");
         }
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
-            logger.warn("Bật Auto-bid thất bại: Giới hạn tối đa ({}) nhỏ hơn hoặc bằng giá hiện tại ({}).", maxLimit, auction.getCurrentPrice());
-            throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại của phiên đấu giá.");
+            logger.warn("Enable Auto-bid failed: max limit ({}) is less than or equal to current price ({}).", maxLimit, auction.getCurrentPrice());
+            throw new BusinessException("Max limit must be greater than the current auction price.");
         }
         
-        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-            logger.warn("Bật Auto-bid thất bại: Giới hạn tối đa ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
-            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
+        BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0) {
+            logger.warn("Enable Auto-bid failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxLimit);
+            throw new BusinessException("Max limit exceeds the allowed maximum policy limit.");
         }
         User user = userDAO.findById(bidderId);
         if (user == null || user.getRole() != User.Role.BIDDER) {
-            logger.warn("Bật Auto-bid thất bại: Bidder không hợp lệ hoặc không tồn tại. bidderId={}", bidderId);
-            throw new BusinessException("Bidder không hợp lệ.");
+            logger.warn("Enable Auto-bid failed: invalid or missing bidder. bidderId={}", bidderId);
+            throw new BusinessException("Invalid bidder.");
         }
         // Kiểm tra config đã tồn tại chưa
         AutoBidding existingConfig = autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId);
         if (existingConfig != null) {
             // Kiểm tra bidder đã bật autobid cho phiên này chưa
             if (existingConfig.isActive()) {
-                logger.warn("Bật Auto-bid thất bại: Bidder đã có cấu hình Auto-bid đang hoạt động cho phiên này. bidderId={}, auctionId={}", bidderId, auctionId);
+                logger.warn("Enable Auto-bid failed: bidder already has an active Auto-bid configuration for this auction. bidderId={}, auctionId={}", bidderId, auctionId);
                 // Rồi thì thông báo
-                throw new BusinessException("Bạn đã bật Auto-bid cho phiên đấu giá này.");
+                throw new BusinessException("You have already enabled Auto-bid for this auction.");
             } else {
                 // Chưa thì bật
-                logger.info("Phát hiện cấu hình Auto-bid cũ đã tắt, đang kích hoạt lại. configId={}", existingConfig.getId());
+                logger.info("Found an inactive Auto-bid configuration; reactivating it. configId={}", existingConfig.getId());
                 existingConfig.setMaxLimit(maxLimit);
                 existingConfig.activate();
                 if (!autoBiddingDAO.update(existingConfig)) {
-                    logger.error("Lỗi khi cập nhật trạng thái kích hoạt lại Auto-bid. configId={}", existingConfig.getId());
-                    throw new BusinessException("Không thể bật lại cấu hình auto-bid.");
+                    logger.error("Error while reactivating Auto-bid status. configId={}", existingConfig.getId());
+                    throw new BusinessException("Unable to reactivate auto-bid configuration.");
                 }
-                logger.info("Đã kích hoạt lại thành công Auto-bid cho bidderId={} trong phiên auctionId={}", bidderId, auctionId);
+                logger.info("Auto-bid reactivated successfully for bidderId={} in auctionId={}", bidderId, auctionId);
                 return existingConfig;
             }
         }
         // Nếu chưa có thì tạo mới
         AutoBidding newAutoBidding = new AutoBidding(auctionId, bidderId, maxLimit);
         if (!autoBiddingDAO.insert(newAutoBidding)) {
-            logger.error("Lỗi khi tạo mới cấu hình Auto-bid. bidderId={}, auctionId={}", bidderId, auctionId);
-            throw new BusinessException("Không thể tạo cấu hình auto-bid.");
+            logger.error("Error while creating Auto-bid configuration. bidderId={}, auctionId={}", bidderId, auctionId);
+            throw new BusinessException("Unable to create auto-bid configuration.");
         }
-        logger.info("Đã tạo mới và bật thành công Auto-bid. configId={}, bidderId={}, auctionId={}", newAutoBidding.getId(), bidderId, auctionId);
+        logger.info("Auto-bid created and enabled successfully. configId={}, bidderId={}, auctionId={}", newAutoBidding.getId(), bidderId, auctionId);
         return newAutoBidding;
     }
 
@@ -92,35 +92,35 @@ public class AutoBiddingService {
      * Cập nhật cấu hình auto-bid: đổi giới hạn tối đa hoặc bước tăng giá
      */
     public boolean updateAutoBidding(String configId, BigDecimal maxLimit) {
-        logger.info("Đang cập nhật cấu hình Auto-bid: configId={}, newMaxLimit={}", configId, maxLimit);
+        logger.info("Updating Auto-bid configuration: configId={}, newMaxLimit={}", configId, maxLimit);
         AutoBidding autoBidding = autoBiddingDAO.findById(configId);
         if (autoBidding == null) {
-            logger.warn("Cập nhật Auto-bid thất bại: Cấu hình không tồn tại. configId={}", configId);
-            throw new BusinessException("Cấu hình Auto-bid không tồn tại.");
+            logger.warn("Auto-bid update failed: configuration does not exist. configId={}", configId);
+            throw new BusinessException("Auto-bid configuration does not exist.");
         }
         Auction auction = auctionDAO.findById(autoBidding.getAuctionId());
         if (auction == null || auction.getStatus() != Auction.AuctionStatus.RUNNING) {
-            logger.warn("Cập nhật Auto-bid thất bại: Phiên đấu giá không hợp lệ. auctionId={}", autoBidding.getAuctionId());
-            throw new BusinessException("Phiên đấu giá không hợp lệ.");
+            logger.warn("Auto-bid update failed: invalid auction. auctionId={}", autoBidding.getAuctionId());
+            throw new BusinessException("Invalid auction.");
         }
 
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
-            logger.warn("Cập nhật Auto-bid thất bại: Giới hạn mới ({}) không lớn hơn giá hiện tại ({}).", maxLimit, auction.getCurrentPrice());
-            throw new BusinessException("Giới hạn tối đa phải lớn hơn giá hiện tại.");
+            logger.warn("Auto-bid update failed: new limit ({}) is not greater than current price ({}).", maxLimit, auction.getCurrentPrice());
+            throw new BusinessException("Max limit must be greater than the current price.");
         }
 
-        java.math.BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
-        if (maxLimit.compareTo(allowedMax) > 0 || maxLimit.compareTo(com.team4.util.BidRules.ABSOLUTE_MAX) > 0) {
-            logger.warn("Cập nhật Auto-bid thất bại: Giới hạn mới ({}) vượt quá giới hạn cho phép ({}).", maxLimit, allowedMax);
-            throw new BusinessException("Bid exceeds allowed maximum for current price (policy limit).");
+        BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0) {
+            logger.warn("Auto-bid update failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxLimit);
+            throw new BusinessException("Max limit exceeds the allowed maximum policy limit.");
         }
 
         autoBidding.setMaxLimit(maxLimit);
         boolean updated = autoBiddingDAO.update(autoBidding);
         if (updated) {
-            logger.info("Đã cập nhật thành công Auto-bid. configId={}", configId);
+            logger.info("Auto-bid updated successfully. configId={}", configId);
         } else {
-            logger.error("Lỗi khi cập nhật Auto-bid vào database. configId={}", configId);
+            logger.error("Error while updating Auto-bid in the database. configId={}", configId);
         }
         return updated;
     }
@@ -129,22 +129,22 @@ public class AutoBiddingService {
      * Tắt auto-bid: đánh dấu isActive = false, không xóa config để giữ lịch sử
      */
     public boolean disableAutoBidding(String configId, String auctionId) {
-        logger.info("Đang tắt Auto-bid: configId={}, auctionId={}", configId, auctionId);
+        logger.info("Disabling Auto-bid: configId={}, auctionId={}", configId, auctionId);
         AutoBidding autoBidding = autoBiddingDAO.findById(configId);
         if (autoBidding == null) {
-            logger.warn("Tắt Auto-bid thất bại: Cấu hình không tồn tại. configId={}", configId);
-            throw new BusinessException("Cấu hình Auto-bid không tồn tại.");
+            logger.warn("Disable Auto-bid failed: configuration does not exist. configId={}", configId);
+            throw new BusinessException("Auto-bid configuration does not exist.");
         }
         if (autoBidding.isActive() == false) {
-            logger.warn("Tắt Auto-bid thất bại: Cấu hình đã được tắt trước đó. configId={}", configId);
-            throw new BusinessException("Auto-bid đã tắt trước đó rồi.");
+            logger.warn("Disable Auto-bid failed: configuration was already disabled. configId={}", configId);
+            throw new BusinessException("Auto-bid was already disabled.");
         }
         autoBidding.deactivate();
         boolean disabled = autoBiddingDAO.updateActive(configId, false);
         if (disabled) {
-            logger.info("Đã tắt thành công Auto-bid. configId={}", configId);
+            logger.info("Auto-bid disabled successfully. configId={}", configId);
         } else {
-            logger.error("Lỗi khi cập nhật trạng thái tắt Auto-bid vào database. configId={}", configId);
+            logger.error("Error while updating disabled Auto-bid status in the database. configId={}", configId);
         }
         return disabled;
     }
@@ -153,11 +153,11 @@ public class AutoBiddingService {
      * Lấy cấu hình auto-bid của 1 bidder trong 1 phiên, kiểm tra đã cài chưa
      */
     public AutoBidding findConfig(String bidderId, String auctionId) {
-        logger.debug("Đang tìm cấu hình Auto-bid: bidderId={}, auctionId={}", bidderId, auctionId);
+        logger.debug("Looking up Auto-bid configuration: bidderId={}, auctionId={}", bidderId, auctionId);
         AutoBidding autoBidding = autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId);
         if (autoBidding == null) {
-            logger.warn("Không tìm thấy cấu hình Auto-bid cho bidderId={} trong phiên auctionId={}", bidderId, auctionId);
-            throw new BusinessException("Bidder chưa cài cấu hình autobid cho phiên này");
+            logger.warn("No Auto-bid configuration found for bidderId={} in auctionId={}", bidderId, auctionId);
+            throw new BusinessException("Bidder has not configured auto-bid for this auction");
         }
         return autoBidding;
     }
@@ -166,7 +166,7 @@ public class AutoBiddingService {
      * Lấy tất cả config auto-bid đang bật trong 1 phiên, dùng khi có bid mới để kích hoạt auto-bid cho những người liên quan
      */
     public List<AutoBidding> findActiveConfigs(String auctionId) {
-        logger.debug("Đang lấy danh sách các cấu hình Auto-bid đang hoạt động cho phiên auctionId={}", auctionId);
+        logger.debug("Loading active Auto-bid configurations for auctionId={}", auctionId);
         return autoBiddingDAO.findActiveByAuctionId(auctionId);
     }
 }

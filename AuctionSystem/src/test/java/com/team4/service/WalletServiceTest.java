@@ -88,7 +88,7 @@ public class WalletServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 walletService.deposit(userId, new BigDecimal("100.00"))
             );
-            assertEquals("Người dùng không tồn tại", ex.getMessage());
+            assertEquals("User does not exist", ex.getMessage());
         }
 
         @Test

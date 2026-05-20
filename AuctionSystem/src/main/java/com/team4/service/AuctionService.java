@@ -31,21 +31,21 @@ public class AuctionService {
      */
     public Auction createAuction(String itemId, String sellerId, BigDecimal startingPrice, BigDecimal bidIncrement, LocalDateTime endTime) {
         // Kiểm tra
-        logger.info("Đang tạo phiên đấu giá itemId={} sellerId={} startingPrice={} bidIncrement={} endTime={}",
+        logger.info("Creating auction itemId={} sellerId={} startingPrice={} bidIncrement={} endTime={}",
                 itemId, sellerId, startingPrice, bidIncrement, endTime);
         Item item = itemDAO.findById(itemId);
         if (item == null) {
-            logger.warn("Tạo phiên đấu giá thất bại vì mặt hàng không tồn tại itemId={}", itemId);
-            throw new BusinessException("Mặt hàng không tồn tại");
+            logger.warn("Auction creation failed because item does not exist itemId={}", itemId);
+            throw new BusinessException("Item does not exist");
         }
         if (!item.getOwnerId().equals(sellerId)) {
-            logger.warn("Tạo phiên đấu giá thất bại vì người bán không sở hữu mặt hàng itemId={} sellerId={} ownerId={}",
+            logger.warn("Auction creation failed because seller does not own the item itemId={} sellerId={} ownerId={}",
                     itemId, sellerId, item.getOwnerId());
-            throw new BusinessException("Người bán không sở hữu mặt hàng này");
+            throw new BusinessException("Seller does not own this item");
         }
         Auction auction = new Auction(itemId, sellerId, startingPrice, bidIncrement, endTime);
         auctionDAO.insert(auction);
-        logger.info("Đã tạo phiên đấu giá id={} itemId={} sellerId={} status={}",
+        logger.info("Auction created id={} itemId={} sellerId={} status={}",
                 auction.getId(), itemId, sellerId, auction.getStatus());
         return auction;
     }
@@ -54,11 +54,11 @@ public class AuctionService {
      * Lấy thông tin chi tiết 1 phiên đấu giá theo id
      */
     public Auction getAuctionById(String auctionId) {
-        logger.debug("Đang lấy thông tin phiên đấu giá id={}", auctionId);
+        logger.debug("Loading auction details id={}", auctionId);
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            logger.warn("Không tìm thấy phiên đấu giá id={}", auctionId);
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            logger.warn("Auction not found id={}", auctionId);
+            throw new BusinessException("Auction does not exist");
         }
         return auction;
     }
@@ -67,7 +67,7 @@ public class AuctionService {
      * Lấy danh sách phiên theo trạng thái, dùng cho trang chủ (ACTIVE) hoặc scheduler (kiểm tra hết hạn)
      */
     public List<Auction> getAuctionsByStatus(Auction.AuctionStatus status) {
-        logger.debug("Đang lấy danh sách phiên đấu giá theo trạng thái status={}", status);
+        logger.debug("Loading auctions by status status={}", status);
         return auctionDAO.findByStatus(status);
     }
 
@@ -75,23 +75,23 @@ public class AuctionService {
      * Admin duyệt phiên: chuyển status PENDING -> RUNNING
      */
     public Auction approveAuction(String auctionId) {
-        logger.info("Đang duyệt phiên đấu giá id={}", auctionId);
+        logger.info("Approving auction id={}", auctionId);
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            logger.warn("Duyệt phiên đấu giá thất bại vì phiên không tồn tại id={}", auctionId);
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            logger.warn("Auction approval failed because auction does not exist id={}", auctionId);
+            throw new BusinessException("Auction does not exist");
         }
         // Kiêm tra trạng thái hiện tại phải là PENDING
         if (auction.getStatus() != Auction.AuctionStatus.PENDING) {
-            logger.warn("Duyệt phiên đấu giá thất bại vì trạng thái không phải PENDING id={} currentStatus={}",
+            logger.warn("Auction approval failed because status is not PENDING id={} currentStatus={}",
                     auctionId, auction.getStatus());
-            throw new BusinessException("Chỉ có thể duyệt cuộc đấu giá đang chờ duyệt");
+            throw new BusinessException("Only pending auctions can be approved");
         }
         // Không kiểm tra quyền admin ở đây do nguy cơ chồng chéo & khó debug
         // Kiểm tra sẽ do AdminService thực hiện
         auction.approve();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.RUNNING);
-        logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {}",
+        logger.info("Updated auction status id={} from {} to {}",
                 auctionId, Auction.AuctionStatus.PENDING, Auction.AuctionStatus.RUNNING);
         return auction;
     }
@@ -101,20 +101,20 @@ public class AuctionService {
      * Dành riêng cho Super Admin
      */
     public Auction cancelAuction(String auctionId) {
-        logger.info("Đang hủy phiên đấu giá id={}", auctionId);
+        logger.info("Cancelling auction id={}", auctionId);
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            logger.warn("Hủy phiên đấu giá thất bại vì phiên không tồn tại id={}", auctionId);
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            logger.warn("Auction cancellation failed because auction does not exist id={}", auctionId);
+            throw new BusinessException("Auction does not exist");
         }
         if (auction.getStatus() == Auction.AuctionStatus.PAID) {
-            logger.warn("Hủy phiên đấu giá thất bại vì phiên đã thanh toán id={}", auctionId);
-            throw new BusinessException("Không thể hủy cuộc đấu giá đã thanh toán");
+            logger.warn("Auction cancellation failed because auction has already been paid id={}", auctionId);
+            throw new BusinessException("Cannot cancel a paid auction");
         }
         Auction.AuctionStatus oldStatus = auction.getStatus();
         auction.cancel();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
-        logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {}",
+        logger.info("Updated auction status id={} from {} to {}",
                 auctionId, oldStatus, Auction.AuctionStatus.CANCELLED);
         return auction;
     }
@@ -123,20 +123,20 @@ public class AuctionService {
      * Từ chối duyệt phiên đấu giá: chuyển status từ PENDING -> CANCELLED
      */
     public void rejectAuction(String auctionId) {
-        logger.info("Đang từ chối phiên đấu giá id={}", auctionId);
+        logger.info("Rejecting auction id={}", auctionId);
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            logger.warn("Từ chối phiên đấu giá thất bại vì phiên không tồn tại id={}", auctionId);
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            logger.warn("Auction rejection failed because auction does not exist id={}", auctionId);
+            throw new BusinessException("Auction does not exist");
         }
         if (auction.getStatus() != Auction.AuctionStatus.PENDING) {
-            logger.warn("Từ chối phiên đấu giá thất bại vì trạng thái không phải PENDING id={} currentStatus={}",
+            logger.warn("Auction rejection failed because status is not PENDING id={} currentStatus={}",
                     auctionId, auction.getStatus());
-            throw new BusinessException("Chỉ có thể từ chối cuộc đấu giá đang chờ duyệt");
+            throw new BusinessException("Only pending auctions can be rejected");
         }
         auction.cancel();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
-        logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {}",
+        logger.info("Updated auction status id={} from {} to {}",
                 auctionId, Auction.AuctionStatus.PENDING, Auction.AuctionStatus.CANCELLED);
     }
 
@@ -144,7 +144,7 @@ public class AuctionService {
      *Tự động đóng các phiên đã hết thời gian: tìm phiên ACTIVE đã quá endTime, chuyển -> CLOSED, dùng cho scheduler
      */
     public void closeExpiredAuctions() {
-        logger.info("Đang đóng các phiên đấu giá đã hết hạn");
+        logger.info("Closing expired auctions");
         List<Auction> activeAuctions = auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING);
         LocalDateTime now = LocalDateTime.now();
         int closedCount = 0;
@@ -153,12 +153,12 @@ public class AuctionService {
                 auction.close();
                 auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED);
                 closedCount++;
-                logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {} endTime={} closedAt={}",
+                logger.info("Updated auction status id={} from {} to {} endTime={} closedAt={}",
                         auction.getId(), Auction.AuctionStatus.RUNNING, Auction.AuctionStatus.FINISHED,
                         auction.getEndTime(), now);
             }
         }
-        logger.info("Hoàn tất đóng phiên đấu giá hết hạn checkedCount={} closedCount={}",
+        logger.info("Finished closing expired auctions checkedCount={} closedCount={}",
                 activeAuctions.size(), closedCount);
     }
 
@@ -166,20 +166,20 @@ public class AuctionService {
      * Đánh dấu phiên đã thanh toán xong: chuyển status CLOSED -> PAID, dùng khi bidder thanh toán thành công
      */
     public Auction markPaid(String auctionId) {
-        logger.info("Đang đánh dấu phiên đấu giá đã thanh toán id={}", auctionId);
+        logger.info("Marking auction as paid id={}", auctionId);
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            logger.warn("Đánh dấu đã thanh toán thất bại vì phiên không tồn tại id={}", auctionId);
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            logger.warn("Mark paid failed because auction does not exist id={}", auctionId);
+            throw new BusinessException("Auction does not exist");
         }
         if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
-            logger.warn("Đánh dấu đã thanh toán thất bại vì trạng thái không phải FINISHED id={} currentStatus={}",
+            logger.warn("Mark paid failed because status is not FINISHED id={} currentStatus={}",
                     auctionId, auction.getStatus());
-            throw new BusinessException("Chỉ có thể đánh dấu đã thanh toán cho cuộc đấu giá đã kết thúc");
+            throw new BusinessException("Only finished auctions can be marked as paid");
         }
         auction.markPaid();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.PAID);
-        logger.info("Đã cập nhật trạng thái phiên đấu giá id={} từ {} sang {}",
+        logger.info("Updated auction status id={} from {} to {}",
                 auctionId, Auction.AuctionStatus.FINISHED, Auction.AuctionStatus.PAID);
         return auction;
     }
@@ -190,10 +190,10 @@ public class AuctionService {
     public Auction cancelDueToInsufficientFunds(String auctionId) {
         Auction auction = auctionDAO.findById(auctionId);
         if (auction == null) {
-            throw new BusinessException("Cuộc đấu giá không tồn tại");
+            throw new BusinessException("Auction does not exist");
         }
         if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
-            throw new BusinessException("Chỉ có thể hủy cuộc đấu giá đã kết thúc");
+            throw new BusinessException("Only finished auctions can be cancelled");
         }
         auction.cancel();
         auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
