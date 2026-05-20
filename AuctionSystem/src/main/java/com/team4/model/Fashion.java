@@ -65,6 +65,7 @@ public class Fashion extends Item {
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Require size
         this.size = size;
         this.material = (material == null || material.trim().isEmpty())
                 ? "Unknown"
@@ -72,8 +73,11 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
+        // Default blank/missing gender to UNISEX
         this.gender = (gender == null ? Gender.UNISEX : gender);
+        // Require condition
         this.condition = condition;
+        // Keep authentic optional
         this.authentic = authentic;
         validateBrand(this.brand);
         validateSize(this.size);
@@ -100,6 +104,7 @@ public class Fashion extends Item {
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Require size
         this.size = size;
         this.material = (material == null || material.trim().isEmpty())
                 ? "Unknown"
@@ -107,8 +112,11 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
+        // Default blank/missing gender to UNISEX
         this.gender = (gender == null ? Gender.UNISEX : gender);
+        // Require condition
         this.condition = condition;
+        // Keep authentic optional
         this.authentic = authentic;
         validateBrand(this.brand);
         validateSize(this.size);
