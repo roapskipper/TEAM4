@@ -33,15 +33,15 @@ public class ItemService {
      * Tạo mặt hàng mới: kiểm tra seller có tồn tại và đúng role không, tạo object Item qua Factory, lưu xuống DB
      */
     public ItemResponseDTO createItem(String sellerId, CreateItemRequestDTO requestDTO) {
-        logger.info("Đang tạo mặt hàng mới cho người bán: sellerId={}, itemName={}, category={}", 
+        logger.info("Đang tạo mặt hàng mới cho người bán: sellerId={}, itemName={}, category={}",
                 sellerId, requestDTO.getName(), requestDTO.getCategory());
-        
+
         User seller = userDAO.findById(sellerId);
         if (seller == null || !(seller instanceof Seller)) {
             logger.warn("Tạo mặt hàng thất bại: Người bán không tồn tại hoặc không hợp lệ. sellerId={}", sellerId);
             throw new BusinessException("Người bán không tồn tại.");
         }
-        
+
         // Map DTO to Factory Request
         ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
 
@@ -95,7 +95,7 @@ public class ItemService {
             logger.warn("Cập nhật thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
             throw new BusinessException("Lỗi về quyền sở hữu.");
         }
-        
+
         existingItem.setName(newName);
         existingItem.setDescription(newDescription);
         boolean updated = itemDAO.update(existingItem);
@@ -121,7 +121,7 @@ public class ItemService {
             logger.warn("Xóa thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
             throw new BusinessException("Lỗi về quyền sở hữu.");
         }
-        
+
         boolean deleted = itemDAO.delete(itemId);
         if (deleted) {
             logger.info("Đã xóa thành công mặt hàng: itemId={}", itemId);
@@ -238,7 +238,7 @@ public class ItemService {
         if (price.remainder(new java.math.BigDecimal("1000")).compareTo(java.math.BigDecimal.ZERO) != 0) {
             throw new BusinessException("Price must be a multiple of 1,000 VND (no decimals).");
         }
-        
+
         java.math.BigDecimal maxPrice;
         switch (category) {
             case ELECTRONICS:

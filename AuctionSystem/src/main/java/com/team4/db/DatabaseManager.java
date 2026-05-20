@@ -50,7 +50,6 @@ public final class DatabaseManager {
     public static synchronized void initialize() {
         if (dataSource == null) {
             loadConfig();
-
             initDataSource();
         }
     }
