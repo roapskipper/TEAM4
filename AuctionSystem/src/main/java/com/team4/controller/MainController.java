@@ -40,6 +40,7 @@ public class MainController implements Initializable {
         this.userRole = role;
         setupSidebar();
         updateUserInfo();
+        updateBalanceVisibility();
         refreshUserBalance();
 
         if (role != null && role.startsWith("admin")) {
@@ -154,6 +155,10 @@ public class MainController implements Initializable {
         if (balanceValueLabel == null || session == null || session.getUserId() == null) {
             return;
         }
+        if (isAdminRole()) {
+            updateBalanceVisibility();
+            return;
+        }
 
         balanceValueLabel.setText("Balance: " + formatMoney(session.getBalance()));
 
@@ -176,6 +181,19 @@ public class MainController implements Initializable {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void updateBalanceVisibility() {
+        if (balanceValueLabel == null) {
+            return;
+        }
+        boolean showBalance = !isAdminRole();
+        balanceValueLabel.setManaged(showBalance);
+        balanceValueLabel.setVisible(showBalance);
+    }
+
+    private boolean isAdminRole() {
+        return userRole != null && userRole.startsWith("admin");
     }
 
     private String formatMoney(BigDecimal value) {

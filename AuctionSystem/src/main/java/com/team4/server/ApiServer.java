@@ -25,6 +25,7 @@ public class ApiServer {
                 server.createContext("/api/auctions", new AuctionsHandler());
                 server.createContext("/api/user", new UserHandler());
                 server.createContext("/api/seller", new SellerHandler());
+                server.createContext("/api/admin/users", new AdminUsersHandler());
                 server.createContext("/api/admin/auctions", new AdminAuctionsHandler());
                 server.setExecutor(null);
                 server.start();
@@ -39,7 +40,7 @@ public class ApiServer {
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
         exchange.sendResponseHeaders(statusCode, bytes.length);
         OutputStream os = exchange.getResponseBody();

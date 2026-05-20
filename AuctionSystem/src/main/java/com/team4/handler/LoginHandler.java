@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.impl.UserDAOImpl;
+import com.team4.model.Admin;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.service.AuthenticationService;
@@ -54,6 +55,9 @@ public class LoginHandler implements HttpHandler {
             data.addProperty("role", user.getRole().name());
             data.addProperty("fullName", user.getFullName());
             data.addProperty("balance", user.getBalance());
+            if (user instanceof Admin admin) {
+                data.addProperty("accessLevel", admin.getAccessLevel().getLevel());
+            }
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 401, ApiServer.buildResponse("ERROR", e.getMessage(), null));
