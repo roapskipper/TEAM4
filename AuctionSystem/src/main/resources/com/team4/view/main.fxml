@@ -25,15 +25,11 @@
                 <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
                     <Group>
-                        <Line startX="8" startY="31" endX="32" endY="31" styleClass="brand-logo-axis"/>
-                        <Line startX="9" startY="27" endX="16" endY="21" styleClass="brand-logo-line"/>
-                        <Line startX="16" startY="21" endX="23" endY="24" styleClass="brand-logo-line"/>
-                        <Line startX="23" startY="24" endX="32" endY="12" styleClass="brand-logo-line"/>
-                        <Line startX="32" startY="12" endX="31" endY="18" styleClass="brand-logo-arrow"/>
-                        <Line startX="32" startY="12" endX="26" endY="13" styleClass="brand-logo-arrow"/>
-                        <Circle centerX="9" centerY="27" radius="2.2" styleClass="brand-logo-node"/>
-                        <Circle centerX="16" centerY="21" radius="2.2" styleClass="brand-logo-node"/>
-                        <Circle centerX="23" centerY="24" radius="2.2" styleClass="brand-logo-node"/>
+                        <Rectangle x="10" y="14" width="21" height="7" arcWidth="2" arcHeight="2" rotate="-25" styleClass="brand-logo-gavel"/>
+                        <Rectangle x="18" y="11" width="5" height="12" arcWidth="1" arcHeight="1" rotate="-25" styleClass="brand-logo-gavel-cap"/>
+                        <Rectangle x="25" y="19" width="5" height="20" arcWidth="2" arcHeight="2" rotate="-25" styleClass="brand-logo-gavel"/>
+                        <Line startX="9" startY="36" endX="34" endY="36" styleClass="brand-logo-base"/>
+                        <Circle centerX="12" centerY="30" radius="3" styleClass="brand-logo-coin"/>
                     </Group>
                 </StackPane>
                 <VBox spacing="2">

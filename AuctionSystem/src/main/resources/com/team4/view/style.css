@@ -913,31 +913,31 @@
 }
 
 .brand-logo-mark {
-    -fx-background-color: linear-gradient(to bottom right, #2C2C2C, #722F37);
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255, 255, 255, 0.16);
+    -fx-background-color: #722F37;
+    -fx-background-radius: 10;
+    -fx-border-color: #5A252B;
     -fx-border-width: 1;
-    -fx-border-radius: 14;
-    -fx-effect: dropshadow(three-pass-box, rgba(114, 47, 55, 0.28), 10, 0, 0, 3);
+    -fx-border-radius: 10;
 }
 
-.brand-logo-line,
-.brand-logo-arrow {
-    -fx-stroke: #42D392;
-    -fx-stroke-width: 3;
+.brand-logo-gavel {
+    -fx-fill: #F7E6C4;
+}
+
+.brand-logo-gavel-cap {
+    -fx-fill: #D4AF37;
+}
+
+.brand-logo-base {
+    -fx-stroke: #D4AF37;
+    -fx-stroke-width: 2.2;
     -fx-stroke-line-cap: round;
 }
 
-.brand-logo-axis {
-    -fx-stroke: rgba(255, 255, 255, 0.42);
-    -fx-stroke-width: 2;
-    -fx-stroke-line-cap: round;
-}
-
-.brand-logo-node {
-    -fx-fill: #FFFFFF;
-    -fx-stroke: #42D392;
-    -fx-stroke-width: 1.4;
+.brand-logo-coin {
+    -fx-fill: #F7E6C4;
+    -fx-stroke: #D4AF37;
+    -fx-stroke-width: 1;
 }
 
 .brand-icon-bg-circle {
