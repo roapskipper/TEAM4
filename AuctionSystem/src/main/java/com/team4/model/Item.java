@@ -182,4 +182,15 @@ public abstract class Item extends Entity {
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
+
+    /**
+     * Normalizes a string value. If the string is null or blank, returns the default value.
+     */
+    protected static String normalizeDefaultString(String value, String defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? defaultValue : trimmed;
+    }
 }
