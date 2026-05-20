@@ -20,6 +20,25 @@ public abstract class Item extends Entity {
     public static final int NAME_MAX_LENGTH = 255;
     public static final int DESCRIPTION_MAX_LENGTH = 2000;
     private static final int OWNER_ID_MAX = 36;
+
+    /** Shared validation messages for Item entity and ItemService pre-checks. */
+    public static final class ValidationMessages {
+        public static final String NAME_REQUIRED = "Item name is required.";
+        public static final String NAME_TOO_LONG =
+                "Item name must not exceed " + NAME_MAX_LENGTH + " characters.";
+        public static final String STARTING_PRICE_REQUIRED = "Starting price is required.";
+        public static final String STARTING_PRICE_NON_NEGATIVE =
+                "Starting price must be zero or greater.";
+        public static final String CATEGORY_REQUIRED = "Category is required.";
+        public static final String DESCRIPTION_REQUIRED = "Description is required.";
+        public static final String DESCRIPTION_TOO_LONG =
+                "Description must not exceed " + DESCRIPTION_MAX_LENGTH + " characters.";
+        public static final String OWNER_ID_REQUIRED = "Owner id is required.";
+        public static final String OWNER_ID_TOO_LONG =
+                "Owner id must not exceed " + OWNER_ID_MAX + " characters.";
+
+        private ValidationMessages() {}
+    }
     private String name;
     private String description;
     private BigDecimal startingPrice;
@@ -60,33 +79,33 @@ public abstract class Item extends Entity {
             String ownerId) {
         String trimmedName = name == null ? null : name.trim();
         if (trimmedName == null || trimmedName.isEmpty()) {
-            throw new IllegalArgumentException("Item name must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.NAME_REQUIRED);
         }
         if (trimmedName.length() > NAME_MAX_LENGTH) {
-            throw new IllegalArgumentException("Item name must not exceed " + NAME_MAX_LENGTH + " characters.");
+            throw new IllegalArgumentException(ValidationMessages.NAME_TOO_LONG);
         }
         if (startingPrice == null) {
-            throw new IllegalArgumentException("Starting price must not be null.");
+            throw new IllegalArgumentException(ValidationMessages.STARTING_PRICE_REQUIRED);
         }
         if (startingPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Starting price cannot be negative.");
+            throw new IllegalArgumentException(ValidationMessages.STARTING_PRICE_NON_NEGATIVE);
         }
         if (category == null) {
-            throw new IllegalArgumentException("Category must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.CATEGORY_REQUIRED);
         }
         String trimmedOwnerId = ownerId == null ? null : ownerId.trim();
         if (trimmedOwnerId == null || trimmedOwnerId.isEmpty()) {
-            throw new IllegalArgumentException("OwnerId must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.OWNER_ID_REQUIRED);
         }
         if (trimmedOwnerId.length() > OWNER_ID_MAX) {
-            throw new IllegalArgumentException("OwnerId must not exceed " + OWNER_ID_MAX + " characters.");
+            throw new IllegalArgumentException(ValidationMessages.OWNER_ID_TOO_LONG);
         }
         String trimmedDescription = description == null ? null : description.trim();
         if (trimmedDescription == null || trimmedDescription.isEmpty()) {
-            throw new IllegalArgumentException("Description must not be blank.");
+            throw new IllegalArgumentException(ValidationMessages.DESCRIPTION_REQUIRED);
         }
         if (trimmedDescription.length() > DESCRIPTION_MAX_LENGTH) {
-            throw new IllegalArgumentException("Description must not exceed " + DESCRIPTION_MAX_LENGTH + " characters.");
+            throw new IllegalArgumentException(ValidationMessages.DESCRIPTION_TOO_LONG);
         }
     }
 
@@ -125,11 +144,11 @@ public abstract class Item extends Entity {
 
     // Các phương thức chuẩn hóa
     private static BigDecimal money(BigDecimal amount) {
-        if (amount == null) throw new IllegalArgumentException("Starting price must not be null.");
+        if (amount == null) throw new IllegalArgumentException(ValidationMessages.STARTING_PRICE_REQUIRED);
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
     private static String normalizeName(String name) {
-        if (name == null) throw new IllegalArgumentException("Item name must not be blank.");
+        if (name == null) throw new IllegalArgumentException(ValidationMessages.NAME_REQUIRED);
         String t = name.trim();
         return t.isEmpty() ? null : t;
     }
@@ -139,9 +158,9 @@ public abstract class Item extends Entity {
         return t.isEmpty() ? null : t;
     }
     private static String normalizeOwnerId(String ownerId) {
-        if (ownerId == null) throw new IllegalArgumentException("OwnerId must not be blank.");
+        if (ownerId == null) throw new IllegalArgumentException(ValidationMessages.OWNER_ID_REQUIRED);
         String t = ownerId.trim();
-        if (t.isEmpty()) throw new IllegalArgumentException("OwnerId must not be blank.");
+        if (t.isEmpty()) throw new IllegalArgumentException(ValidationMessages.OWNER_ID_REQUIRED);
         return t;
     }
     // Item này là gì về mặt kỹ thuật

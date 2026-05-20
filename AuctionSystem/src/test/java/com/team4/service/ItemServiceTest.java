@@ -150,7 +150,7 @@ public class ItemServiceTest {
             ItemRequest req = createArtRequest(sellerId, "   ");
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Item name must not be blank.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.NAME_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -162,7 +162,7 @@ public class ItemServiceTest {
             ItemRequest req = createArtRequest(sellerId, "a".repeat(256));
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Item name must not exceed 255 characters.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.NAME_TOO_LONG, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -175,7 +175,7 @@ public class ItemServiceTest {
             req.setStartingPrice(null);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Starting price must not be null.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.STARTING_PRICE_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -188,7 +188,7 @@ public class ItemServiceTest {
             req.setStartingPrice(new BigDecimal("-1"));
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Starting price cannot be negative.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.STARTING_PRICE_NON_NEGATIVE, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -201,7 +201,7 @@ public class ItemServiceTest {
             req.setCategory(null);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Category must not be blank.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.CATEGORY_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -214,7 +214,7 @@ public class ItemServiceTest {
             req.setDescription("   ");
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Description must not be blank.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.DESCRIPTION_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -227,7 +227,7 @@ public class ItemServiceTest {
             req.setDescription("x".repeat(2001));
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("Description must not exceed 2000 characters.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.DESCRIPTION_TOO_LONG, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -240,7 +240,7 @@ public class ItemServiceTest {
             req.setOwnerId("  ");
 
             BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
-            assertEquals("OwnerId must not be blank.", ex.getMessage());
+            assertEquals(Item.ValidationMessages.OWNER_ID_REQUIRED, ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
