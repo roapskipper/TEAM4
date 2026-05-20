@@ -920,24 +920,24 @@
     -fx-border-radius: 10;
 }
 
-.brand-logo-gavel {
-    -fx-fill: #F7E6C4;
-}
-
-.brand-logo-gavel-cap {
-    -fx-fill: #D4AF37;
-}
-
 .brand-logo-base {
-    -fx-stroke: #D4AF37;
-    -fx-stroke-width: 2.2;
+    -fx-stroke: rgba(247, 230, 196, 0.55);
+    -fx-stroke-width: 1.6;
     -fx-stroke-line-cap: round;
 }
 
-.brand-logo-coin {
+.brand-logo-wick {
+    -fx-stroke: #F7E6C4;
+    -fx-stroke-width: 1.6;
+    -fx-stroke-line-cap: round;
+}
+
+.brand-logo-candle {
     -fx-fill: #F7E6C4;
-    -fx-stroke: #D4AF37;
-    -fx-stroke-width: 1;
+}
+
+.brand-logo-candle-alt {
+    -fx-fill: #D4AF37;
 }
 
 .brand-icon-bg-circle {
