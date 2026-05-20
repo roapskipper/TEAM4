@@ -48,8 +48,11 @@ public class Electronics extends Item {
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Require itemCondition
         this.itemCondition = itemCondition;
+        // Require warrantyMonths >= 0
         this.warrantyMonths = warrantyMonths;
+        // Keep fullyFunctional optional
         this.fullyFunctional = fullyFunctional;
         validateBrand(this.brand);
         validateModel(this.model);
@@ -75,8 +78,11 @@ public class Electronics extends Item {
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Require itemCondition
         this.itemCondition = itemCondition;
+        // Require warrantyMonths >= 0
         this.warrantyMonths = warrantyMonths;
+        // Keep fullyFunctional optional
         this.fullyFunctional = fullyFunctional;
         validateBrand(this.brand);
         validateModel(this.model);
