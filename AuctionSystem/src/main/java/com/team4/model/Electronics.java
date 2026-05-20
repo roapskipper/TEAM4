@@ -6,6 +6,14 @@ import java.util.regex.Pattern;
 
 /**
  * Electronics: model cho nhóm hàng điện tử.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>itemCondition</b>: Required. Cannot be null.</li>
+ * <li><b>warrantyMonths</b>: Required. Must be &ge; 0.</li>
+ * <li><b>brand & model</b>: Optional. Defaults to "Unknown" if blank. Max 50 characters each.</li>
+ * <li><b>fullyFunctional</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Electronics extends Item {
     private static final long serialVersionUID = 1L;
