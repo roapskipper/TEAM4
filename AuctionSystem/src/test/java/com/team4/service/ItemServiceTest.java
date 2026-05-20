@@ -507,6 +507,126 @@ public class ItemServiceTest {
     }
 
     @Nested
+    @DisplayName("Validation Art (Tranh ảnh / Nghệ thuật)")
+    class ArtValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu chất liệu (medium)")
+        void testCreateItem_MissingMedium() {
+            String sellerId = "seller-art-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Tranh đẹp");
+            req.setMedium(null);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Art medium is required.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Năm sáng tác không hợp lệ")
+        void testCreateItem_InvalidCreationYear() {
+            String sellerId = "seller-art-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Tranh tương lai");
+            req.setCreationYear(3000); // Tương lai
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertTrue(ex.getMessage().contains("Invalid creation year"));
+            verify(itemDAO, never()).insert(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Validation Electronics (Đồ điện tử)")
+    class ElectronicsValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Số tháng bảo hành âm")
+        void testCreateItem_InvalidWarrantyMonths() {
+            String sellerId = "seller-elec-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createElectronicsRequest(sellerId, "Laptop cũ");
+            req.setWarrantyMonths(-1);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Warranty months cannot be negative.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Validation Fashion (Thời trang)")
+    class FashionValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu kích cỡ (size)")
+        void testCreateItem_MissingSize() {
+            String sellerId = "seller-fash-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createFashionRequest(sellerId, "Áo thun");
+            req.setSize(null);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Fashion size is required.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Validation Vehicle (Phương tiện)")
+    class VehicleValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Odo âm")
+        void testCreateItem_InvalidOdo() {
+            String sellerId = "seller-veh-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createVehicleRequest(sellerId, "Xe máy");
+            req.setOdo(-100);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Odometer (odo) cannot be negative.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Năm sản xuất không hợp lệ")
+        void testCreateItem_InvalidManufacturingYear() {
+            String sellerId = "seller-veh-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createVehicleRequest(sellerId, "Xe ô tô");
+            req.setManufacturingYear(1800); // Quá cũ
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertTrue(ex.getMessage().contains("Invalid production year"));
+            verify(itemDAO, never()).insert(any());
+        }
+    }
+
+    @Nested
     @DisplayName("Nghiệp vụ Cập nhật mặt hàng (Update Item)")
     class UpdateItemTests {
 
