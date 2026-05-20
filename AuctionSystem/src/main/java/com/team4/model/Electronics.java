@@ -109,12 +109,12 @@ public class Electronics extends Item {
     }
     private static void validateItemCondition(ConditionGrade cond) {
         if (cond == null) {
-            throw new IllegalArgumentException("Item condition must not be blank.");
+            throw new IllegalArgumentException("Electronics item condition is required.");
         }
     }
     private static void validateWarrantyMonths(int months) {
         if (months < 0) {
-            throw new IllegalArgumentException("Warranty months must be >= 0.");
+            throw new IllegalArgumentException("Warranty months cannot be negative.");
         }
     }
     // Summary / toString
