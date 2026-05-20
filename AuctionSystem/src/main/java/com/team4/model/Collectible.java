@@ -82,9 +82,7 @@ public class Collectible extends Item {
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
         this.hasCertificate = hasCertificate;
-        this.origin = (origin == null || origin.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(origin);
+        this.origin = resolveOrigin(origin);
         validateCollectibleCategory();
     }
 
@@ -105,10 +103,18 @@ public class Collectible extends Item {
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
         this.hasCertificate = hasCertificate;
-        this.origin = (origin == null || origin.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(origin);
+        this.origin = resolveOrigin(origin);
         validateCollectibleCategory();
+    }
+
+    /**
+     * Optional origin: blank values default to {@code Unknown}.
+     */
+    public static String resolveOrigin(String origin) {
+        if (origin == null || origin.trim().isEmpty()) {
+            return "Unknown";
+        }
+        return normalizeOptional(origin);
     }
 
     private static void validateYearOfOrigin(int year) {
@@ -171,7 +177,7 @@ public class Collectible extends Item {
     public void setHasCertificate(boolean hasCertificate) { this.hasCertificate = hasCertificate; }
     public String getOrigin() { return origin; }
     public void setOrigin(String origin) {
-        this.origin = normalizeOptional(origin);
+        this.origin = resolveOrigin(origin);
         validateOrigin(this.origin);
     }
 }
