@@ -135,6 +135,133 @@ public class ItemServiceTest {
     }
 
     @Nested
+    @DisplayName("Validation thông tin chung (Common fields)")
+    class CommonItemValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Tên sản phẩm trống")
+        void testCreateItem_BlankName() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "   ");
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Item name must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Tên sản phẩm vượt quá 255 ký tự")
+        void testCreateItem_NameTooLong() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "a".repeat(256));
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Item name must not exceed 255 characters.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giá khởi điểm null")
+        void testCreateItem_NullStartingPrice() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setStartingPrice(null);
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Starting price must not be null.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giá khởi điểm âm")
+        void testCreateItem_NegativeStartingPrice() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setStartingPrice(new BigDecimal("-1"));
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Starting price cannot be negative.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu danh mục")
+        void testCreateItem_NullCategory() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setCategory(null);
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Category must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Mô tả trống")
+        void testCreateItem_BlankDescription() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setDescription("   ");
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Description must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Mô tả vượt quá 2000 ký tự")
+        void testCreateItem_DescriptionTooLong() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setDescription("x".repeat(2001));
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("Description must not exceed 2000 characters.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu ownerId")
+        void testCreateItem_BlankOwnerId() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Hợp lệ");
+            req.setOwnerId("  ");
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
+            assertEquals("OwnerId must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thành công - Giá khởi điểm bằng 0")
+        void testCreateItem_ZeroStartingPriceAllowed() {
+            String sellerId = "seller-123";
+            stubValidSeller(sellerId);
+            ItemRequest req = createArtRequest(sellerId, "Miễn phí");
+            req.setStartingPrice(BigDecimal.ZERO);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Item result = itemService.createItem(sellerId, req);
+
+            assertNotNull(result);
+            assertEquals(0, result.getStartingPrice().compareTo(BigDecimal.ZERO));
+            verify(itemDAO).insert(any(Item.class));
+        }
+    }
+
+    @Nested
     @DisplayName("Nghiệp vụ Cập nhật mặt hàng (Update Item)")
     class UpdateItemTests {
 
