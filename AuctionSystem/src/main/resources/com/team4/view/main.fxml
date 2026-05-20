@@ -25,9 +25,15 @@
                 <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
                     <Group>
-                        <Rectangle x="7" y="7" width="22" height="7" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-head"/>
-                        <Rectangle x="22" y="13" width="5" height="22" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-handle"/>
-                        <Rectangle x="8" y="29" width="24" height="4" arcWidth="3" arcHeight="3" styleClass="brand-logo-accent"/>
+                        <Line startX="8" startY="31" endX="32" endY="31" styleClass="brand-logo-axis"/>
+                        <Line startX="9" startY="27" endX="16" endY="21" styleClass="brand-logo-line"/>
+                        <Line startX="16" startY="21" endX="23" endY="24" styleClass="brand-logo-line"/>
+                        <Line startX="23" startY="24" endX="32" endY="12" styleClass="brand-logo-line"/>
+                        <Line startX="32" startY="12" endX="31" endY="18" styleClass="brand-logo-arrow"/>
+                        <Line startX="32" startY="12" endX="26" endY="13" styleClass="brand-logo-arrow"/>
+                        <Circle centerX="9" centerY="27" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="16" centerY="21" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="23" centerY="24" radius="2.2" styleClass="brand-logo-node"/>
                     </Group>
                 </StackPane>
                 <VBox spacing="2">
