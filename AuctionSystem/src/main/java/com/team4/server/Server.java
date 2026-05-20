@@ -62,6 +62,7 @@ public class Server {
     public static Gson getGson()                     { return gson; }
 
     public static void main(String[] args) {
+        com.team4.util.DatabaseSetup.initDatabase();
         com.team4.db.DatabaseManager.initialize();
         new ApiServer().start();
 

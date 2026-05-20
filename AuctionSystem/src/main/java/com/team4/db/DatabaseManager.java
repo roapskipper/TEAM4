@@ -18,6 +18,10 @@ import io.github.cdimascio.dotenv.Dotenv;
  */
 public final class DatabaseManager {
 
+    private static final String DEFAULT_DATABASE = "auction_system";
+    private static final String DEFAULT_JDBC_QUERY =
+            "useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh";
+
     private static HikariDataSource dataSource;
     private static String url;
     private static String username;
@@ -67,9 +71,9 @@ public final class DatabaseManager {
 
             props.load(is);
             // Lấy các giá trị
-            url               = dotenv.get("DB_URL");
-            username          = dotenv.get("DB_USERNAME");
-            password          = dotenv.get("DB_PASSWORD");
+            url               = normalizeJdbcUrl(dotenv.get("DB_URL"), DEFAULT_DATABASE);
+            username          = requireConfig("DB_USERNAME", dotenv.get("DB_USERNAME"));
+            password          = requireConfig("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
             idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
@@ -94,6 +98,46 @@ public final class DatabaseManager {
         config.setMaxLifetime(maxLifetime);
 
         dataSource = new HikariDataSource(config);
+    }
+
+    public static String normalizeJdbcUrl(String rawUrl, String defaultDatabase) {
+        String value = requireConfig("DB_URL", rawUrl).trim();
+        String base = value;
+        String query = "";
+        int queryIdx = value.indexOf('?');
+
+        if (queryIdx >= 0) {
+            base = value.substring(0, queryIdx);
+            query = value.substring(queryIdx + 1);
+        }
+
+        int schemeIdx = base.indexOf("://");
+        if (schemeIdx < 0 || !base.startsWith("jdbc:mysql://")) {
+            throw new IllegalArgumentException("DB_URL must be a MySQL JDBC URL");
+        }
+
+        int pathStart = base.indexOf('/', schemeIdx + 3);
+        boolean missingDatabase = pathStart < 0 || pathStart == base.length() - 1;
+        if (missingDatabase) {
+            if (pathStart < 0) {
+                base = base + "/" + defaultDatabase;
+            } else {
+                base = base + defaultDatabase;
+            }
+        }
+
+        if (query.isBlank()) {
+            query = DEFAULT_JDBC_QUERY;
+        }
+
+        return base + "?" + query;
+    }
+
+    private static String requireConfig(String key, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(key + " must not be blank");
+        }
+        return value;
     }
 
     // 4. Lấy connection
