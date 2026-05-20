@@ -164,12 +164,12 @@ public class Vehicle extends Item {
         }
     }
     private static void validateOdo(int odo) {
-        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) must be >= 0.");
-        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer seems invalid (>1,000,000).");
+        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) cannot be negative.");
+        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer value exceeds maximum limit of 1,000,000.");
     }
     private static void validateEngineType(EngineType t) {
         if (t == null)
-            throw new IllegalArgumentException("EngineType must not be null. If the engine type is unknown, choose EngineType.OTHER.");
+            throw new IllegalArgumentException("Vehicle engine type is required.");
     }
     private static void validateColor(String c) {
         if (c == null) return; // optional
