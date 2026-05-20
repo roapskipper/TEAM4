@@ -83,6 +83,7 @@ public class AuthenticationService {
             logger.warn("Sign-in failed because username does not exist username={}", username);
             throw new BusinessException("Username does not exist");
         }
+        ensureAccountCanLogin(user);
         if (!user.verifyPassword(rawPassword)) {
             logger.warn("Sign-in failed because password is incorrect username={} userId={}", username, user.getId());
             throw new BusinessException("Incorrect password");
@@ -101,6 +102,7 @@ public class AuthenticationService {
             throw new BusinessException("Username does not exist");
 
         }
+        ensureAccountCanLogin(user);
 
         if (!(user instanceof Admin admin)) {
             logger.warn("Admin sign-in failed because account does not have admin privileges username={} userId={} role={}",
@@ -141,5 +143,15 @@ public class AuthenticationService {
         user.changePasswordHash(PasswordHasher.hashPassword(newRawPassword));
         userDAO.update(user);
         logger.info("Password changed userId={} username={}", userId, user.getUsername());
+    }
+
+    private void ensureAccountCanLogin(User user) {
+        String status = userDAO.getAccountStatus(user.getId());
+        if ("BANNED".equalsIgnoreCase(status)) {
+            throw new BusinessException("This account has been banned.");
+        }
+        if ("SUSPENDED".equalsIgnoreCase(status)) {
+            throw new BusinessException("This account has been suspended.");
+        }
     }
 }

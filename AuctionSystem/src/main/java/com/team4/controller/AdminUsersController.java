@@ -8,6 +8,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.team4.client.ApiClient;
+import com.team4.util.UserSession;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,7 +20,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -27,6 +30,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 
 public class AdminUsersController implements Initializable {
 
@@ -77,16 +82,22 @@ public class AdminUsersController implements Initializable {
         });
 
         colAction.setCellFactory(param -> new TableCell<UserRow, Void>() {
+            private final Button grantBtn = new Button("Grant Admin");
+            private final Button revokeBtn = new Button("Remove Admin");
             private final Button suspendBtn = new Button("Suspend");
             private final Button banBtn = new Button("Ban");
             private final Button unsuspendBtn = new Button("Unsuspend");
-            private final HBox actionBox = new HBox(10);
+            private final Button unbanBtn = new Button("Unban");
+            private final HBox actionBox = new HBox(6);
 
             {
                 actionBox.setAlignment(Pos.CENTER_LEFT);
-                suspendBtn.setStyle("-fx-font-size: 11px;");
-                banBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #ef4444;");
-                unsuspendBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #10b981;");
+                styleActionButton(grantBtn, "admin-action-grant");
+                styleActionButton(revokeBtn, "admin-action-revoke");
+                styleActionButton(suspendBtn, "admin-action-suspend");
+                styleActionButton(banBtn, "admin-action-ban");
+                styleActionButton(unsuspendBtn, "admin-action-restore");
+                styleActionButton(unbanBtn, "admin-action-restore");
             }
 
             @Override
@@ -99,14 +110,35 @@ public class AdminUsersController implements Initializable {
                     String status = user.getStatus() != null ? user.getStatus().toUpperCase() : "ACTIVE";
                     actionBox.getChildren().clear();
 
-                    if ("ACTIVE".equals(status)) {
-                        suspendBtn.setOnAction(e -> handleSuspend(user));
-                        banBtn.setOnAction(e -> handleBan(user));
-                        actionBox.getChildren().addAll(suspendBtn, banBtn);
-                    } else if ("SUSPENDED".equals(status)) {
-                        unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
-                        banBtn.setOnAction(e -> handleBan(user));
-                        actionBox.getChildren().addAll(unsuspendBtn, banBtn);
+                    boolean self = currentUserId().equals(user.getUserId());
+                    if (self) {
+                        Label current = new Label("Current account");
+                        current.getStyleClass().add("muted-text-sm");
+                        actionBox.getChildren().add(current);
+                    } else {
+                        boolean adminRole = "ADMIN".equalsIgnoreCase(user.getRole());
+                        if (canGrantAdmin() && adminRole && user.getAccessLevelCode() != 2) {
+                            revokeBtn.setOnAction(e -> handleRevokeAdmin(user));
+                            actionBox.getChildren().add(revokeBtn);
+                        } else if (canGrantAdmin() && !adminRole) {
+                            grantBtn.setOnAction(e -> handleGrantAdmin(user));
+                            actionBox.getChildren().add(grantBtn);
+                        }
+
+                        if ("BANNED".equals(status)) {
+                            unbanBtn.setOnAction(e -> handleUnban(user));
+                            actionBox.getChildren().add(unbanBtn);
+                        } else if ("SUSPENDED".equals(status)) {
+                            unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
+                            actionBox.getChildren().add(unsuspendBtn);
+                            banBtn.setOnAction(e -> handleBan(user));
+                            actionBox.getChildren().add(banBtn);
+                        } else {
+                            suspendBtn.setOnAction(e -> handleSuspend(user));
+                            actionBox.getChildren().add(suspendBtn);
+                            banBtn.setOnAction(e -> handleBan(user));
+                            actionBox.getChildren().add(banBtn);
+                        }
                     }
 
                     setGraphic(actionBox);
@@ -116,13 +148,18 @@ public class AdminUsersController implements Initializable {
         });
     }
 
+    private void styleActionButton(Button button, String styleClass) {
+        button.getStyleClass().setAll("admin-action-btn", styleClass);
+        button.setMinWidth(Region.USE_PREF_SIZE);
+    }
+
     private void loadRealData() {
         usersTable.setPlaceholder(new Label("Loading users..."));
         Task<JsonArray> task = new Task<>() {
             @Override
             protected JsonArray call() throws Exception {
                 ApiClient apiClient = new ApiClient();
-                return apiClient.getAllUsers();
+                return apiClient.getAllUsers(currentUserId());
             }
         };
 
@@ -139,8 +176,9 @@ public class AdminUsersController implements Initializable {
                 String email = obj.has("email") ? obj.get("email").getAsString() : "";
                 String joinDate = obj.has("createdAt") ? obj.get("createdAt").getAsString() : "";
                 String status = obj.has("status") ? obj.get("status").getAsString() : "ACTIVE";
+                int accessLevelCode = obj.has("accessLevelCode") ? obj.get("accessLevelCode").getAsInt() : 0;
                 
-                allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, status));
+                allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, status, accessLevelCode));
             }
             
             if (allUsers.isEmpty()) {
@@ -159,7 +197,11 @@ public class AdminUsersController implements Initializable {
     }
 
     private void setupFilters() {
-        roleFilter.setItems(FXCollections.observableArrayList("All Users", "Bidders Only", "Sellers Only", "Admins Only"));
+        if (canGrantAdmin()) {
+            roleFilter.setItems(FXCollections.observableArrayList("All Users", "Admins Only", "Sellers Only", "Bidders Only"));
+        } else {
+            roleFilter.setItems(FXCollections.observableArrayList("All Users", "Sellers Only", "Bidders Only"));
+        }
         roleFilter.setValue("All Users");
         roleFilter.valueProperty().addListener((obs, old, val) -> applyFilter());
         searchField.textProperty().addListener((obs, old, val) -> applyFilter());
@@ -195,7 +237,7 @@ public class AdminUsersController implements Initializable {
         dialog.showAndWait().ifPresent(reason -> {
             disableButtonsAndCallApi(() -> {
                 ApiClient apiClient = new ApiClient();
-                return apiClient.suspendUser(user.getUserId(), reason);
+                return apiClient.suspendUser(user.getUserId(), currentUserId(), reason);
             }, "User suspended successfully!");
         });
     }
@@ -213,8 +255,20 @@ public class AdminUsersController implements Initializable {
             }
             disableButtonsAndCallApi(() -> {
                 ApiClient apiClient = new ApiClient();
-                return apiClient.banUser(user.getUserId(), reason);
+                return apiClient.banUser(user.getUserId(), currentUserId(), reason);
             }, "User banned successfully!");
+        });
+    }
+
+    private void handleUnban(UserRow user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Unban " + user.getUsername() + "?", ButtonType.YES, ButtonType.NO);
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                disableButtonsAndCallApi(() -> {
+                    ApiClient apiClient = new ApiClient();
+                    return apiClient.unbanUser(user.getUserId(), currentUserId());
+                }, "User unbanned successfully!");
+            }
         });
     }
 
@@ -224,9 +278,52 @@ public class AdminUsersController implements Initializable {
             if (response == ButtonType.YES) {
                 disableButtonsAndCallApi(() -> {
                     ApiClient apiClient = new ApiClient();
-                    return apiClient.unsuspendUser(user.getUserId());
+                    return apiClient.unsuspendUser(user.getUserId(), currentUserId());
                 }, "User unsuspended successfully!");
             }
+        });
+    }
+
+    private void handleRevokeAdmin(UserRow user) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Remove admin role from " + user.getUsername() + "?",
+                ButtonType.YES,
+                ButtonType.NO);
+        confirm.setTitle("Remove Admin");
+        confirm.setHeaderText(null);
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                disableButtonsAndCallApi(() -> {
+                    ApiClient apiClient = new ApiClient();
+                    return apiClient.revokeAdmin(user.getUserId(), currentUserId());
+                }, "Admin privileges removed successfully!");
+            }
+        });
+    }
+
+    private void handleGrantAdmin(UserRow user) {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Grant Admin");
+        dialog.setHeaderText("Grant admin privileges to " + user.getUsername());
+        ButtonType grantButtonType = new ButtonType("Grant", ButtonType.OK.getButtonData());
+        dialog.getDialogPane().getButtonTypes().addAll(grantButtonType, ButtonType.CANCEL);
+
+        PasswordField adminCodeField = new PasswordField();
+        adminCodeField.setPromptText("New admin code");
+        adminCodeField.getStyleClass().add("input-field");
+        VBox content = new VBox(8, new Label("Set an admin code for this account"), adminCodeField);
+        dialog.getDialogPane().setContent(content);
+        dialog.setResultConverter(button -> button == grantButtonType ? adminCodeField.getText() : null);
+
+        dialog.showAndWait().ifPresent(adminCode -> {
+            if (adminCode == null || adminCode.trim().length() < 8) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Admin code must be at least 8 characters long.");
+                return;
+            }
+            disableButtonsAndCallApi(() -> {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.grantAdmin(user.getUserId(), currentUserId(), adminCode.trim());
+            }, "Admin privileges granted successfully!");
         });
     }
 
@@ -260,9 +357,20 @@ public class AdminUsersController implements Initializable {
         alert.show();
     }
 
+    private boolean canGrantAdmin() {
+        UserSession session = UserSession.getInstance();
+        return session != null && "admin_super".equals(session.getRole());
+    }
+
+    private String currentUserId() {
+        UserSession session = UserSession.getInstance();
+        return session != null && session.getUserId() != null ? session.getUserId() : "";
+    }
+
     public static class UserRow {
         private String userId, username, fullName, role, email, joinDate, status;
-        public UserRow(String userId, String username, String fullName, String role, String email, String joinDate, String status) {
+        private int accessLevelCode;
+        public UserRow(String userId, String username, String fullName, String role, String email, String joinDate, String status, int accessLevelCode) {
             this.userId = userId;
             this.username = username;
             this.fullName = fullName;
@@ -270,6 +378,7 @@ public class AdminUsersController implements Initializable {
             this.email = email;
             this.joinDate = joinDate;
             this.status = status;
+            this.accessLevelCode = accessLevelCode;
         }
         public String getUserId() { return userId; }
         public String getUsername() { return username; }
@@ -278,5 +387,6 @@ public class AdminUsersController implements Initializable {
         public String getEmail() { return email; }
         public String getJoinDate() { return joinDate; }
         public String getStatus() { return status; }
+        public int getAccessLevelCode() { return accessLevelCode; }
     }
 }

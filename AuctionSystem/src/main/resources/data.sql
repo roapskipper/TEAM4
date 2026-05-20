@@ -4,18 +4,18 @@
 
 -- Super Admin: admin123 & adminteam4
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('root-admin', CURRENT_TIMESTAMP, 'superadmin', '$2a$10$Ew.YIn0n3k6S22qP8u68N.0q/sL/7m693Q06z3FqK3v.h9C2e4w1W', 'Trần Minh Trung', 'admin@auctionsystem.com', 'ADMIN', 0, '$2a$10$7Z2P.M8J6L.Qk/7q7g4FMe.K1z9Y3V5x8T0w2S4u6R8p0N2m4O6q', 1);
+VALUES ('root-admin', CURRENT_TIMESTAMP, 'superadmin', '$2a$10$Ew.YIn0n3k6S22qP8u68N.0q/sL/7m693Q06z3FqK3v.h9C2e4w1W', 'Trần Minh Trung', 'admin@auctionsystem.com', 'ADMIN', 0, '$2a$10$7Z2P.M8J6L.Qk/7q7g4FMe.K1z9Y3V5x8T0w2S4u6R8p0N2m4O6q', 2);
 
--- 3 Moderator (Access Level = 2)
+-- 3 Moderator (Access Level = 1)
        -- mod123 & mod-code-01
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-001', CURRENT_TIMESTAMP, 'moderator1', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Lê Văn Cấc', 'mod1@gmail.com', 'ADMIN', 0, '$2a$10$K7Xk9B5aH3R8V2u1S4t6Q.9p0N2m4O6q8r0N2m4O6q8r0N2m4O6q', 2);
+VALUES ('mod-001', CURRENT_TIMESTAMP, 'moderator1', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Lê Văn Cấc', 'mod1@gmail.com', 'ADMIN', 0, '$2a$10$K7Xk9B5aH3R8V2u1S4t6Q.9p0N2m4O6q8r0N2m4O6q8r0N2m4O6q', 1);
        -- mod123 & mod-code-02
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-002', CURRENT_TIMESTAMP, 'moderator2', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Lê Minh Hiếu', 'mod2@gmail.com', 'ADMIN', 0, '$2a$10$T5v8Y7w3Q4x1V2u3S6t9R.0qK/r5sH6g7R9x1/4L8t1u.5/K9z2Z', 2);
+VALUES ('mod-002', CURRENT_TIMESTAMP, 'moderator2', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Lê Minh Hiếu', 'mod2@gmail.com', 'ADMIN', 0, '$2a$10$T5v8Y7w3Q4x1V2u3S6t9R.0qK/r5sH6g7R9x1/4L8t1u.5/K9z2Z', 1);
        -- mod123 & mod-code-03
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Du Di Min', 'mod3@gmail.com', 'ADMIN', 0, '$2a$10$M8J6L.Qk/7q7g4FMe.K1z.9Y3V5x8T0w2S4u6R8p0N2m4O6q8r0N', 2);
+VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Du Di Min', 'mod3@gmail.com', 'ADMIN', 0, '$2a$10$M8J6L.Qk/7q7g4FMe.K1z.9Y3V5x8T0w2S4u6R8p0N2m4O6q8r0N', 1);
 
 
 -- =========================================================================

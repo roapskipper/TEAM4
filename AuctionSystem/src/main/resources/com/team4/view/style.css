@@ -454,6 +454,54 @@
     -fx-text-fill: #722F37;
 }
 
+.admin-action-btn {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 6 10;
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.admin-action-grant {
+    -fx-background-color: rgba(114, 47, 55, 0.10);
+    -fx-border-color: rgba(212, 175, 55, 0.45);
+    -fx-text-fill: #722F37;
+}
+
+.admin-action-revoke {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: #CBD5E1;
+    -fx-text-fill: #334155;
+}
+
+.admin-action-suspend {
+    -fx-background-color: rgba(202, 138, 4, 0.10);
+    -fx-border-color: rgba(202, 138, 4, 0.24);
+    -fx-text-fill: #A16207;
+}
+
+.admin-action-ban {
+    -fx-background-color: rgba(185, 28, 28, 0.10);
+    -fx-border-color: rgba(185, 28, 28, 0.24);
+    -fx-text-fill: #B91C1C;
+}
+
+.admin-action-restore {
+    -fx-background-color: rgba(21, 128, 61, 0.10);
+    -fx-border-color: rgba(21, 128, 61, 0.24);
+    -fx-text-fill: #15803D;
+}
+
+.admin-action-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-border-color: rgba(114, 47, 55, 0.22);
+    -fx-text-fill: #722F37;
+}
+
 .filter-pill {
     -fx-background-color: #F3F4F6;
     -fx-text-fill: #555555;
