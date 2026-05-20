@@ -46,6 +46,12 @@ public class AutoBiddingService {
             logger.warn("Enable Auto-bid failed: max limit ({}) is less than or equal to current price ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Max limit must be greater than the current auction price.");
         }
+        
+        BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0) {
+            logger.warn("Enable Auto-bid failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxLimit);
+            throw new BusinessException("Max limit exceeds the allowed maximum policy limit.");
+        }
         User user = userDAO.findById(bidderId);
         if (user == null || user.getRole() != User.Role.BIDDER) {
             logger.warn("Enable Auto-bid failed: invalid or missing bidder. bidderId={}", bidderId);
@@ -101,6 +107,12 @@ public class AutoBiddingService {
         if (maxLimit.compareTo(auction.getCurrentPrice()) <= 0) {
             logger.warn("Auto-bid update failed: new limit ({}) is not greater than current price ({}).", maxLimit, auction.getCurrentPrice());
             throw new BusinessException("Max limit must be greater than the current price.");
+        }
+
+        BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+        if (maxLimit.compareTo(allowedMax) > 0) {
+            logger.warn("Auto-bid update failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxLimit);
+            throw new BusinessException("Max limit exceeds the allowed maximum policy limit.");
         }
 
         autoBidding.setMaxLimit(maxLimit);

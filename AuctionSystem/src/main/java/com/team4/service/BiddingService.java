@@ -72,6 +72,12 @@ public class BiddingService {
                     throw new BusinessException("Maximum bid must exceed the current price by at least one bid increment.");
                 }
 
+                BigDecimal allowedMax = com.team4.util.BidRules.allowedMaxFor(auction.getCurrentPrice());
+                if (maxAmount.compareTo(allowedMax) > 0) {
+                    logger.warn("Bid failed: exceeds allowed maximum policy limit. limit={}, requested={}", allowedMax, maxAmount);
+                    throw new BusinessException("Bid exceeds the allowed maximum policy limit.");
+                }
+
                 if (!bidder.hasEnoughBalance(maxAmount)) {
                     logger.warn("Bid failed: insufficient account balance. balance={}, required={}", bidder.getBalance(), maxAmount);
                     throw new BusinessException("Current balance is not enough to cover this maximum bid.");
