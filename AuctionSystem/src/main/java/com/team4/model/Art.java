@@ -4,7 +4,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
-/** Art: Đại diện cho các sản phẩm nghệ thuật */
+/**
+ * Art: Đại diện cho các sản phẩm nghệ thuật
+ * <p>
+ * Validation Rules:
+ * <ul>
+ * <li><b>medium</b>: Required. Cannot be null.</li>
+ * <li><b>artist</b>: Optional. Defaults to "Unknown" if blank. Must be 2-50 characters if provided.</li>
+ * <li><b>creationYear</b>: Optional. 0 means Unknown. Must be between -3000 and current year.</li>
+ * <li><b>dimensions</b>: Optional. Max 50 characters. Must follow valid dimension format (e.g., '30x40 cm').</li>
+ * </ul>
+ */
 public class Art extends Item {
     private static final long serialVersionUID = 1L;
     // enum Medium (cho nó chất)
