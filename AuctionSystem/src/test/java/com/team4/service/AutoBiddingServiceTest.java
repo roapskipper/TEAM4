@@ -95,7 +95,7 @@ public class AutoBiddingServiceTest {
             // GIVEN
             String bidderId = "bidder-1";
             String auctionId = "auc-1";
-            BigDecimal newLimit = new BigDecimal("600.00");
+            BigDecimal newLimit = new BigDecimal("450.00");
 
             Auction auction = createRunningAuction(auctionId, "seller-1", "100.00");
             Bidder bidder = createRealBidder(bidderId);
@@ -113,7 +113,7 @@ public class AutoBiddingServiceTest {
 
             // THEN
             assertTrue(result.isActive());
-            assertEquals(new BigDecimal("600.00"), result.getMaxLimit());
+            assertEquals(new BigDecimal("450.00"), result.getMaxLimit());
             verify(autoBiddingDAO).update(oldConfig);
         }
 
@@ -157,6 +157,59 @@ public class AutoBiddingServiceTest {
                 autoBiddingService.enableAutoBidding(sellerId, "auc-1", new BigDecimal("500.00"))
             );
         }
+
+        @Test
+        @DisplayName("Thất bại - Giới hạn tối đa vượt quá multiplier của chính sách")
+        void testEnable_ExceedsMultiplierPolicy() {
+            String auctionId = "auc-1";
+            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
+            Auction auction = createRunningAuction(auctionId, "s1", "1000000.00");
+            
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+
+            // 4,500,000 (4.5M) exceeds allowedMax (4M)
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("4500000.00"))
+            );
+            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giới hạn tối đa vượt quá ABSOLUTE_MAX")
+        void testEnable_ExceedsAbsoluteMax() {
+            String auctionId = "auc-1";
+            // currentPrice = 400,000,000 (400M) -> clamped allowedMax = 500,000,000 (500M)
+            Auction auction = createRunningAuction(auctionId, "s1", "400000000.00");
+            
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+
+            // 500,000,001 exceeds ABSOLUTE_MAX (500M)
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("500000001.00"))
+            );
+            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+        }
+
+        @Test
+        @DisplayName("Thành công - Giới hạn tối đa nằm trong cho phép")
+        void testEnable_WithinAllowedMax_Success() {
+            String bidderId = "bidder-1";
+            String auctionId = "auc-1";
+            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
+            BigDecimal maxLimit = new BigDecimal("4000000.00");
+
+            Auction auction = createRunningAuction(auctionId, "seller-1", "1000000.00");
+            Bidder bidder = createRealBidder(bidderId);
+
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+            when(userDAO.findById(bidderId)).thenReturn(bidder);
+            when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(null);
+            when(autoBiddingDAO.insert(any(AutoBidding.class))).thenReturn(true);
+
+            AutoBidding result = autoBiddingService.enableAutoBidding(bidderId, auctionId, maxLimit);
+            assertNotNull(result);
+            assertEquals(maxLimit, result.getMaxLimit());
+        }
     }
 
     @Nested
@@ -169,7 +222,7 @@ public class AutoBiddingServiceTest {
             String configId = "conf-123";
             BigDecimal newLimit = new BigDecimal("800.00");
             AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("500.00"));
-            Auction auction = createRunningAuction("auc-1", "sel-1", "100.00");
+            Auction auction = createRunningAuction("auc-1", "sel-1", "200.00");
 
             when(autoBiddingDAO.findById(configId)).thenReturn(config);
             when(auctionDAO.findById("auc-1")).thenReturn(auction);
@@ -192,6 +245,42 @@ public class AutoBiddingServiceTest {
             assertThrows(BusinessException.class, () -> 
                 autoBiddingService.updateAutoBidding("none", new BigDecimal("1000.00"))
             );
+        }
+
+        @Test
+        @DisplayName("Thất bại - Giới hạn mới vượt quá multiplier của chính sách")
+        void testUpdate_ExceedsMultiplierPolicy() {
+            String configId = "conf-123";
+            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
+            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("2000000.00"));
+            Auction auction = createRunningAuction("auc-1", "sel-1", "1000000.00");
+
+            when(autoBiddingDAO.findById(configId)).thenReturn(config);
+            when(auctionDAO.findById("auc-1")).thenReturn(auction);
+
+            // 4,000,001 exceeds allowedMax (4M)
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                autoBiddingService.updateAutoBidding(configId, new BigDecimal("4000001.00"))
+            );
+            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+        }
+
+        @Test
+        @DisplayName("Thành công - Giới hạn mới nằm trong cho phép")
+        void testUpdate_WithinAllowedMax_Success() {
+            String configId = "conf-123";
+            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
+            BigDecimal newLimit = new BigDecimal("4000000.00");
+            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("2000000.00"));
+            Auction auction = createRunningAuction("auc-1", "sel-1", "1000000.00");
+
+            when(autoBiddingDAO.findById(configId)).thenReturn(config);
+            when(auctionDAO.findById("auc-1")).thenReturn(auction);
+            when(autoBiddingDAO.update(config)).thenReturn(true);
+
+            boolean updated = autoBiddingService.updateAutoBidding(configId, newLimit);
+            assertTrue(updated);
+            assertEquals(newLimit, config.getMaxLimit());
         }
     }
 

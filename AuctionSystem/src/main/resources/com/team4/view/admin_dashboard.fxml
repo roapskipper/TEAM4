@@ -22,7 +22,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
-                    <Label style="-fx-font-size: 20;" text="👥" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="U" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="totalUsersLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -34,7 +34,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
-                    <Label style="-fx-font-size: 20;" text="📦" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="A" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="totalAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -46,7 +46,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
-                    <Label style="-fx-font-size: 20;" text="🔥" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="L" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="activeAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -58,7 +58,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
-                    <Label style="-fx-font-size: 20;" text="💰" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="R" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="totalRevenueLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -72,7 +72,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
-                    <Label style="-fx-font-size: 20;" text="💳" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="T" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="totalTransactionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -84,7 +84,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
-                    <Label style="-fx-font-size: 20;" text="📈" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="N" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="newRegistrationsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -96,7 +96,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
-                    <Label style="-fx-font-size: 20;" text="⚠️" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="P" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="reportsCountLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -108,7 +108,7 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-danger">
-                    <Label style="-fx-font-size: 20;" text="🚨" />
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="F" />
                 </StackPane>
                 <VBox spacing="2">
                     <Label fx:id="fraudCasesLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
@@ -145,4 +145,4 @@
             </VBox>
         </VBox>
     </HBox>
-</VBox>
+</VBox>

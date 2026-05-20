@@ -18,8 +18,8 @@ public class AutoBidding extends Entity {
                        String bidderId,
                        BigDecimal maxLimit) {
         super();
-        this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
-        this.bidderId = Objects.requireNonNull(bidderId, "bidderId không đợc null").trim();
+        this.auctionId = Objects.requireNonNull(auctionId, "auctionId must not be null").trim();
+        this.bidderId = Objects.requireNonNull(bidderId, "bidderId must not be null").trim();
         this.maxLimit = money(maxLimit);
         this.isActive = true;
         validateConfig();
@@ -32,8 +32,8 @@ public class AutoBidding extends Entity {
                        BigDecimal maxLimit,
                        boolean isActive) {
         super(id, createdAt);
-        this.auctionId = Objects.requireNonNull(auctionId, "auctionId không được null").trim();
-        this.bidderId = Objects.requireNonNull(bidderId, "bidderId không được null").trim();
+        this.auctionId = Objects.requireNonNull(auctionId, "auctionId must not be null").trim();
+        this.bidderId = Objects.requireNonNull(bidderId, "bidderId must not be null").trim();
         this.maxLimit = money(maxLimit);
         this.isActive = isActive;
         validateConfig();
@@ -41,17 +41,17 @@ public class AutoBidding extends Entity {
 
     public void validateConfig() {
         if (maxLimit == null || maxLimit.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("maxLimit phải lớn hơn 0");
+            throw new IllegalArgumentException("maxLimit must be greater than 0");
         }
-        if (this.auctionId.isEmpty()) throw new IllegalArgumentException("auctionId không được rỗng");
-        if (this.bidderId.isEmpty()) throw new IllegalArgumentException("bidderId không được rỗng");
+        if (this.auctionId.isEmpty()) throw new IllegalArgumentException("auctionId must not be blank");
+        if (this.bidderId.isEmpty()) throw new IllegalArgumentException("bidderId must not be blank");
     }
 
     // maxLimit phải lớn hơn giá hiện tại
     public static void validateMaxLimit(BigDecimal maxLimit, BigDecimal currentAuctionPrice) {
-        Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice không được null");
+        Objects.requireNonNull(currentAuctionPrice, "currentAuctionPrice must not be null");
         if (maxLimit.compareTo(money(currentAuctionPrice)) <= 0) {
-            throw new IllegalArgumentException("maxLimit phải lớn hơn giá hiện tại của phiên");
+            throw new IllegalArgumentException("maxLimit must be greater than the current auction price");
         }
     }
 
@@ -60,7 +60,7 @@ public class AutoBidding extends Entity {
     public synchronized void deactivate() { this.isActive = false; }
 
     private static BigDecimal money(BigDecimal amount) {
-        if (amount == null) throw new IllegalArgumentException("Amount không được null");
+        if (amount == null) throw new IllegalArgumentException("Amount must not be null");
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
     // Getters / setters

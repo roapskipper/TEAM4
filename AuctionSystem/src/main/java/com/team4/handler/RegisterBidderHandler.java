@@ -50,7 +50,7 @@ public class RegisterBidderHandler implements HttpHandler {
                     phoneNumber     != null ? phoneNumber     : ""
             );
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Bidder thanh cong!", null));
-        } catch (BusinessException e) {
+        } catch (BusinessException | IllegalArgumentException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();

@@ -39,7 +39,7 @@ public class SellerHandler implements HttpHandler {
             if ("GET".equals(method) && "items".equals(action)) {
                 List<Item> items = itemDAO.findByOwnerId(sellerId);
                 JsonElement dataArr = Server.getGson().toJsonTree(items);
-                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lấy danh sách sản phẩm thành công", dataArr));
+                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Product list loaded successfully", dataArr));
             } else if ("GET".equals(method) && "stats".equals(action)) {
                 List<Item> items = itemDAO.findByOwnerId(sellerId);
                 int totalProducts = items.size();
@@ -53,13 +53,13 @@ public class SellerHandler implements HttpHandler {
                 stats.addProperty("pendingProducts", pendingProducts);
                 stats.addProperty("soldProducts", soldProducts);
 
-                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lấy thống kê thành công", stats));
+                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Statistics loaded successfully", stats));
             } else {
                 exchange.sendResponseHeaders(405, -1);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Lỗi máy chủ: " + e.getMessage(), null));
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Server error: " + e.getMessage(), null));
         }
     }
 }

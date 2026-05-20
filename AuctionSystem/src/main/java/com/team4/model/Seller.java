@@ -37,10 +37,10 @@ public class Seller extends User {
     // Rating sẽ cho hệ thống quản lý nên không cần validate
     private void validateStoreName(String storeName) {
         if (storeName == null || storeName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên cửa hàng không được để trống.");
+            throw new IllegalArgumentException("Store name must not be blank.");
         }
         if (storeName.trim().length() > 100) {
-            throw new IllegalArgumentException("Tên cửa hàng không được vượt quá 100 ký tự.");
+            throw new IllegalArgumentException("Store name must not exceed 100 characters.");
         }
     }
 

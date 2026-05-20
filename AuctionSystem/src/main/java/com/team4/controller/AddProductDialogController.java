@@ -28,6 +28,7 @@ public class AddProductDialogController implements Initializable {
     @FXML
     private void onSave() {
         errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
         String n = nameField.getText().trim();
         String c = categoryBox.getValue();
         String pStr = priceField.getText().trim();
@@ -69,7 +70,6 @@ public class AddProductDialogController implements Initializable {
             return;
         }
 
-        // Mapping to upper case for enum if needed (Electronics -> ELECTRONICS)
         this.name = n;
         this.category = c.toUpperCase();
         this.price = p;
@@ -87,6 +87,7 @@ public class AddProductDialogController implements Initializable {
 
     private void showError(String msg) {
         errorLabel.setText(msg);
+        errorLabel.setManaged(true);
         errorLabel.setVisible(true);
     }
 
@@ -97,7 +98,6 @@ public class AddProductDialogController implements Initializable {
 
     public void setItemData(String n, String c, double p, String d, String status) {
         nameField.setText(n != null ? n : "");
-        // Map category properly to UI selection
         if (c != null) {
             for (String item : categoryBox.getItems()) {
                 if (item.equalsIgnoreCase(c)) {

@@ -50,7 +50,6 @@ public final class DatabaseManager {
     public static synchronized void initialize() {
         if (dataSource == null) {
             loadConfig();
-
             initDataSource();
         }
     }
@@ -64,7 +63,7 @@ public final class DatabaseManager {
                 .getResourceAsStream("database.properties")) {
 
             if (is == null)
-                throw new RuntimeException("Không tìm thấy database.properties");
+                throw new RuntimeException("database.properties not found"); // getResourceAsStream trả null nếu không tìm thấy file
 
             props.load(is);
 
@@ -79,7 +78,7 @@ public final class DatabaseManager {
             maxLifetime       = Integer.parseInt(props.getProperty("db.maxLifetime", "1800000"));
 
         } catch (IOException e) {
-            throw new RuntimeException("Không đọc được database.properties", e);
+            throw new RuntimeException("Unable to read database.properties", e);
         }
     }
 
@@ -102,7 +101,7 @@ public final class DatabaseManager {
     // 4. Lấy connection
     public static Connection getConnection() throws SQLException {
         if (dataSource == null)
-            throw new IllegalStateException("DatabaseManager chưa được khởi tạo, hãy gọi initialize() trước");
+            throw new IllegalStateException("DatabaseManager has not been initialized; call initialize() first");
         return dataSource.getConnection();
     }
 
@@ -110,12 +109,12 @@ public final class DatabaseManager {
     // 5. Transaction
     public static void beginTransaction(Connection conn) throws SQLException {
         if (conn == null)
-            throw new IllegalArgumentException("Connection không được null");
+            throw new IllegalArgumentException("Connection must not be null");
         conn.setAutoCommit(false);
     }
     public static void commitTransaction(Connection conn) throws SQLException {
         if (conn == null)
-            throw new IllegalArgumentException("Connection không được null");
+            throw new IllegalArgumentException("Connection must not be null");
         conn.commit(); //lưu toàn bộ thay đổi xuống DB
         conn.setAutoCommit(true); //trả về trạng thái ban đầu trước khi trả connection về pool
     }
@@ -125,7 +124,7 @@ public final class DatabaseManager {
             conn.rollback(); //hủy toàn bộ thay đổi chưa commit
             conn.setAutoCommit(true);
         } catch (SQLException e) {
-            throw new RuntimeException("Rollback thất bại", e);
+            throw new RuntimeException("Rollback failed", e);
         }
     }
 

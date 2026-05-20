@@ -134,7 +134,7 @@ public class AuctionServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 auctionService.createAuction(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now())
             );
-            assertEquals("Người bán không sở hữu mặt hàng này", ex.getMessage());
+            assertEquals("Seller does not own this item", ex.getMessage());
         }
     }
 

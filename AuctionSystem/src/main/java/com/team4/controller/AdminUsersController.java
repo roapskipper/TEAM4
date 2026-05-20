@@ -77,9 +77,9 @@ public class AdminUsersController implements Initializable {
         });
 
         colAction.setCellFactory(param -> new TableCell<UserRow, Void>() {
-            private final Button suspendBtn = new Button("⏸ Suspend");
-            private final Button banBtn = new Button("🚫 Ban");
-            private final Button unsuspendBtn = new Button("▶ Unsuspend");
+            private final Button suspendBtn = new Button("Suspend");
+            private final Button banBtn = new Button("Ban");
+            private final Button unsuspendBtn = new Button("Unsuspend");
             private final HBox actionBox = new HBox(10);
 
             {
@@ -107,8 +107,6 @@ public class AdminUsersController implements Initializable {
                         unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
                         banBtn.setOnAction(e -> handleBan(user));
                         actionBox.getChildren().addAll(unsuspendBtn, banBtn);
-                    } else if ("BANNED".equals(status)) {
-                        // Thường người dùng bị Ban sẽ không có thao tác nhanh ở đây
                     }
 
                     setGraphic(actionBox);

@@ -30,7 +30,7 @@
                        style="-fx-font-size: 28;"/>
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Label fx:id="roleBadge" text="BIDDER" styleClass="role-badge"/>
-                    <Label fx:id="statusBadge" text="● Active" styleClass="status-active"/>
+                    <Label fx:id="statusBadge" text="Active" styleClass="status-active"/>
                 </HBox>
                 <Label fx:id="emailDisplay" text="user@email.com"
                        styleClass="muted-text"

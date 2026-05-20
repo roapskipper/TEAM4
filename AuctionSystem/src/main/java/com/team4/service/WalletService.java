@@ -20,11 +20,11 @@ public class WalletService {
 
     // Nạp tiền
     public User deposit(String userId, BigDecimal amount) {
-        logger.info("Yêu cầu nạp tiền: userId={}, amount={}", userId, amount);
+        logger.info("Deposit request: userId={}, amount={}", userId, amount);
         User user = userDAO.findById(userId);
         if (user == null) {
-            logger.warn("Nạp tiền thất bại: Người dùng không tồn tại. userId={}", userId);
-            throw new BusinessException("Người dùng không tồn tại");
+            logger.warn("Deposit failed: user does not exist. userId={}", userId);
+            throw new BusinessException("User does not exist");
         }
         
         // Gọi phương thức của model User
@@ -32,58 +32,58 @@ public class WalletService {
         
         // Nạp vào DB
         if (!userDAO.updateBalance(userId, user.getBalance())) {
-            logger.error("Lỗi hệ thống khi cập nhật số dư sau khi nạp: userId={}, amount={}, currentBalance={}", 
+            logger.error("System error while updating balance after deposit: userId={}, amount={}, currentBalance={}", 
                     userId, amount, user.getBalance());
-            throw new BusinessException("Nạp tiền thất bại do lỗi cơ sở dữ liệu");
+            throw new BusinessException("Deposit failed due to database error");
         }
         
-        logger.info("Nạp tiền thành công: userId={}, amount={}, newBalance={}", userId, amount, user.getBalance());
+        logger.info("Deposit successful: userId={}, amount={}, newBalance={}", userId, amount, user.getBalance());
         return user;
     }
 
     // Rút tiền
     public User withdraw(String userId, BigDecimal amount) {
-        logger.info("Yêu cầu rút tiền: userId={}, amount={}", userId, amount);
+        logger.info("Withdrawal request: userId={}, amount={}", userId, amount);
         User user = userDAO.findById(userId);
         if (user == null) {
-            logger.warn("Rút tiền thất bại: Người dùng không tồn tại. userId={}", userId);
-            throw new BusinessException("Người dùng không tồn tại");
+            logger.warn("Withdrawal failed: user does not exist. userId={}", userId);
+            throw new BusinessException("User does not exist");
         }
         if (!user.withdraw(amount)) {
-            logger.warn("Rút tiền thất bại: Số dư không đủ hoặc số tiền không hợp lệ. userId={}, amount={}, currentBalance={}", 
+            logger.warn("Withdrawal failed: insufficient balance or invalid amount. userId={}, amount={}, currentBalance={}", 
                     userId, amount, user.getBalance());
-            throw new BusinessException("Rút tiền thất bại: Số dư không đủ hoặc số tiền không hợp lệ");
+            throw new BusinessException("Withdrawal failed: insufficient balance or invalid amount");
         }
         if (!userDAO.updateBalance(userId, user.getBalance())) {
-            logger.error("Lỗi hệ thống khi cập nhật số dư sau khi rút: userId={}, amount={}, currentBalance={}", 
+            logger.error("System error while updating balance after withdrawal: userId={}, amount={}, currentBalance={}", 
                     userId, amount, user.getBalance());
-            throw new BusinessException("Rút tiền thất bại do lỗi cơ sở dữ liệu");
+            throw new BusinessException("Withdrawal failed due to database error");
         }
         
-        logger.info("Rút tiền thành công: userId={}, amount={}, newBalance={}", userId, amount, user.getBalance());
+        logger.info("Withdrawal successful: userId={}, amount={}, newBalance={}", userId, amount, user.getBalance());
         return user;
     }
 
     // Kiêm tra xem người dùng đủ tiền không
     public boolean hasSufficientBalance(String userId, BigDecimal amount) {
-        logger.debug("Kiểm tra khả năng thanh toán: userId={}, requiredAmount={}", userId, amount);
+        logger.debug("Checking payment capability: userId={}, requiredAmount={}", userId, amount);
         User user = userDAO.findById(userId);
         if (user == null) {
-            logger.warn("Kiểm tra số dư thất bại: Người dùng không tồn tại. userId={}", userId);
-            throw new BusinessException("Người dùng không tồn tại");
+            logger.warn("Balance check failed: user does not exist. userId={}", userId);
+            throw new BusinessException("User does not exist");
         }
         boolean sufficient = user.hasEnoughBalance(amount);
-        logger.debug("Kết quả kiểm tra số dư: userId={}, sufficient={}", userId, sufficient);
+        logger.debug("Balance check result: userId={}, sufficient={}", userId, sufficient);
         return sufficient;
     }
 
     // Lấy số dư hiện tại của user
     public BigDecimal balance(String userId) {
-        logger.debug("Lấy số dư hiện tại của người dùng: userId={}", userId);
+        logger.debug("Loading current user balance: userId={}", userId);
         User user = userDAO.findById(userId);
         if (user == null) {
-            logger.warn("Lấy số dư thất bại: Người dùng không tồn tại. userId={}", userId);
-            throw new BusinessException("Người dùng không tồn tại");
+            logger.warn("Balance load failed: user does not exist. userId={}", userId);
+            throw new BusinessException("User does not exist");
         }
         return user.getBalance();
     }
@@ -91,14 +91,14 @@ public class WalletService {
     public User payForAuction(String userId, BigDecimal amount) {
         User user = userDAO.findById(userId);
         if (user == null) {
-            throw new BusinessException("Người dùng không tồn tại");
+            throw new BusinessException("User does not exist");
         }
         if (!user.hasEnoughBalance(amount)) {
-            throw new BusinessException("Không đủ số dư để thanh toán");
+            throw new BusinessException("Insufficient balance for payment");
         }
         user.withdraw(amount);
         if (!userDAO.updateBalance(userId, user.getBalance())) {
-            throw new BusinessException("Thanh toán thất bại do lỗi cơ sở dữ liệu");
+            throw new BusinessException("Payment failed due to database error");
         }
         return user;
     }
@@ -107,11 +107,11 @@ public class WalletService {
     public User refund(String userId, BigDecimal amount) {
         User user = userDAO.findById(userId);
         if (user == null) {
-            throw new BusinessException("Người dùng không tồn tại");
+            throw new BusinessException("User does not exist");
         }
         user.deposit(amount);
         if (!userDAO.updateBalance(userId, user.getBalance())) {
-            throw new BusinessException("Hoàn tiền thất bại do lỗi cơ sở dữ liệu");
+            throw new BusinessException("Refund failed due to database error");
         }
         return user;
     }
