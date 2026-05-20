@@ -53,6 +53,7 @@ public class LoginHandler implements HttpHandler {
             data.addProperty("username", user.getUsername());
             data.addProperty("role", user.getRole().name());
             data.addProperty("fullName", user.getFullName());
+            data.addProperty("balance", user.getBalance());
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 401, ApiServer.buildResponse("ERROR", e.getMessage(), null));

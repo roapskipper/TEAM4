@@ -2,7 +2,9 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
@@ -20,9 +22,13 @@
               spacing="0">
 
             <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 24 20 16 20;">
-                <StackPane styleClass="brand-icon-bg"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
-                    <Label text="AS" style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    <Group>
+                        <Rectangle x="7" y="7" width="22" height="7" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-head"/>
+                        <Rectangle x="22" y="13" width="5" height="22" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-handle"/>
+                        <Rectangle x="8" y="29" width="24" height="4" arcWidth="3" arcHeight="3" styleClass="brand-logo-accent"/>
+                    </Group>
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" styleClass="brand-name"/>
@@ -61,6 +67,11 @@
                         </HBox>
                     </VBox>
                 </HBox>
+
+                <Label fx:id="balanceValueLabel"
+                       text="Balance: --"
+                       maxWidth="Infinity"
+                       styleClass="balance-pill"/>
 
                 <Button fx:id="logoutBtn"
                         text="Logout"

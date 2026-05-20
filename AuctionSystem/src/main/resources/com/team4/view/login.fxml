@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.paint.*?>
@@ -32,9 +33,13 @@
             </padding>
 
             <HBox spacing="14" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 12;"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="52" prefHeight="52">
-                    <Label text="AS" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white;" />
+                    <Group scaleX="1.18" scaleY="1.18">
+                        <Rectangle x="7" y="7" width="22" height="7" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-head"/>
+                        <Rectangle x="22" y="13" width="5" height="22" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-handle"/>
+                        <Rectangle x="8" y="29" width="24" height="4" arcWidth="3" arcHeight="3" styleClass="brand-logo-accent"/>
+                    </Group>
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
@@ -90,9 +95,13 @@
             </padding>
 
             <HBox id="mobileLogo" spacing="10" alignment="CENTER" managed="false" visible="false">
-                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 14;"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
-                    <Label text="AS" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: white;" />
+                    <Group>
+                        <Rectangle x="7" y="7" width="22" height="7" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-head"/>
+                        <Rectangle x="22" y="13" width="5" height="22" arcWidth="3" arcHeight="3" rotate="-28" styleClass="brand-logo-handle"/>
+                        <Rectangle x="8" y="29" width="24" height="4" arcWidth="3" arcHeight="3" styleClass="brand-logo-accent"/>
+                    </Group>
                 </StackPane>
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>

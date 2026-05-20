@@ -97,7 +97,10 @@
         <VBox spacing="16" prefWidth="380">
 
             <VBox styleClass="bidding-card" spacing="14">
-                <Label text="Place Bid" styleClass="section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Place Bid" styleClass="section-title" HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="walletBalance" text="Wallet: --" styleClass="balance-pill-compact"/>
+                </HBox>
 
                 <HBox spacing="8">
                     <Button fx:id="quick100k" text="+Step" onAction="#onQuickBid" styleClass="quick-bid-btn" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>

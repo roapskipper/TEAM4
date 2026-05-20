@@ -124,6 +124,11 @@ public class ItemDAOImpl implements ItemDAO {
     }
 
     @Override
+    public List<Item> findOwnedByBidderId(String bidderId) {
+        return findByOwnerId(bidderId);
+    }
+
+    @Override
     public boolean insert(Item item) {
         // Lưu ý: Trong Single Table Inheritance, bảng sẽ có rất nhiều cột.
         // Ta set các cột không liên quan thành NULL.
@@ -220,6 +225,19 @@ public class ItemDAOImpl implements ItemDAO {
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("Không thể update item id={}", item.getId(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateOwner(Connection conn, String itemId, String ownerId) {
+        String sql = "UPDATE items SET owner_id = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, ownerId);
+            stmt.setString(2, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to update item owner itemId={} ownerId={} in transaction", itemId, ownerId, e);
             return false;
         }
     }

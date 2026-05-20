@@ -37,6 +37,7 @@ public class BiddingRoomController implements Initializable {
 
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating, itemDescription;
     @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
+    @FXML private Label walletBalance;
     @FXML private AreaChart<Number, Number> priceChart;
     @FXML private ListView<String> bidHistoryList;
     @FXML private TextField bidAmountField;
@@ -49,10 +50,13 @@ public class BiddingRoomController implements Initializable {
     private static final DateTimeFormatter HISTORY_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
 
     private String auctionId;
+    private String currentLeaderId;
     private double currentBid;
     private double bidIncrement = 100000;
+    private BigDecimal availableBalance = BigDecimal.ZERO;
     private LocalDateTime auctionEndTime;
     private Timeline countdownTimeline;
+    private MainController mainController;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -60,7 +64,12 @@ public class BiddingRoomController implements Initializable {
         priceChart.setLegendVisible(false);
         bidHistoryList.setPlaceholder(new Label("No bids yet"));
         hideBidError();
+        updateWalletBalanceLabel();
         setRoomLoadingState();
+    }
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
     }
 
     public void loadAuction(String auctionId) {
@@ -103,6 +112,7 @@ public class BiddingRoomController implements Initializable {
         }
 
         auctionId = stringValue(data, "id", auctionId);
+        currentLeaderId = stringValue(data, "currentHighestBidderId", currentLeaderId);
         currentBid = doubleValue(data, "currentPrice", 0);
         bidIncrement = doubleValue(data, "bidIncrement", 100000);
         auctionEndTime = parseTime(stringValue(data, "endTime", null));
@@ -140,6 +150,7 @@ public class BiddingRoomController implements Initializable {
         renderBidHistory(history);
         renderPriceChart(data, history);
         startCountdown();
+        refreshWalletBalance();
         ensureSocketListener();
     }
 
@@ -215,6 +226,14 @@ public class BiddingRoomController implements Initializable {
             if ("BID_SUCCESS".equals(action) || "BID_UPDATE".equals(action)) {
                 placeBidBtn.setDisable(false);
                 hideBidError();
+                if (data.has("currentHighestBidderId")) {
+                    currentLeaderId = stringValue(data, "currentHighestBidderId", currentLeaderId);
+                }
+                if ("BID_SUCCESS".equals(action) && data.has("balance") && !data.get("balance").isJsonNull()) {
+                    updateSessionBalance(data.get("balance").getAsBigDecimal());
+                } else {
+                    refreshWalletBalance();
+                }
                 if (data.has("currentPrice")) {
                     currentBid = data.get("currentPrice").getAsDouble();
                     currentPrice.setText(formatPrice(currentBid));
@@ -286,6 +305,13 @@ public class BiddingRoomController implements Initializable {
             return;
         }
 
+        BigDecimal requestedBid = BigDecimal.valueOf(amount);
+        BigDecimal spendable = availableForBid(session);
+        if (requestedBid.compareTo(spendable) > 0) {
+            showBidError("Your balance is not enough. Available: " + formatPrice(spendable.doubleValue()));
+            return;
+        }
+
         hideBidError();
         placeBidBtn.setDisable(true);
         ensureSocketListener();
@@ -343,6 +369,61 @@ public class BiddingRoomController implements Initializable {
     private void hideBidError() {
         bidError.setManaged(false);
         bidError.setVisible(false);
+    }
+
+    private void refreshWalletBalance() {
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null) {
+            availableBalance = BigDecimal.ZERO;
+            updateWalletBalanceLabel();
+            return;
+        }
+
+        updateSessionBalance(session.getBalance());
+
+        Task<JsonObject> task = new Task<JsonObject>() {
+            @Override
+            protected JsonObject call() throws Exception {
+                return new ApiClient().getUserProfile(session.getUserId());
+            }
+        };
+        task.setOnSucceeded(e -> {
+            JsonObject profile = task.getValue();
+            if (profile != null && profile.has("balance") && !profile.get("balance").isJsonNull()) {
+                updateSessionBalance(profile.get("balance").getAsBigDecimal());
+            }
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private BigDecimal availableForBid(UserSession session) {
+        BigDecimal spendable = availableBalance != null ? availableBalance : BigDecimal.ZERO;
+        if (session != null && session.getUserId() != null && session.getUserId().equals(currentLeaderId)) {
+            spendable = spendable.add(BigDecimal.valueOf(currentBid));
+        }
+        return spendable;
+    }
+
+    private void updateSessionBalance(BigDecimal balance) {
+        BigDecimal safeBalance = balance != null ? balance : BigDecimal.ZERO;
+        availableBalance = safeBalance;
+        UserSession session = UserSession.getInstance();
+        if (session != null) {
+            session.setBalance(safeBalance);
+        }
+        updateWalletBalanceLabel();
+        if (mainController != null) {
+            mainController.refreshUserBalance();
+        }
+    }
+
+    private void updateWalletBalanceLabel() {
+        if (walletBalance != null) {
+            walletBalance.setText("Wallet: " + formatPrice((availableBalance != null ? availableBalance : BigDecimal.ZERO).doubleValue()));
+        }
     }
 
     private String formatPrice(double price) {

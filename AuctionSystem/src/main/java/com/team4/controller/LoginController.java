@@ -218,7 +218,10 @@ public class LoginController {
                         String userId = data.has("userId") ? data.get("userId").getAsString() : null;
                         String uName = data.has("username") ? data.get("username").getAsString() : username;
                         if (userId != null) {
-                            com.team4.util.UserSession.createSession(userId, uName, role);
+                            java.math.BigDecimal balance = data.has("balance") && !data.get("balance").isJsonNull()
+                                    ? data.get("balance").getAsBigDecimal()
+                                    : java.math.BigDecimal.ZERO;
+                            com.team4.util.UserSession.createSession(userId, uName, role, balance);
                         }
                     }
 

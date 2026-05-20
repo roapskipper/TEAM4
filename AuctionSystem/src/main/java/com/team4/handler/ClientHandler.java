@@ -138,8 +138,9 @@ public class ClientHandler implements Runnable, BidObserver {
                     return;
                 }
 
-                // Gọi BiddingService để xử lý proxy bidding
-                biddingService.placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
+                // Handle direct bidding and balance escrow.
+                BiddingService.BidResult bidResult =
+                        biddingService.placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
 
                 // Lấy lại auction sau khi bid để có giá và endTime mới nhất
                 Auction updatedAuction = Server.getAuctionService().getAuctionById(auctionId);
@@ -154,7 +155,11 @@ public class ClientHandler implements Runnable, BidObserver {
                 }
                 Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), null);
 
-                sendMessage(buildResponse("SUCCESS", "Dat gia thanh cong!", "BID_SUCCESS", broadcastData));
+                JsonObject successData = broadcastData.deepCopy();
+                if (bidResult != null && bidResult.bidderBalance() != null) {
+                    successData.addProperty("balance", bidResult.bidderBalance());
+                }
+                sendMessage(buildResponse("SUCCESS", "Dat gia thanh cong!", "BID_SUCCESS", successData));
 
             } catch (BusinessException e) {
                 sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));

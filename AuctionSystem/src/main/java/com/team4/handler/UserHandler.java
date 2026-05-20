@@ -1,9 +1,14 @@
 package com.team4.handler;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.team4.dao.impl.AuctionDAOImpl;
+import com.team4.dao.impl.ItemDAOImpl;
+import com.team4.model.Auction;
 import com.team4.model.Bidder;
+import com.team4.model.Item;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.server.Server;
@@ -12,8 +17,14 @@ import com.team4.util.BusinessException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class UserHandler implements HttpHandler {
+    private final ItemDAOImpl itemDAO = new ItemDAOImpl();
+    private final AuctionDAOImpl auctionDAO = new AuctionDAOImpl();
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String method = exchange.getRequestMethod();
@@ -36,6 +47,8 @@ public class UserHandler implements HttpHandler {
         try {
             if ("GET".equals(method) && "profile".equals(action)) {
                 handleGetProfile(exchange, userId);
+            } else if ("GET".equals(method) && "owned-items".equals(action)) {
+                handleGetOwnedItems(exchange, userId);
             } else if ("PUT".equals(method) && "profile".equals(action)) {
                 handleUpdateProfile(exchange, userId);
             } else if ("PUT".equals(method) && "password".equals(action)) {
@@ -73,6 +86,49 @@ public class UserHandler implements HttpHandler {
         }
 
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Profile loaded successfully", data));
+    }
+
+    private void handleGetOwnedItems(HttpExchange exchange, String userId) throws IOException {
+        User user = Server.getUserService().getUserById(userId);
+        if (user == null) {
+            ApiServer.sendResponse(exchange, 404, ApiServer.buildResponse("ERROR", "User does not exist", null));
+            return;
+        }
+        if (user.getRole() != User.Role.BIDDER) {
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Only bidders have won items", null));
+            return;
+        }
+
+        List<Item> items = itemDAO.findOwnedByBidderId(userId);
+        Map<String, Auction> wonAuctionsByItemId = new HashMap<>();
+        for (Auction auction : auctionDAO.findAll()) {
+            boolean closed = auction.getStatus() == Auction.AuctionStatus.FINISHED
+                    || auction.getStatus() == Auction.AuctionStatus.PAID;
+            if (closed && userId.equals(auction.getCurrentHighestBidderId())) {
+                wonAuctionsByItemId.put(auction.getItemId(), auction);
+            }
+        }
+
+        JsonArray data = new JsonArray();
+        for (Item item : items) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("id", item.getId());
+            obj.addProperty("name", item.getName());
+            obj.addProperty("description", item.getDescription());
+            obj.addProperty("category", item.getCategory().name());
+            obj.addProperty("startingPrice", item.getStartingPrice());
+            obj.addProperty("createdAt", item.getCreatedAt().toString());
+
+            Auction wonAuction = wonAuctionsByItemId.get(item.getId());
+            if (wonAuction != null) {
+                obj.addProperty("auctionId", wonAuction.getId());
+                obj.addProperty("wonPrice", wonAuction.getCurrentPrice());
+                obj.addProperty("wonAt", wonAuction.getEndTime().toString());
+            }
+            data.add(obj);
+        }
+
+        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Owned items loaded successfully", data));
     }
 
     private void handleUpdateProfile(HttpExchange exchange, String userId) throws IOException {

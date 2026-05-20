@@ -84,7 +84,7 @@ public class UserDAOImpl implements UserDAO {
     }
 
     public User findById(Connection conn, String id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "SELECT * FROM users WHERE id = ? FOR UPDATE";
         // Sử dụng try-with-resources để tự động đóng kết nối
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
