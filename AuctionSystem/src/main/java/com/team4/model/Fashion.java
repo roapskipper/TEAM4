@@ -58,6 +58,10 @@ public class Fashion extends Item {
     private ConditionGrade condition; // tình trạng
     private boolean authentic;       // is_authentic
 
+    public static Gender resolveGender(Gender gender) {
+        return gender == null ? Gender.UNISEX : gender;
+    }
+
     // Constructor khi Seller đăng sản phẩm mới
     public Fashion(String name,
                    BigDecimal startingPrice,
@@ -82,8 +86,7 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
-        // Default blank/missing gender to UNISEX
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
         // Require condition
         this.condition = condition;
         // Keep authentic optional
@@ -121,8 +124,7 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
-        // Default blank/missing gender to UNISEX
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
         // Require condition
         this.condition = condition;
         // Keep authentic optional
@@ -206,7 +208,7 @@ public class Fashion extends Item {
     }
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) {
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
         validateGender(this.gender);
     }
     public ConditionGrade getCondition() { return condition; }

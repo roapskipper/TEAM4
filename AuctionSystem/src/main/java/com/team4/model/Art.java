@@ -47,6 +47,16 @@ public class Art extends Item {
     private int creationYear;     // năm sáng tác
     private Medium medium;        // chất liệu (sơn dầu, màu nước...)
     private String dimensions;    // kích thước
+
+    public static String resolveArtist(String artist) {
+        return normalizeDefaultString(artist, "Unknown");
+    }
+
+    /** Missing or unknown year is represented as {@code 0}. */
+    public static int resolveCreationYear(int creationYear) {
+        return creationYear;
+    }
+
     // Constructor dùng khi tạo Art mới (Seller đăng sản phẩm)
     public Art(String name,
                BigDecimal startingPrice,
@@ -57,12 +67,8 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(name, startingPrice, description, ItemCategory.ART, ownerId);
-        // Default blank artist to Unknown
-        this.artist = (artist == null || artist.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(artist);
-        // Treat missing or zero creationYear as 0 (Unknown)
-        this.creationYear = creationYear;
+        this.artist = resolveArtist(artist);
+        this.creationYear = resolveCreationYear(creationYear);
         // Require medium
         this.medium = medium;
         // Keep dimensions optional
@@ -84,12 +90,8 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ART, ownerId);
-        // Default blank artist to Unknown
-        this.artist = (artist == null || artist.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(artist);
-        // Treat missing or zero creationYear as 0 (Unknown)
-        this.creationYear = creationYear;
+        this.artist = resolveArtist(artist);
+        this.creationYear = resolveCreationYear(creationYear);
         // Require medium
         this.medium = medium;
         // Keep dimensions optional
@@ -154,8 +156,10 @@ public class Art extends Item {
 
     // Getter/Setter
     public String getArtist() { return artist; }
-    public void setArtist(String artist) { this.artist = normalizeOptional(artist);
-    validateArtist(this.artist);}
+    public void setArtist(String artist) {
+        this.artist = resolveArtist(artist);
+        validateArtist(this.artist);
+    }
     public int getCreationYear() { return creationYear; }
     public void setCreationYear(int creationYear) { this.creationYear = creationYear;
     validateCreationYear(this.creationYear);}

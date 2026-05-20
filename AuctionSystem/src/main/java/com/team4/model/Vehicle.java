@@ -68,6 +68,10 @@ public class Vehicle extends Item {
     private boolean hasLegalPapers; // có giấy tờ pháp lý
     private Transmission transmission; // hộp số
 
+    public static Transmission resolveTransmission(Transmission transmission) {
+        return transmission == null ? Transmission.OTHER : transmission;
+    }
+
     // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
     public Vehicle(String name,
                    BigDecimal startingPrice,
@@ -100,8 +104,7 @@ public class Vehicle extends Item {
         this.color = normalizeOptional(color);
         // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
-        // Require transmission and default missing value to OTHER
-        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        this.transmission = resolveTransmission(transmission);
         validateBrand(this.brand);
         validateModel(this.model);
         validateManufacturingYear(this.manufacturingYear);
@@ -145,8 +148,7 @@ public class Vehicle extends Item {
         this.color = normalizeOptional(color);
         // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
-        // Require transmission and default missing value to OTHER
-        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        this.transmission = resolveTransmission(transmission);
         validateBrand(this.brand);
         validateModel(this.model);
         validateManufacturingYear(this.manufacturingYear);
@@ -246,7 +248,7 @@ public class Vehicle extends Item {
     public void setHasLegalPapers(boolean hasLegalPapers) { this.hasLegalPapers = hasLegalPapers; }
     public Transmission getTransmission() { return transmission; }
     public void setTransmission(Transmission transmission) {
-        this.transmission = (transmission == null ? Transmission.OTHER : transmission);
+        this.transmission = resolveTransmission(transmission);
         validateTransmission(this.transmission);
     }
 }

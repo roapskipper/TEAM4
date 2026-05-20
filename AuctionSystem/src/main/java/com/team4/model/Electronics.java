@@ -39,6 +39,15 @@ public class Electronics extends Item {
     private ConditionGrade itemCondition;       // tình trạng
     private int warrantyMonths;     // bảo hành (tháng)
     private boolean fullyFunctional; // hoạt động đầy đủ
+
+    public static String resolveBrand(String brand) {
+        return normalizeDefaultString(brand, "Unknown");
+    }
+
+    public static String resolveModel(String model) {
+        return normalizeDefaultString(model, "Unknown");
+    }
+
     // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
     public Electronics(String name,
                        BigDecimal startingPrice,
@@ -50,14 +59,8 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
-        // Default blank brand to Unknown
-        this.brand = (brand == null || brand.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(brand);
-        // Default blank model to Unknown
-        this.model = (model == null || model.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(model);
+        this.brand = resolveBrand(brand);
+        this.model = resolveModel(model);
         // Require itemCondition
         this.itemCondition = itemCondition;
         // Require warrantyMonths >= 0
@@ -82,14 +85,8 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
-        // Default blank brand to Unknown
-        this.brand = (brand == null || brand.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(brand);
-        // Default blank model to Unknown
-        this.model = (model == null || model.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(model);
+        this.brand = resolveBrand(brand);
+        this.model = resolveModel(model);
         // Require itemCondition
         this.itemCondition = itemCondition;
         // Require warrantyMonths >= 0
@@ -145,12 +142,12 @@ public class Electronics extends Item {
     // Getters / Setters
     public String getBrand() { return brand; }
     public void setBrand(String brand) {
-        this.brand = normalizeOptional(brand);
+        this.brand = resolveBrand(brand);
         validateBrand(this.brand);
     }
     public String getModel() { return model; }
     public void setModel(String model) {
-        this.model = normalizeOptional(model);
+        this.model = resolveModel(model);
         validateModel(this.model);
     }
     public ConditionGrade getItemCondition() { return itemCondition; }
