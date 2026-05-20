@@ -7,6 +7,11 @@ import java.math.BigDecimal;
 public class CollectibleFactory implements ItemFactory {
     @Override
     public Item createItem(ItemRequest itemRequest) {
+        Collectible.validateCollectibleFields(
+                itemRequest.getRarityLevel(),
+                itemRequest.getConditionGrade(),
+                itemRequest.getYearOfOrigin(),
+                itemRequest.getOrigin());
         return new Collectible(
                 itemRequest.getName(),
                 itemRequest.getStartingPrice(),

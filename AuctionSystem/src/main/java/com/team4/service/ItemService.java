@@ -3,6 +3,7 @@ package com.team4.service;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.factory.*;
+import com.team4.model.Collectible;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -38,6 +39,7 @@ public class ItemService {
             throw new BusinessException("Seller does not exist.");
         }
         validateCommonItemRequest(itemRequest);
+        validateCategorySpecificRequest(itemRequest);
         // Chọn Factory
         ItemFactory factory;
         switch (itemRequest.getCategory()) {
@@ -78,6 +80,25 @@ public class ItemService {
         }
         logger.info("Item created successfully: itemId={}, name={}", item.getId(), item.getName());
         return item;
+    }
+
+    /**
+     * Rejects invalid category-specific payloads before factory construction.
+     */
+    private void validateCategorySpecificRequest(ItemRequest itemRequest) {
+        if (itemRequest.getCategory() != Item.ItemCategory.COLLECTIBLE) {
+            return;
+        }
+        try {
+            Collectible.validateCollectibleFields(
+                    itemRequest.getRarityLevel(),
+                    itemRequest.getConditionGrade(),
+                    itemRequest.getYearOfOrigin(),
+                    itemRequest.getOrigin());
+        } catch (IllegalArgumentException ex) {
+            logger.warn("Item creation failed: invalid Collectible fields. reason={}", ex.getMessage());
+            throw new BusinessException(ex.getMessage());
+        }
     }
 
     /**

@@ -63,6 +63,20 @@ public class ItemServiceTest {
         return req;
     }
 
+    private ItemRequest createCollectibleRequest(String ownerId, String name) {
+        ItemRequest req = new ItemRequest();
+        req.setCategory(Item.ItemCategory.COLLECTIBLE);
+        req.setName(name);
+        req.setDescription("Mô tả " + name);
+        req.setStartingPrice(new BigDecimal("500.00"));
+        req.setOwnerId(ownerId);
+        req.setRarityLevel(Collectible.RarityLevel.RARE);
+        req.setConditionGrade(Collectible.ConditionGrade.GOOD);
+        req.setYearOfOrigin(0);
+        req.setHasCertificate(false);
+        return req;
+    }
+
     @Nested
     @DisplayName("Nghiệp vụ Tạo mặt hàng (Create Item)")
     class CreateItemTests {
@@ -258,6 +272,81 @@ public class ItemServiceTest {
             assertNotNull(result);
             assertEquals(0, result.getStartingPrice().compareTo(BigDecimal.ZERO));
             verify(itemDAO).insert(any(Item.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("Validation Collectible (Đồ sưu tầm)")
+    class CollectibleValidationTests {
+
+        private void stubValidSeller(String sellerId) {
+            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu độ hiếm (rarityLevel)")
+        void testCreateItem_MissingRarityLevel() {
+            String sellerId = "seller-col-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createCollectibleRequest(sellerId, "Tem cổ");
+            req.setRarityLevel(null);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Rarity level must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu tình trạng (conditionGrade)")
+        void testCreateItem_MissingConditionGrade() {
+            String sellerId = "seller-col-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createCollectibleRequest(sellerId, "Đồng xu");
+            req.setConditionGrade(null);
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> itemService.createItem(sellerId, req));
+            assertEquals("Condition grade must not be blank.", ex.getMessage());
+            verify(itemDAO, never()).insert(any());
+        }
+
+        @Test
+        @DisplayName("Thành công - Tạo Collectible hợp lệ")
+        void testCreateItem_Collectible_Success() {
+            String sellerId = "seller-col-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createCollectibleRequest(sellerId, "Tem hiếm");
+            req.setYearOfOrigin(1945);
+            req.setOrigin("Việt Nam");
+            req.setHasCertificate(true);
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Item result = itemService.createItem(sellerId, req);
+
+            assertNotNull(result);
+            assertTrue(result instanceof Collectible);
+            Collectible c = (Collectible) result;
+            assertEquals(Collectible.RarityLevel.RARE, c.getRarityLevel());
+            assertEquals(Collectible.ConditionGrade.GOOD, c.getConditionGrade());
+            assertEquals(1945, c.getYearOfOrigin());
+            assertEquals("Việt Nam", c.getOrigin());
+            assertTrue(c.isHasCertificate());
+            verify(itemDAO).insert(any(Item.class));
+        }
+
+        @Test
+        @DisplayName("Thành công - Xuất xứ trống mặc định Unknown")
+        void testCreateItem_Collectible_BlankOriginDefaultsToUnknown() {
+            String sellerId = "seller-col-1";
+            stubValidSeller(sellerId);
+            ItemRequest req = createCollectibleRequest(sellerId, "Huy hiệu");
+            req.setOrigin("   ");
+            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+
+            Item result = itemService.createItem(sellerId, req);
+
+            assertEquals("Unknown", ((Collectible) result).getOrigin());
         }
     }
 
