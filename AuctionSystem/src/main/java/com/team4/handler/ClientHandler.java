@@ -152,7 +152,7 @@ public class ClientHandler implements Runnable, BidObserver {
                 if (updatedAuction.getEndTime() != null) {
                     broadcastData.addProperty("endTime", updatedAuction.getEndTime().toString());
                 }
-                Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), null);
+                Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), this);
 
                 sendMessage(buildResponse("SUCCESS", "Dat gia thanh cong!", "BID_SUCCESS", broadcastData));
 
