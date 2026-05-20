@@ -61,7 +61,13 @@ public class ItemService {
                 throw new BusinessException("Invalid item category.");
         }
         // Tạo và lưu
-        Item item = factory.createItem(itemRequest);
+        Item item;
+        try {
+            item = factory.createItem(itemRequest);
+        } catch (IllegalArgumentException ex) {
+            logger.warn("Item creation failed: invalid category specific fields. reason={}", ex.getMessage());
+            throw new BusinessException(ex.getMessage());
+        }
         if (!itemDAO.insert(item)) {
             logger.error("System error: unable to save item to database. sellerId={}", sellerId);
             throw new BusinessException("Unable to create item.");
