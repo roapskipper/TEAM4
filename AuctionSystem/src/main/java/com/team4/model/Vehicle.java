@@ -72,17 +72,25 @@ public class Vehicle extends Item {
                    boolean hasLegalPapers,
                    Transmission transmission) {
         super(name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        // Optional brand
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Optional model
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Optional manufacturingYear
         this.manufacturingYear = manufacturingYear;
+        // Require odo (validated to 0 .. 1_000_000)
         this.odo = odo;
+        // Require engineType
         this.engineType = engineType;
+        // Optional color
         this.color = normalizeOptional(color);
+        // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
+        // Require transmission and default missing value to OTHER
         this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
         validateBrand(this.brand);
         validateModel(this.model);
@@ -109,17 +117,25 @@ public class Vehicle extends Item {
                    boolean hasLegalPapers,
                    Transmission transmission) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        // Optional brand
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Optional model
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Optional manufacturingYear
         this.manufacturingYear = manufacturingYear;
+        // Require odo (validated to 0 .. 1_000_000)
         this.odo = odo;
+        // Require engineType
         this.engineType = engineType;
+        // Optional color
         this.color = normalizeOptional(color);
+        // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
+        // Require transmission and default missing value to OTHER
         this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
         validateBrand(this.brand);
         validateModel(this.model);
