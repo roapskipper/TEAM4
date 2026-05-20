@@ -98,10 +98,10 @@ public class Art extends Item {
         if (artist == null) return; // optional
         String a = artist.trim();
         if (a.length() < 2) {
-            throw new IllegalArgumentException("Artist name must contain at least 2 characters.");
+            throw new IllegalArgumentException("Artist name must be at least 2 characters long.");
         }
         if (a.length() > 50) {
-            throw new IllegalArgumentException("Artist name must not exceed 50 characters.");
+            throw new IllegalArgumentException("Artist name cannot exceed 50 characters.");
         }
     }
     private static void validateCreationYear(int year) {
@@ -118,16 +118,16 @@ public class Art extends Item {
         String d = dims.trim();
         if (d.isEmpty()) return;
         if (d.length() > 50) {
-            throw new IllegalArgumentException("Dimensions are too long (maximum 50 characters).");
+            throw new IllegalArgumentException("Dimensions cannot exceed 50 characters.");
         }
         // Nếu khớp định dạng chuẩn (ví dụ "30x40 cm" hoặc "30 × 40 × 2 cm") thì OK
         if (!DIMENSION_PATTERN.matcher(d).matches()) {
-            throw new IllegalArgumentException("Invalid dimensions.");
+            throw new IllegalArgumentException("Invalid dimensions format. Expected format like '30x40 cm'.");
         }
     }
     private static void validateMedium(Medium medium) {
         if (medium == null)
-            throw new IllegalArgumentException("Medium must not be null");
+            throw new IllegalArgumentException("Art medium is required.");
     }
     @Override
     public String summary() {
