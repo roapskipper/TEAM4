@@ -124,7 +124,7 @@ public class AuctionServiceTest {
             when(itemDAO.findById(itemId)).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, "seller-1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now()))
+                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, "seller-1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1)))
             );
         }
 
@@ -138,7 +138,7 @@ public class AuctionServiceTest {
             when(itemDAO.findById(itemId)).thenReturn(realItem);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now()))
+                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1)))
             );
             assertEquals("Seller does not own this item", ex.getMessage());
         }
