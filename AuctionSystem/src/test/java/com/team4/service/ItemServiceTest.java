@@ -3,6 +3,7 @@ package com.team4.service;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.dto.item.*;
+import com.team4.factory.ItemRequest;
 import com.team4.model.*;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.DisplayName;
@@ -55,6 +56,20 @@ public class ItemServiceTest {
                 Art.Medium.OIL_PAINT,
                 "100x100"
         );
+    }
+
+    private ItemRequest createArtRequest(String ownerId, String name) {
+        ItemRequest req = new ItemRequest();
+        req.setCategory(Item.ItemCategory.ART);
+        req.setName(name);
+        req.setDescription("Description for " + name);
+        req.setStartingPrice(new BigDecimal("100000"));
+        req.setOwnerId(ownerId);
+        req.setMedium(Art.Medium.OIL_PAINT);
+        req.setArtist("Artist Name");
+        req.setCreationYear(2024);
+        req.setDimensions("100x100");
+        return req;
     }
 
     private ItemRequest createCollectibleRequest(String ownerId, String name) {
@@ -634,7 +649,7 @@ public class ItemServiceTest {
             String realOwner = "real-seller";
             String hackerId = "hacker-007";
             String itemId = "item-vault";
-            Art item = new Art(itemId, LocalDateTime.now(), "Vault", new BigDecimal("100"), "...", realOwner, "A", 2000, Art.Medium.INK, "1x1");
+            Art item = new Art(itemId, LocalDateTime.now(), "Vault", new BigDecimal("100"), "...", realOwner, "Artist", 2000, Art.Medium.INK, "10x10 cm");
 
             when(itemDAO.findById(itemId)).thenReturn(item);
 
@@ -655,7 +670,7 @@ public class ItemServiceTest {
         void testDeleteItem_Success() {
             String sellerId = "seller-1";
             String itemId = "item-delete";
-            Art item = new Art(itemId, LocalDateTime.now(), "DeleteMe", new BigDecimal("100"), "...", sellerId, "A", 2000, Art.Medium.INK, "1x1");
+            Art item = new Art(itemId, LocalDateTime.now(), "DeleteMe", new BigDecimal("100"), "...", sellerId, "Artist", 2000, Art.Medium.INK, "10x10 cm");
 
             when(itemDAO.findById(itemId)).thenReturn(item);
             when(itemDAO.delete(itemId)).thenReturn(true);
@@ -677,7 +692,7 @@ public class ItemServiceTest {
         void testGetByCategory() {
             // GIVEN
             when(itemDAO.findByCategory("ART")).thenReturn(List.of(
-                    new Art("1", new BigDecimal("100000"), "Painting", "seller-1", "Artist", 2020, Art.Medium.OIL_PAINT, "10x10")
+                    new Art("1", LocalDateTime.now(), "Painting", new BigDecimal("100000"), "Description", "seller-1", "Artist", 2020, Art.Medium.OIL_PAINT, "10x10 cm")
             ));
 
             // WHEN: Lấy danh sách

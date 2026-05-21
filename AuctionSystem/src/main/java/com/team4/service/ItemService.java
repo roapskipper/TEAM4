@@ -52,45 +52,65 @@ public class ItemService {
         User seller = userDAO.findById(sellerId);
         if (seller == null || !(seller instanceof Seller)) {
             logger.warn("Tạo mặt hàng thất bại: Người bán không tồn tại hoặc không hợp lệ. sellerId={}", sellerId);
-            throw new BusinessException("Người bán không tồn tại.");
+            throw new BusinessException("Seller does not exist.");
         }
 
-        // Map DTO to Factory Request
-        ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
+        try {
+            // Map DTO to Factory Request
+            ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
 
-        // Chọn Factory
-        ItemFactory factory;
-        switch (itemRequest.getCategory()) {
-            case ART:
-                factory = new ArtFactory();
-                break;
-            case COLLECTIBLE:
-                factory = new CollectibleFactory();
-                break;
-            case ELECTRONICS:
-                factory = new ElectronicsFactory();
-                break;
-            case FASHION:
-                factory = new FashionFactory();
-                break;
-            case VEHICLE:
-                factory = new VehicleFactory();
-                break;
-            default:
-                logger.warn("Tạo mặt hàng thất bại: Loại mặt hàng không hợp lệ. category={}", itemRequest.getCategory());
-                throw new BusinessException("Loại mặt hàng không hợp lệ.");
+            // Chọn Factory
+            ItemFactory factory = getFactory(itemRequest.getCategory());
+
+            Item item = factory.createItem(itemRequest);
+
+            if (!itemDAO.insert(item)) {
+                logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                throw new BusinessException("Không thể tạo mặt hàng.");
+            }
+            if (!item.getOwnerId().equals(sellerId)) {
+                logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
+                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+            }
+            logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
+            return ItemMapper.toItemResponseDTO(item);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(e.getMessage());
+        }
+    }
+
+    public Item createItem(String sellerId, ItemRequest itemRequest) {
+        logger.info("Đang tạo mặt hàng mới cho người bán từ ItemRequest: sellerId={}, itemName={}, category={}",
+                sellerId, itemRequest.getName(), itemRequest.getCategory());
+
+        User seller = userDAO.findById(sellerId);
+        if (seller == null || !(seller instanceof Seller)) {
+            logger.warn("Tạo mặt hàng thất bại: Người bán không tồn tại hoặc không hợp lệ. sellerId={}", sellerId);
+            throw new BusinessException("Seller does not exist.");
         }
 
-        if (!itemDAO.insert(item)) {
-            logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
-            throw new BusinessException("Không thể tạo mặt hàng.");
+        try {
+            // Common validation
+            validateCommonItemRequest(itemRequest);
+
+            // Chọn Factory
+            ItemFactory factory = getFactory(itemRequest.getCategory());
+
+            Item item = factory.createItem(itemRequest);
+
+            if (!itemDAO.insert(item)) {
+                logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                throw new BusinessException("Không thể tạo mặt hàng.");
+            }
+            if (!item.getOwnerId().equals(sellerId)) {
+                logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
+                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+            }
+            logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
+            return item;
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(e.getMessage());
         }
-        if (!item.getOwnerId().equals(sellerId)) {
-            logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-            throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
-        }
-        logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
-        return ItemMapper.toItemResponseDTO(item);
     }
 
     private ItemFactory getFactory(Item.ItemCategory category) {
