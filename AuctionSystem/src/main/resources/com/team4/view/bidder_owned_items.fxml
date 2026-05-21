@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.team4.controller.BidderOwnedItemsController"
+      spacing="20"
+      style="-fx-background-color: transparent;"
+      prefWidth="1200">
+
+    <HBox spacing="16">
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Owned Items" styleClass="muted-text"/>
+            <Label fx:id="ownedCount" text="0" styleClass="stat-number-accent"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Winning Value" styleClass="muted-text"/>
+            <Label fx:id="totalValue" text="0 VND" styleClass="stat-number-neutral" style="-fx-font-size: 24;"/>
+        </VBox>
+        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Latest Win" styleClass="muted-text"/>
+            <Label fx:id="latestItem" text="--" styleClass="stat-number-muted" style="-fx-font-size: 24;" wrapText="true"/>
+        </VBox>
+    </HBox>
+
+    <VBox styleClass="filter-panel" spacing="14">
+        <HBox alignment="CENTER_LEFT">
+            <Label text="Collection" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <FlowPane fx:id="ownedItemsGrid"
+                  hgap="16"
+                  vgap="16"
+                  prefWrapLength="900"/>
+    </VBox>
+</VBox>

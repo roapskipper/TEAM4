@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * </ul>
  */
 public class Fashion extends Item {
-    private static final long serialVersionUID = 1L;
+
     public enum Size {
         XS, S, M, L, XL, XXL, XXXL, OTHER
     }

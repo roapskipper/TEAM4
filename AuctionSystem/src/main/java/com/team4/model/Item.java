@@ -143,8 +143,8 @@ public abstract class Item extends Entity {
     public abstract String summary();
 
     // Các phương thức chuẩn hóa
-    private static BigDecimal money(BigDecimal amount) {
-        if (amount == null) throw new IllegalArgumentException(ValidationMessages.STARTING_PRICE_REQUIRED);
+    public static BigDecimal money(BigDecimal amount) {
+        if (amount == null) throw new IllegalArgumentException("Amount must not be null.");
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
     private static String normalizeName(String name) {

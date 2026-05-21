@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public class Art extends Item {
-    private static final long serialVersionUID = 1L;
     // enum Medium (cho nó chất)
     public enum Medium {
         OIL_PAINT,          // Sơn dầu

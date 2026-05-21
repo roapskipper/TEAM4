@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
  * </ul>
  */
 public class Electronics extends Item {
-    private static final long serialVersionUID = 1L;
     public enum ConditionGrade {
         POOR,           // Kém
         FAIR,           // Trung bình

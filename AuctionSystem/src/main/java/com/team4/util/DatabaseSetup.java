@@ -1,5 +1,8 @@
 package com.team4.util;
 
+import com.team4.db.DatabaseManager;
+import io.github.cdimascio.dotenv.Dotenv;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +23,8 @@ import java.util.Properties;
  * 4. chạy schema vào MySQL
  */
 public final class DatabaseSetup {
+
+    private static final String DEFAULT_DATABASE = "auction_system";
 
     // method public để bên ngoài có thể gọi vào
     public static void initDatabase() {
@@ -56,23 +61,46 @@ public final class DatabaseSetup {
             // Sử dụng RuntimeException là cách tốt nhất để Ngắt ứng dụng ngay khi lỗi nền tảng xảy ra và Giữ cho mã nguồn các tầng bên trên được sạch đẹp, không vướng bận các ngoại lệ của I/O.
             throw new RuntimeException("Unable to load database.properties", e);
         }
-        String url = properties.getProperty("db.url");
-        String user = properties.getProperty("db.username");
-        String password = properties.getProperty("db.password");
+        Dotenv dotenv = loadDotenv();
+        String rawUrl = firstNonBlank(dotenv.get("DB_URL"), properties.getProperty("db.url"));
+        String user = firstNonBlank(dotenv.get("DB_USERNAME"), properties.getProperty("db.username"));
+        String password = firstNonBlank(dotenv.get("DB_PASSWORD"), properties.getProperty("db.password"));
         /** Validate 3 thành phần đều không được null/trống
          * Do đã cài mât khẩu trong Workbench nên password không được null
          * Dùng trim() ở đây thay vè bên trên để tránh NPE :((
          */
-        if (url == null || url.trim().isEmpty()) {
-            throw new IllegalArgumentException("db.url must not be blank");
+        if (rawUrl == null) {
+            throw new IllegalArgumentException("DB_URL must not be blank");
         }
-        if (user == null || user.trim().isEmpty()) {
-            throw new IllegalArgumentException("db.user must not be blank");
+        if (user == null) {
+            throw new IllegalArgumentException("DB_USERNAME must not be blank");
         }
-        if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("password must not be blank");
+        if (password == null) {
+            throw new IllegalArgumentException("DB_PASSWORD must not be blank");
         }
-        return new DbConfig(url.trim(), user.trim(), password);
+        return new DbConfig(DatabaseManager.normalizeJdbcUrl(rawUrl, DEFAULT_DATABASE), user, password);
+    }
+
+    private static Dotenv loadDotenv() {
+        try {
+            Dotenv d = Dotenv.configure().ignoreIfMissing().load();
+            if (d.get("DB_URL") != null) return d;
+        } catch (Exception ignored) {}
+        try {
+            Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
+            if (d.get("DB_URL") != null) return d;
+        } catch (Exception ignored) {}
+        return Dotenv.configure().ignoreIfMissing().load();
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        if (first != null && !first.trim().isEmpty()) {
+            return first.trim();
+        }
+        if (second != null && !second.trim().isEmpty()) {
+            return second.trim();
+        }
+        return null;
     }
 
     /**
@@ -158,10 +186,17 @@ public final class DatabaseSetup {
         Statement stmt = conn.createStatement()) {
 
             for (String sql : statements) {
-                stmt.execute(sql);
+                try {
+                    stmt.execute(sql);
+                } catch (SQLException e) {
+                    if (!isIgnorableSchemaError(e)) {
+                        throw e;
+                    }
+                }
             }
 
         } catch (SQLException e) {
+            throw new RuntimeException("Unable to apply database schema", e);
         }
     }
 
