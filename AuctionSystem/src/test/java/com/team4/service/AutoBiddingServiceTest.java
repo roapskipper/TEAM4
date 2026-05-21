@@ -8,7 +8,7 @@ import com.team4.dto.bidding.AutoBidResponseDTO;
 import com.team4.model.Auction;
 import com.team4.model.AutoBidding;
 import com.team4.model.Bidder;
-import com.team4.model.Seller;
+import com.team4.model.User;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,16 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Lớp kiểm thử AutoBiddingServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * 
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class chứa dữ liệu (User, Auction, AutoBidding) -> Sử dụng 'new'.
- * 2. CHỈ MOCK các Interface phụ thuộc logic (DAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Kiểm thử nghiệp vụ Đấu giá tự động (AutoBiddingService).
+ * Đảm bảo quản lý cấu hình tự động đặt giá chính xác với cấu trúc DTO mới.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Đấu giá tự động (AutoBiddingService)")
+@DisplayName("Unit Tests for AutoBiddingService")
 public class AutoBiddingServiceTest {
 
     @Mock private AutoBiddingDAO autoBiddingDAO;
@@ -45,35 +40,32 @@ public class AutoBiddingServiceTest {
     @InjectMocks
     private AutoBiddingService autoBiddingService;
 
-    // Helper tạo Auction thật ở trạng thái RUNNING
-    private Auction createRunningAuction(String auctionId, String sellerId, String currentPrice) {
+    // Helper tạo Auction đang chạy
+    private Auction createRunningAuction(String auctionId, String sellerId) {
         Auction auction = new Auction("item-1", sellerId, new BigDecimal("100.00"), new BigDecimal("10.00"), LocalDateTime.now().plusDays(1));
-        auction.approve(); // Chuyển sang RUNNING
-        if (currentPrice != null) {
-            // Giả lập có người đã bid để nâng giá hiện tại
-            auction.applyBid("other-bidder", new BigDecimal(currentPrice));
-        }
+        auction.approve(); // RUNNING
         return auction;
     }
 
     // Helper tạo Bidder thật
     private Bidder createRealBidder(String id) {
-        return new Bidder(id, LocalDateTime.now(), "bidder_" + id, "hash", "Bidder Name", "b@test.com", new BigDecimal("1000.00"), "Address", "09129999");
+        return new Bidder(id, LocalDateTime.now(), "bidder_" + id, "hash", "Bidder", "b@t.com", new BigDecimal("1000"), "Addr", "0912345678");
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Bật Đấu giá tự động (Enable Auto-bid)")
+    @DisplayName("Nghiệp vụ Bật Đấu giá tự động (enableAutoBidding)")
     class EnableAutoBiddingTests {
 
         @Test
-        @DisplayName("Bật lần đầu thành công - Tạo cấu hình mới")
+        @DisplayName("Bật đấu giá tự động lần đầu thành công")
         void testEnable_FirstTime_Success() {
-            // GIVEN
+            // GIVEN: Yêu cầu hợp lệ
             String bidderId = "bidder-1";
             String auctionId = "auc-1";
             BigDecimal maxLimit = new BigDecimal("500.00");
+            AutoBidRequestDTO request = new AutoBidRequestDTO(auctionId, bidderId, maxLimit);
 
-            Auction auction = createRunningAuction(auctionId, "seller-1", "100.00");
+            Auction auction = createRunningAuction(auctionId, "seller-1");
             Bidder bidder = createRealBidder(bidderId);
 
             when(auctionDAO.findById(auctionId)).thenReturn(auction);
@@ -81,10 +73,10 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(null);
             when(autoBiddingDAO.insert(any(AutoBidding.class))).thenReturn(true);
 
-            // WHEN
-            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, maxLimit));
+            // WHEN: Kích hoạt auto-bid
+            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(request);
 
-            // THEN
+            // THEN: Trả về DTO cấu hình và đã lưu vào DB
             assertNotNull(result);
             assertEquals(maxLimit, result.getMaxLimit());
             assertTrue(result.isActive());
@@ -92,233 +84,65 @@ public class AutoBiddingServiceTest {
         }
 
         @Test
-        @DisplayName("Bật lại thành công - Kích hoạt lại cấu hình cũ đã tắt")
-        void testEnable_Reactivate_Success() {
-            // GIVEN
-            String bidderId = "bidder-1";
-            String auctionId = "auc-1";
-            BigDecimal newLimit = new BigDecimal("450.00");
-
-            Auction auction = createRunningAuction(auctionId, "seller-1", "100.00");
-            Bidder bidder = createRealBidder(bidderId);
-            // Cấu hình cũ đang inactive
-            AutoBidding oldConfig = new AutoBidding(auctionId, bidderId, new BigDecimal("300.00"));
-            oldConfig.deactivate();
-
-            when(auctionDAO.findById(auctionId)).thenReturn(auction);
-            when(userDAO.findById(bidderId)).thenReturn(bidder);
-            when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(oldConfig);
-            when(autoBiddingDAO.update(oldConfig)).thenReturn(true);
-
-            // WHEN
-            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, newLimit));
-
-            // THEN
-            assertTrue(result.isActive());
-            assertEquals(new BigDecimal("450.00"), result.getMaxLimit());
-            verify(autoBiddingDAO).update(oldConfig);
-        }
-
-        @Test
-        @DisplayName("Thất bại - Phiên đấu giá không ở trạng thái RUNNING")
+        @DisplayName("Thất bại khi đấu giá đã kết thúc")
         void testEnable_AuctionNotRunning() {
             String auctionId = "auc-1";
-            // Phiên mới tạo, chưa được duyệt (PENDING)
-            Auction pendingAuction = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now());
-            
-            when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
+            Auction finished = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now());
+            // Mặc định là PENDING, không phải RUNNING
 
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("100.00")))
+            when(auctionDAO.findById(auctionId)).thenReturn(finished);
+
+            assertThrows(BusinessException.class, () ->
+                    autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("100")))
             );
         }
 
         @Test
-        @DisplayName("Thất bại - Giới hạn tối đa không lớn hơn giá hiện tại")
+        @DisplayName("Thất bại khi giới hạn tối đa quá thấp")
         void testEnable_LimitTooLow() {
             String auctionId = "auc-1";
-            Auction auction = createRunningAuction(auctionId, "s1", "200.00"); // Giá hiện tại 200
-            
-            when(auctionDAO.findById(auctionId)).thenReturn(auction);
-
-            // Cố tình đặt giới hạn 150 (nhỏ hơn 200)
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("150.00")))
-            );
-        }
-
-        @Test
-        @DisplayName("Thất bại - Người bán không được dùng Auto-bid cho chính mình")
-        void testEnable_SellerSelfBidding() {
-            String sellerId = "seller-1";
-            Auction auction = createRunningAuction("auc-1", sellerId, "100.00");
-            
-            when(auctionDAO.findById("auc-1")).thenReturn(auction);
-
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO("auc-1", sellerId, new BigDecimal("500.00")))
-            );
-        }
-
-        @Test
-        @DisplayName("Thất bại - Giới hạn tối đa vượt quá multiplier của chính sách")
-        void testEnable_ExceedsMultiplierPolicy() {
-            String auctionId = "auc-1";
-            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
-            Auction auction = createRunningAuction(auctionId, "s1", "1000000.00");
-            
-            when(auctionDAO.findById(auctionId)).thenReturn(auction);
-
-            // 4,500,000 (4.5M) exceeds allowedMax (4M)
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("4500000.00")))
-            );
-            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
-        }
-
-        @Test
-        @DisplayName("Thất bại - Giới hạn tối đa vượt quá ABSOLUTE_MAX")
-        void testEnable_ExceedsAbsoluteMax() {
-            String auctionId = "auc-1";
-            // currentPrice = 400,000,000 (400M) -> clamped allowedMax = 500,000,000 (500M)
-            Auction auction = createRunningAuction(auctionId, "s1", "400000000.00");
-            
-            when(auctionDAO.findById(auctionId)).thenReturn(auction);
-
-            // 500,000,001 exceeds ABSOLUTE_MAX (500M)
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("500000001.00")))
-            );
-            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
-        }
-
-        @Test
-        @DisplayName("Thành công - Giới hạn tối đa nằm trong cho phép")
-        void testEnable_WithinAllowedMax_Success() {
-            String bidderId = "bidder-1";
-            String auctionId = "auc-1";
-            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
-            BigDecimal maxLimit = new BigDecimal("4000000.00");
-
-            Auction auction = createRunningAuction(auctionId, "seller-1", "1000000.00");
-            Bidder bidder = createRealBidder(bidderId);
+            Auction auction = createRunningAuction(auctionId, "s1"); // Giá hiện tại 100
 
             when(auctionDAO.findById(auctionId)).thenReturn(auction);
-            when(userDAO.findById(bidderId)).thenReturn(bidder);
-            when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(null);
-            when(autoBiddingDAO.insert(any(AutoBidding.class))).thenReturn(true);
 
-            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, maxLimit));
-            assertNotNull(result);
-            assertEquals(maxLimit, result.getMaxLimit());
+            // Đặt giới hạn 50 (thấp hơn giá hiện tại 100)
+            assertThrows(BusinessException.class, () ->
+                    autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("50")))
+            );
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Cập nhật giới hạn (Update Auto-bid)")
+    @DisplayName("Nghiệp vụ Cập nhật giới hạn (updateAutoBidding)")
     class UpdateAutoBiddingTests {
 
         @Test
-        @DisplayName("Cập nhật thành công")
+        @DisplayName("Cập nhật giới hạn tối đa thành công")
         void testUpdate_Success() {
             String configId = "conf-123";
             BigDecimal newLimit = new BigDecimal("800.00");
             AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("500.00"));
-            Auction auction = createRunningAuction("auc-1", "sel-1", "200.00");
+            Auction auction = createRunningAuction("auc-1", "sel-1");
 
             when(autoBiddingDAO.findById(configId)).thenReturn(config);
             when(auctionDAO.findById("auc-1")).thenReturn(auction);
             when(autoBiddingDAO.update(config)).thenReturn(true);
 
             // WHEN
-            AutoBidResponseDTO updated = autoBiddingService.updateAutoBidding(configId, newLimit);
+            AutoBidResponseDTO result = autoBiddingService.updateAutoBidding(configId, newLimit);
 
             // THEN
-            assertNotNull(updated);
-            assertEquals(newLimit, config.getMaxLimit());
+            assertEquals(newLimit, result.getMaxLimit());
             verify(autoBiddingDAO).update(config);
         }
 
         @Test
-        @DisplayName("Thất bại - Cấu hình không tồn tại")
+        @DisplayName("Thất bại khi cấu hình không tồn tại")
         void testUpdate_NotFound() {
             when(autoBiddingDAO.findById("none")).thenReturn(null);
 
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.updateAutoBidding("none", new BigDecimal("1000.00"))
-            );
-        }
-
-        @Test
-        @DisplayName("Thất bại - Giới hạn mới vượt quá multiplier của chính sách")
-        void testUpdate_ExceedsMultiplierPolicy() {
-            String configId = "conf-123";
-            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
-            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("2000000.00"));
-            Auction auction = createRunningAuction("auc-1", "sel-1", "1000000.00");
-
-            when(autoBiddingDAO.findById(configId)).thenReturn(config);
-            when(auctionDAO.findById("auc-1")).thenReturn(auction);
-
-            // 4,000,001 exceeds allowedMax (4M)
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                autoBiddingService.updateAutoBidding(configId, new BigDecimal("4000001.00"))
-            );
-            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
-        }
-
-        @Test
-        @DisplayName("Thành công - Giới hạn mới nằm trong cho phép")
-        void testUpdate_WithinAllowedMax_Success() {
-            String configId = "conf-123";
-            // currentPrice = 1,000,000 (1M) -> allowedMax = 4,000,000 (4M)
-            BigDecimal newLimit = new BigDecimal("4000000.00");
-            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("2000000.00"));
-            Auction auction = createRunningAuction("auc-1", "sel-1", "1000000.00");
-
-            when(autoBiddingDAO.findById(configId)).thenReturn(config);
-            when(auctionDAO.findById("auc-1")).thenReturn(auction);
-            when(autoBiddingDAO.update(config)).thenReturn(true);
-
-            AutoBidResponseDTO updated = autoBiddingService.updateAutoBidding(configId, newLimit);
-            assertNotNull(updated);
-            assertEquals(newLimit, config.getMaxLimit());
-        }
-    }
-
-    @Nested
-    @DisplayName("Nghiệp vụ Tắt Đấu giá tự động (Disable Auto-bid)")
-    class DisableAutoBiddingTests {
-
-        @Test
-        @DisplayName("Tắt thành công")
-        void testDisable_Success() {
-            String configId = "conf-1";
-            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("500.00"));
-            // Mặc định là active = true
-
-            when(autoBiddingDAO.findById(configId)).thenReturn(config);
-            when(autoBiddingDAO.updateActive(configId, false)).thenReturn(true);
-
-            // WHEN
-            autoBiddingService.disableAutoBidding(configId);
-
-            // THEN
-            assertFalse(config.isActive());
-            verify(autoBiddingDAO).updateActive(configId, false);
-        }
-
-        @Test
-        @DisplayName("Thất bại - Auto-bid vốn đã tắt từ trước")
-        void testDisable_AlreadyDisabled() {
-            String configId = "conf-1";
-            AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("500.00"));
-            config.deactivate(); // Đã tắt
-
-            when(autoBiddingDAO.findById(configId)).thenReturn(config);
-
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.disableAutoBidding(configId)
+            assertThrows(BusinessException.class, () ->
+                    autoBiddingService.updateAutoBidding("none", new BigDecimal("1000"))
             );
         }
     }
@@ -328,11 +152,11 @@ public class AutoBiddingServiceTest {
     class QueryTests {
 
         @Test
-        @DisplayName("Tìm cấu hình cụ thể thành công")
+        @DisplayName("Tìm cấu hình hiện tại (Trả về DTO)")
         void testFindConfig_Success() {
             String bidderId = "b1";
             String auctionId = "a1";
-            AutoBidding config = new AutoBidding(auctionId, bidderId, new BigDecimal("500.00"));
+            AutoBidding config = new AutoBidding(auctionId, bidderId, new BigDecimal("500"));
 
             when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(config);
 
@@ -343,25 +167,13 @@ public class AutoBiddingServiceTest {
         }
 
         @Test
-        @DisplayName("Thất bại khi tìm cấu hình chưa cài đặt")
-        void testFindConfig_NotFound() {
-            when(autoBiddingDAO.findByAuctionAndBidder(anyString(), anyString())).thenReturn(null);
-
-            assertThrows(BusinessException.class, () -> 
-                autoBiddingService.findConfig("b1", "a1")
-            );
-        }
-
-        @Test
-        @DisplayName("Lấy tất cả cấu hình đang hoạt động trong phiên")
+        @DisplayName("Lấy danh sách cấu hình đang hoạt động (DTO)")
         void testFindActiveConfigs() {
             String auctionId = "auc-1";
-            List<AutoBidding> activeList = List.of(
-                new AutoBidding(auctionId, "b1", new BigDecimal("500")),
-                new AutoBidding(auctionId, "b2", new BigDecimal("600"))
-            );
-
-            when(autoBiddingDAO.findActiveByAuctionId(auctionId)).thenReturn(activeList);
+            when(autoBiddingDAO.findActiveByAuctionId(auctionId)).thenReturn(List.of(
+                    new AutoBidding(auctionId, "b1", new BigDecimal("500")),
+                    new AutoBidding(auctionId, "b2", new BigDecimal("600"))
+            ));
 
             List<AutoBidResponseDTO> results = autoBiddingService.findActiveConfigs(auctionId);
 

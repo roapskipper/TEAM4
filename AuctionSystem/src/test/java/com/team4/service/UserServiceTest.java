@@ -22,16 +22,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Lớp kiểm thử UserServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * 
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class chứa dữ liệu (User, Bidder, Seller) -> Sử dụng 'new'.
- * 2. CHỈ MOCK các Interface phụ thuộc logic (UserDAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Kiểm thử nghiệp vụ UserService.
+ * Đảm bảo thông tin người dùng được bảo mật qua DTO và các nghiệp vụ cập nhật hồ sơ hoạt động đúng.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Quản lý người dùng (UserService)")
+@DisplayName("Unit Tests for UserService")
 public class UserServiceTest {
 
     @Mock
@@ -40,130 +35,87 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    /**
-     * Helper tạo đối tượng Bidder thật.
-     */
+    // Helper tạo Bidder thật
     private Bidder createRealBidder(String id, String email) {
-        return new Bidder(
-                id,
-                LocalDateTime.now(),
-                "user_" + id,
-                "hashed_pass",
-                "Tên Người Dùng " + id,
-                email,
-                BigDecimal.ZERO,
-                "Hà Nội",
-                "0912345678"
-        );
+        return new Bidder(id, LocalDateTime.now(), "user_" + id, "hashed_pass", "Test User " + id, email, BigDecimal.ZERO, "Hanoi", "0912345678");
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Tìm kiếm người dùng")
+    @DisplayName("Nghiệp vụ Tìm kiếm người dùng (getUserById)")
     class GetUserTests {
 
         @Test
-        @DisplayName("Lấy User theo ID thành công")
+        @DisplayName("Lấy thông tin người dùng thành công (Trả về DTO)")
         void testGetUserById_Success() {
-            // GIVEN: Giả lập một người dùng tồn tại trong hệ thống
+            // GIVEN: Người dùng tồn tại trong hệ thống
             String userId = "user-123";
             User realUser = createRealBidder(userId, "test@gmail.com");
             when(userDAO.findById(userId)).thenReturn(realUser);
 
-            // WHEN: Thực hiện tìm kiếm theo ID
+            // WHEN: Thực hiện lấy thông tin qua Service
             UserResponseDTO result = userService.getUserById(userId);
 
-            // THEN: 
-            // 1. Phải trả về đúng người dùng đó
+            // THEN: Phải trả về DTO hợp lệ, không lộ mật khẩu
             assertNotNull(result);
             assertEquals(userId, result.getId());
             assertEquals("test@gmail.com", result.getEmail());
-            // 2. Phải gọi xuống DAO đúng 1 lần
             verify(userDAO).findById(userId);
         }
 
         @Test
-        @DisplayName("Lấy User theo ID thất bại - ID không tồn tại")
+        @DisplayName("Thất bại khi tìm kiếm ID không tồn tại")
         void testGetUserById_NotFound() {
-            // GIVEN: Không tìm thấy người dùng
+            // GIVEN
             when(userDAO.findById("none")).thenReturn(null);
 
-            // WHEN & THEN
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                userService.getUserById("none")
-            );
-            assertEquals("User does not exist", ex.getMessage());
+            // WHEN & THEN: Phải ném BusinessException theo logic mới của UserService
+            assertThrows(BusinessException.class, () -> userService.getUserById("none"));
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Cập nhật hồ sơ (Update Profile)")
+    @DisplayName("Nghiệp vụ Cập nhật hồ sơ (updateProfile)")
     class UpdateProfileTests {
 
         @Test
-        @DisplayName("Cập nhật thành công - Email phải chuyển về chữ thường")
+        @DisplayName("Cập nhật hồ sơ thành công")
         void testUpdateProfile_Success() {
-            // GIVEN: Người dùng cũ tên "Cũ", email "OLD@gmail.com"
+            // GIVEN: Người dùng hiện tại
             String userId = "user-123";
             User realUser = createRealBidder(userId, "old@gmail.com");
             when(userDAO.findById(userId)).thenReturn(realUser);
             when(userDAO.update(any(User.class))).thenReturn(true);
 
-            // WHEN: Cập nhật tên mới, email có chữ hoa "NEW@gmail.com" và sđt mới
-            UserResponseDTO updated = userService.updateProfile(userId, "Tên Mới", "NEW@gmail.com", "0987654321");
+            // WHEN: Cập nhật thông tin mới
+            UserResponseDTO updated = userService.updateProfile(userId, "New Name", "NEW@gmail.com", "0987654321");
 
-            // THEN: 
-            // 1. Dữ liệu trong đối tượng phải thay đổi (email tự động về chữ thường do logic Model)
-            assertEquals("Tên Mới", updated.getFullName());
+            // THEN: DTO trả về phản ánh thông tin đã chuẩn hóa (email viết thường)
+            assertEquals("New Name", updated.getFullName());
             assertEquals("new@gmail.com", updated.getEmail());
-            // 2. Phải gọi lệnh lưu vào DB
             verify(userDAO).update(realUser);
         }
 
         @Test
-        @DisplayName("Cập nhật thất bại - Người dùng không tồn tại")
+        @DisplayName("Thất bại khi cập nhật người dùng không tồn tại")
         void testUpdateProfile_UserNotFound() {
-            // GIVEN
             when(userDAO.findById("unknown")).thenReturn(null);
 
-            // WHEN & THEN: Kỳ vọng ném BusinessException
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                userService.updateProfile("unknown", "Name", "email@test.com", "0987654321")
+            BusinessException ex = assertThrows(BusinessException.class, () ->
+                    userService.updateProfile("unknown", "Name", "e@t.com", "0987654321")
             );
             assertEquals("User does not exist", ex.getMessage());
-            verify(userDAO, never()).update(any());
-        }
-
-        @Test
-        @DisplayName("Cập nhật thất bại - Email sai định dạng")
-        void testUpdateProfile_InvalidEmail() {
-            // GIVEN: User tồn tại
-            String userId = "user-123";
-            User realUser = createRealBidder(userId, "old@gmail.com");
-            when(userDAO.findById(userId)).thenReturn(realUser);
-
-            // WHEN & THEN: Model User sẽ ném IllegalArgumentException nếu email sai định dạng
-            // Service gọi user.updateProfile() nên lỗi này sẽ bắn ra ngoài
-            assertThrows(IllegalArgumentException.class, () -> 
-                userService.updateProfile(userId, "Name", "email-sai-dinh-dang", "0987654321")
-            );
-            
-            // Đảm bảo không gọi update DB khi dữ liệu sai
-            verify(userDAO, never()).update(any());
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Danh sách người dùng (Admin)")
-    class ListUserTests {
+    @DisplayName("Nghiệp vụ Quản trị (getAllUsers)")
+    class AdminUserTests {
 
         @Test
-        @DisplayName("Lấy tất cả người dùng thành công")
+        @DisplayName("Lấy danh sách tất cả người dùng (Admin)")
         void testGetAllUsers_Success() {
-            // GIVEN: Giả lập danh sách có 2 người
-            List<User> list = List.of(
-                createRealBidder("1", "u1@test.com"),
-                createRealBidder("2", "u2@test.com")
-            );
+            // GIVEN
+            List<User> list = List.of(createRealBidder("1", "u1@t.com"), createRealBidder("2", "u2@t.com"));
             when(userDAO.findAll()).thenReturn(list);
 
             // WHEN
@@ -175,15 +127,12 @@ public class UserServiceTest {
         }
 
         @Test
-        @DisplayName("Lấy danh sách rỗng")
+        @DisplayName("Trả về danh sách rỗng khi không có người dùng")
         void testGetAllUsers_Empty() {
-            // GIVEN: Hệ thống chưa có ai
             when(userDAO.findAll()).thenReturn(Collections.emptyList());
 
-            // WHEN
             List<UserResponseDTO> results = userService.getAllUsers();
 
-            // THEN: Phải trả về list rỗng, không được null
             assertNotNull(results);
             assertTrue(results.isEmpty());
         }

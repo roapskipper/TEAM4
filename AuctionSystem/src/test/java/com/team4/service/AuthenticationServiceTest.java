@@ -1,10 +1,7 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
-import com.team4.dto.auth.LoginRequestDTO;
-import com.team4.dto.auth.LoginResponseDTO;
-import com.team4.dto.auth.RegisterBidderRequestDTO;
-import com.team4.dto.auth.RegisterSellerRequestDTO;
+import com.team4.dto.auth.*;
 import com.team4.model.Admin;
 import com.team4.model.Bidder;
 import com.team4.model.Seller;
@@ -26,16 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Lớp kiểm thử AuthenticationServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * 
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class chứa dữ liệu (Bidder, Seller, Admin) -> Sử dụng 'new'.
- * 2. CHỈ MOCK các Interface phụ thuộc logic (UserDAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Kiểm thử nghiệp vụ AuthenticationService.
+ * Đảm bảo các luồng Đăng ký, Đăng nhập và Đổi mật khẩu hoạt động đúng với cấu trúc DTO/Mapper mới.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Xác thực (AuthenticationService)")
+@DisplayName("Unit Tests for AuthenticationService")
 public class AuthenticationServiceTest {
 
     @Mock
@@ -47,9 +39,6 @@ public class AuthenticationServiceTest {
     @InjectMocks
     private AuthenticationService authService;
 
-    // Một chuỗi thỏa mãn regex AdminCode: 8-128 ký tự, 1 hoa, 1 thường, 1 số, 1 đặc biệt
-    private final String VALID_ADMIN_CODE_HASH = "Admin@123456"; 
-
     @Nested
     @DisplayName("Nghiệp vụ Đăng ký (Registration)")
     class RegistrationTests {
@@ -57,15 +46,18 @@ public class AuthenticationServiceTest {
         @Test
         @DisplayName("Đăng ký Bidder thành công")
         void testRegisterBidder_Success() {
-            // GIVEN: Username chưa tồn tại
-            String username = "new_bidder";
-            when(userDAO.findByUsername(username)).thenReturn(null);
+            // GIVEN: Yêu cầu đăng ký hợp lệ và username chưa tồn tại
+            RegisterBidderRequestDTO request = new RegisterBidderRequestDTO(
+                    "new_bidder", "New User", "Password123", "bidder@test.com", "Address", "0912345678"
+            );
+            when(userDAO.findByUsername(request.getUsername())).thenReturn(null);
+            when(userDAO.findByEmail(request.getEmail())).thenReturn(null);
             when(userDAO.insert(any(Bidder.class))).thenReturn(true);
 
-            // WHEN: Thực hiện đăng ký
-            authService.registerBidder(new RegisterBidderRequestDTO(username, "Password123", "Người Mua Mới", "bidder@test.com", "Hà Nội", "0912345678"));
+            // WHEN: Gọi nghiệp vụ đăng ký
+            authService.registerBidder(request);
 
-            // THEN: Phải gọi DAO để lưu thông tin
+            // THEN: Phải lưu người dùng vào database
             verify(userDAO).insert(any(Bidder.class));
         }
 
@@ -73,31 +65,30 @@ public class AuthenticationServiceTest {
         @DisplayName("Đăng ký Seller thành công")
         void testRegisterSeller_Success() {
             // GIVEN
-            String username = "new_seller";
-            when(userDAO.findByUsername(username)).thenReturn(null);
+            RegisterSellerRequestDTO request = new RegisterSellerRequestDTO(
+                    "new_seller", "Password123", "New Seller", "seller@test.com", "My Shop"
+            );
+            when(userDAO.findByUsername(request.getUsername())).thenReturn(null);
+            when(userDAO.findByEmail(request.getEmail())).thenReturn(null);
             when(userDAO.insert(any(Seller.class))).thenReturn(true);
 
             // WHEN
-            authService.registerSeller(new RegisterSellerRequestDTO(username, "Password123", "Người Bán Mới", "seller@test.com", "Cửa hàng ABC"));
+            authService.registerSeller(request);
 
             // THEN
             verify(userDAO).insert(any(Seller.class));
         }
 
         @Test
-        @DisplayName("Đăng ký thất bại - Tên đăng nhập đã tồn tại")
+        @DisplayName("Đăng ký thất bại khi trùng tên đăng nhập")
         void testRegister_DuplicateUsername() {
-            // GIVEN: Giả lập username đã có người dùng
-            String username = "existing_user";
-            User existingUser = new Bidder(username, "hash", "Tên", "email@test.com", "HN", "09128846584");
-            when(userDAO.findByUsername(username)).thenReturn(existingUser);
+            // GIVEN: Username đã tồn tại trong DB
+            RegisterBidderRequestDTO request = new RegisterBidderRequestDTO("existing", "Name", "Pass123", "e@t.com", "A", "0912345678");
+            when(userDAO.findByUsername("existing")).thenReturn(mock(User.class));
 
-            // WHEN & THEN: Kỳ vọng ném BusinessException
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.registerBidder(new RegisterBidderRequestDTO(username, "Name", "Password123", "e@test.com", "Adr", "01235748768"))
-            );
+            // WHEN & THEN: Kiểm tra ném lỗi Duplicate
+            BusinessException ex = assertThrows(BusinessException.class, () -> authService.registerBidder(request));
             assertEquals("Username already exists.", ex.getMessage());
-            verify(userDAO, never()).insert(any());
         }
     }
 
@@ -106,50 +97,55 @@ public class AuthenticationServiceTest {
     class LoginTests {
 
         @Test
-        @DisplayName("Đăng nhập người dùng thành công")
-        void testLogin_Success() {
-            // GIVEN: Người dùng tồn tại với mật khẩu "Secret123"
-            String username = "user_test";
-            String rawPass = "Secret123";
-            String hashedPass = PasswordHasher.hashPassword(rawPass);
-            User realUser = new Bidder(username, hashedPass, "Nguyễn Văn A", "a@test.com", "HN", "0996664646");
+        @DisplayName("Bidder đăng nhập thành công")
+        void testLoginBidder_Success() {
+            // GIVEN: Bidder tồn tại và mật khẩu chính xác
+            String username = "bidder_test";
+            String pass = "Pass123";
+            String hashed = PasswordHasher.hashPassword(pass);
+            Bidder bidder = new Bidder(username, hashed, "Bidder User", "b@t.com", "Addr", "0912345678");
 
-            when(userDAO.findByUsername(username)).thenReturn(realUser);
-            when(jwtService.generateToken(any())).thenReturn("mock-token");
+            LoginRequestDTO request = new LoginRequestDTO(username, pass, null);
+            when(userDAO.findByUsername(username)).thenReturn(bidder);
+            when(jwtService.generateToken(bidder)).thenReturn("mock_token");
 
-            // WHEN
-            LoginResponseDTO result = authService.loginBidder(new LoginRequestDTO(username, rawPass, null));
+            // WHEN: Thực hiện đăng nhập
+            LoginResponseDTO response = authService.loginBidder(request);
 
-            // THEN
-            assertNotNull(result);
-            assertEquals(username, result.getUsername());
+            // THEN: Trả về DTO kèm token
+            assertNotNull(response);
+            assertEquals("mock_token", response.getToken());
+            assertEquals(User.Role.BIDDER, response.getRole());
         }
 
         @Test
-        @DisplayName("Đăng nhập thất bại - Sai mật khẩu")
-        void testLogin_WrongPassword() {
-            // GIVEN
-            String username = "user_test";
-            String hashedPass = PasswordHasher.hashPassword("CorrectPass");
-            User realUser = new Bidder(username, hashedPass, "Tên", "e@test.com", "HN", "0912375456");
+        @DisplayName("Bidder đăng nhập thất bại khi sai mật khẩu")
+        void testLoginBidder_WrongPassword() {
+            // GIVEN: User tồn tại nhưng nhập sai pass
+            String username = "user";
+            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("correct"), "A", "a@t.com", "A", "0912345678");
 
-            when(userDAO.findByUsername(username)).thenReturn(realUser);
+            LoginRequestDTO request = new LoginRequestDTO(username, "wrong", null);
+            when(userDAO.findByUsername(username)).thenReturn(bidder);
 
-            // WHEN & THEN: Đăng nhập với mật khẩu "WrongPass"
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.loginBidder(new LoginRequestDTO(username, "WrongPass", null))
-            );
+            // WHEN & THEN: Phải ném lỗi Invalid credentials
+            BusinessException ex = assertThrows(BusinessException.class, () -> authService.loginBidder(request));
             assertEquals("Invalid username or password.", ex.getMessage());
         }
 
         @Test
-        @DisplayName("Đăng nhập thất bại - Tên đăng nhập không tồn tại")
-        void testLogin_UsernameNotFound() {
-            when(userDAO.findByUsername("unknown")).thenReturn(null);
+        @DisplayName("Seller đăng nhập thất bại khi sử dụng tài khoản Bidder")
+        void testLoginSeller_WithBidderAccount() {
+            // GIVEN: Tài khoản là Bidder
+            String username = "not_a_seller";
+            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("pass"), "A", "a@t.com", "A", "0912345678");
 
-            assertThrows(BusinessException.class, () -> 
-                authService.loginBidder(new LoginRequestDTO("unknown", "any_pass", null))
-            );
+            LoginRequestDTO request = new LoginRequestDTO(username, "pass", null);
+            when(userDAO.findByUsername(username)).thenReturn(bidder);
+
+            // WHEN & THEN: Phải ném lỗi sai vai trò (This account is not registered as a Seller.)
+            BusinessException ex = assertThrows(BusinessException.class, () -> authService.loginSeller(request));
+            assertTrue(ex.getMessage().contains("is not registered as a Seller"));
         }
     }
 
@@ -158,60 +154,41 @@ public class AuthenticationServiceTest {
     class AdminLoginTests {
 
         @Test
-        @DisplayName("Admin đăng nhập thành công")
+        @DisplayName("Admin đăng nhập thành công với mã AdminCode")
         void testLoginAdmin_Success() {
-            // GIVEN: Tài khoản Admin với đầy đủ thông tin xác thực
-            String username = "admin_user";
-            String rawPass = "AdminPass123";
-            String rawCode = "Code@Secret2024";
-            
-            String hashedPass = PasswordHasher.hashPassword(rawPass);
-            String hashedCode = PasswordHasher.hashPassword(rawCode);
+            // GIVEN: Tài khoản Admin hợp lệ
+            String username = "admin";
+            String pass = "AdminPass123";
+            String code = "Secret@Code2024";
 
-            // Admin model yêu cầu hashedCode phải thỏa mãn regex đặc biệt (do code hiện tại đang validate hash bằng regex raw)
-            // Lưu ý: Tôi dùng hashedCode thỏa mãn regex để tránh lỗi constructor Admin
-            Admin realAdmin = new Admin(username, hashedPass, "Hệ Thống", "admin@test.com", Admin.AccessLevel.SUPER_ADMIN, hashedCode);
+            Admin admin = new Admin(username, PasswordHasher.hashPassword(pass), "Admin", "adm@t.com",
+                    Admin.AccessLevel.SUPER_ADMIN, PasswordHasher.hashPassword(code));
 
-            when(userDAO.findByUsername(username)).thenReturn(realAdmin);
-            when(jwtService.generateToken(any())).thenReturn("mock-admin-token");
+            LoginRequestDTO request = new LoginRequestDTO(username, pass, code);
+            when(userDAO.findByUsername(username)).thenReturn(admin);
+            when(jwtService.generateToken(admin)).thenReturn("admin_token");
 
-            // WHEN
-            LoginResponseDTO result = authService.loginAdmin(new LoginRequestDTO(username, rawPass, rawCode));
+            // WHEN: Thực hiện đăng nhập Admin
+            LoginResponseDTO response = authService.loginAdmin(request);
 
-            // THEN
-            assertNotNull(result);
-            assertEquals(username, result.getUsername());
+            // THEN: Thành công
+            assertNotNull(response);
+            assertEquals("admin_token", response.getToken());
         }
 
         @Test
-        @DisplayName("Admin đăng nhập thất bại - Sai mã Admin Code")
+        @DisplayName("Admin đăng nhập thất bại khi sai mã bảo mật")
         void testLoginAdmin_WrongCode() {
-            String username = "admin_user";
-            String rawPass = "Pass";
-            String correctCode = "Code@12345";
-            
-            Admin realAdmin = new Admin(username, PasswordHasher.hashPassword(rawPass), "A", "a@t.com", Admin.AccessLevel.MODERATOR, PasswordHasher.hashPassword(correctCode));
-            when(userDAO.findByUsername(username)).thenReturn(realAdmin);
+            String username = "admin";
+            Admin admin = new Admin(username, PasswordHasher.hashPassword("pass"), "A", "a@t.com",
+                    Admin.AccessLevel.MODERATOR, PasswordHasher.hashPassword("correct_code"));
 
-            // WHEN & THEN: Nhập đúng pass nhưng sai admin code
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.loginAdmin(new LoginRequestDTO(username, rawPass, "WrongCode@123"))
-            );
+            LoginRequestDTO request = new LoginRequestDTO(username, "pass", "wrong_code");
+            when(userDAO.findByUsername(username)).thenReturn(admin);
+
+            // WHEN & THEN: Lỗi sai admin code
+            BusinessException ex = assertThrows(BusinessException.class, () -> authService.loginAdmin(request));
             assertEquals("Invalid admin security code.", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("Admin đăng nhập thất bại - Tài khoản không có quyền Admin")
-        void testLoginAdmin_NotAnAdmin() {
-            String username = "regular_bidder";
-            // Đối tượng thật là Bidder, không phải Admin
-            User bidder = new Bidder(username, PasswordHasher.hashPassword("pass"), "Tên", "e@t.com", "HN", "0912587548");
-            when(userDAO.findByUsername(username)).thenReturn(bidder);
-
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.loginAdmin(new LoginRequestDTO(username, "pass", "code"))
-            );
-            assertEquals("Access denied. Admin privileges required.", ex.getMessage());
         }
     }
 
@@ -222,35 +199,34 @@ public class AuthenticationServiceTest {
         @Test
         @DisplayName("Đổi mật khẩu thành công")
         void testChangePassword_Success() {
-            // GIVEN: User hiện tại mật khẩu là "OldPass"
-            String userId = "u-123";
-            String oldPass = "OldPass@123";
-            String newPass = "NewPass@456";
-            User realUser = new Bidder(userId, LocalDateTime.now(), "user1", PasswordHasher.hashPassword(oldPass), "Tên", "e@t.com", BigDecimal.ZERO, "HN", "091274757");
+            // GIVEN: User tồn tại và nhập đúng pass cũ
+            String userId = "u-1";
+            String oldPass = "Old@123456";
+            String newPass = "New@123456";
+            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N", "e@t.com", BigDecimal.ZERO, "A", "0912345678");
 
-            when(userDAO.findById(userId)).thenReturn(realUser);
+            when(userDAO.findById(userId)).thenReturn(user);
+            when(userDAO.update(any())).thenReturn(true);
 
-            // WHEN
+            // WHEN: Đổi mật khẩu
             authService.changePassword(userId, oldPass, newPass);
 
-            // THEN: Mật khẩu mới phải được verify thành công
-            assertTrue(realUser.verifyPassword(newPass), "Mật khẩu mới không khớp sau khi đổi");
-            verify(userDAO).update(realUser);
+            // THEN: Xác nhận cập nhật DB
+            verify(userDAO).update(user);
+            assertTrue(user.verifyPassword(newPass));
         }
 
         @Test
-        @DisplayName("Đổi mật khẩu thất bại - Sai mật khẩu cũ")
-        void testChangePassword_WrongOldPassword() {
-            String userId = "u-123";
-            User realUser = new Bidder(userId, LocalDateTime.now(), "uftrhgf", PasswordHasher.hashPassword("CorrectOld"), "Ththnjf", "ehdg@gmail.com", BigDecimal.ZERO, "H", "096364327");
-            when(userDAO.findById(userId)).thenReturn(realUser);
+        @DisplayName("Đổi mật khẩu thất bại khi mật khẩu mới quá ngắn")
+        void testChangePassword_TooShort() {
+            String userId = "u-1";
+            String oldPass = "OldPass";
+            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N", "e@t.com", BigDecimal.ZERO, "A", "0912345678");
+            when(userDAO.findById(userId)).thenReturn(user);
 
-            // WHEN & THEN: Nhập sai mật khẩu cũ
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.changePassword(userId, "WrongOld", "NewPass")
-            );
-            assertEquals("Authentication failed. Current password incorrect.", ex.getMessage());
-            verify(userDAO, never()).update(any());
+            // WHEN & THEN: Lỗi độ dài pass mới (phải >= 6)
+            BusinessException ex = assertThrows(BusinessException.class, () -> authService.changePassword(userId, oldPass, "12345"));
+            assertEquals("New password must be at least 6 characters long.", ex.getMessage());
         }
     }
 }

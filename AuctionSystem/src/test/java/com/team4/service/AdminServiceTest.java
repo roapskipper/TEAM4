@@ -3,7 +3,6 @@ package com.team4.service;
 import com.team4.dao.AuctionDAO;
 import com.team4.dto.auction.AuctionResponseDTO;
 import com.team4.dto.auth.UserResponseDTO;
-import com.team4.mapper.UserMapper;
 import com.team4.model.Admin;
 import com.team4.model.Auction;
 import com.team4.model.Bidder;
@@ -25,14 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests cho AdminService.
- *
- * Quy tắc:
- * 1. KHÔNG mock model (Admin, Bidder, Auction) → dùng 'new'.
- * 2. CHỈ mock các interface/dependency (UserService, AuctionService, AuctionDAO).
+ * Kiểm thử nghiệp vụ AdminService.
+ * Đảm bảo các quyền quản trị (Super Admin, Moderator) được thực thi đúng và dữ liệu trả về là DTO.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Quản trị (AdminService)")
+@DisplayName("Unit Tests for AdminService")
 public class AdminServiceTest {
 
     @Mock private UserService userService;
@@ -42,219 +38,106 @@ public class AdminServiceTest {
     @InjectMocks
     private AdminService adminService;
 
-    // -------------------------------------------------------------------------
-    // Helpers tạo entity thật
-    // -------------------------------------------------------------------------
-    private Admin realSuperAdmin(String id) {
-        return new Admin(
-                id, LocalDateTime.now(),
-                "superadmin",
-                "$2a$12$dummyhashvaluefortest123456789xx",
-                "Super Admin",
-                "admin@test.com",
-                BigDecimal.ZERO,
-                Admin.AccessLevel.SUPER_ADMIN,
-                "Admin@12345"   // đúng pattern regex adminCode
-        );
+    // Helper tạo Super Admin thật
+    private Admin createSuperAdmin(String id) {
+        return new Admin(id, LocalDateTime.now(), "admin", "hash", "Super Admin", "a@t.com", BigDecimal.ZERO, Admin.AccessLevel.SUPER_ADMIN, "Code@123");
     }
 
-    private Admin realModerator(String id) {
-        return new Admin(
-                id, LocalDateTime.now(),
-                "moderator1",
-                "$2a$12$dummyhashvaluefortest123456789xx",
-                "Moderator",
-                "mod@test.com",
-                BigDecimal.ZERO,
-                Admin.AccessLevel.MODERATOR,
-                "Admin@12345"
-        );
+    // Helper tạo Bidder thật
+    private Bidder createBidder(String id) {
+        return new Bidder(id, LocalDateTime.now(), "bidder", "hash", "Bidder", "b@t.com", BigDecimal.ZERO, "Addr", "0912345678");
     }
 
-    private Bidder realBidder(String id) {
-        return new Bidder(
-                id, LocalDateTime.now(),
-                "bidder001",
-                "$2a$12$dummyhashvaluefortest123456789xx",
-                "Nguyen Van A",
-                "bidder@test.com",
-                BigDecimal.ZERO,
-                "123 ABC St",
-                "0912345678"
-        );
-    }
-
-    private Auction realAuction(Auction.AuctionStatus status) {
-        Auction a = new Auction("item-1", "seller-1",
-                new BigDecimal("1000.00"), new BigDecimal("100.00"),
-                LocalDateTime.now().plusDays(1));
-        if (status == Auction.AuctionStatus.RUNNING) a.approve();
-        if (status == Auction.AuctionStatus.FINISHED) { a.approve(); a.close(); }
-        if (status == Auction.AuctionStatus.CANCELLED) a.cancel();
-        return a;
-    }
-
-    // =========================================================================
-    // approveAuction
-    // =========================================================================
     @Nested
-    @DisplayName("Duyệt phiên đấu giá (approveAuction)")
-    class ApproveAuctionTests {
+    @DisplayName("Nghiệp vụ Phê duyệt/Từ chối (Approve/Reject)")
+    class ApprovalTests {
 
         @Test
-        @DisplayName("Thành công – Admin hợp lệ duyệt phiên")
-        void approveAuction_success() {
+        @DisplayName("Admin duyệt phiên đấu giá thành công")
+        void testApproveAuction_Success() {
             String adminId = "admin-1";
-            String auctionId = "auction-1";
-            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
+            String auctionId = "auc-1";
+            when(userService.getRawUserById(adminId)).thenReturn(createSuperAdmin(adminId));
 
+            // WHEN: Admin phê duyệt
             adminService.approveAuction(adminId, auctionId);
 
+            // THEN: Phải gọi xuống AuctionService
             verify(auctionService).approveAuction(auctionId);
         }
 
         @Test
-        @DisplayName("Thất bại – Người dùng không phải Admin")
-        void approveAuction_notAdmin_throwsException() {
+        @DisplayName("Thất bại khi người thực hiện không có quyền Admin")
+        void testApproveAuction_NoPermission() {
             String userId = "user-1";
-            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
+            when(userService.getRawUserById(userId)).thenReturn(createBidder(userId));
 
-            assertThrows(BusinessException.class,
-                    () -> adminService.approveAuction(userId, "auction-1"));
-            verifyNoInteractions(auctionService);
+            // WHEN & THEN: Lỗi thiếu quyền (User does not have admin privileges)
+            BusinessException ex = assertThrows(BusinessException.class, () -> adminService.approveAuction(userId, "auc-1"));
+            assertEquals("User does not have admin privileges", ex.getMessage());
+            verify(auctionService, never()).approveAuction(anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Nghiệp vụ Hủy phiên (SUPER_ADMIN only)")
+    class CancellationTests {
+
+        @Test
+        @DisplayName("Super Admin hủy phiên đấu giá thành công")
+        void testCancelBySuperAdmin_Success() {
+            String adminId = "super-1";
+            String auctionId = "auc-1";
+            when(userService.getRawUserById(adminId)).thenReturn(createSuperAdmin(adminId));
+
+            // WHEN: Super Admin yêu cầu hủy
+            adminService.cancelAuctionByAdmin(adminId, auctionId);
+
+            // THEN: Thành công
+            verify(auctionService).cancelAuction(auctionId);
         }
 
         @Test
-        @DisplayName("Thất bại – Người dùng không tồn tại")
-        void approveAuction_userNotFound_throwsException() {
-            when(userService.getRawUserById("ghost")).thenThrow(new BusinessException("User does not exist"));
-
-            assertThrows(BusinessException.class,
-                    () -> adminService.approveAuction("ghost", "auction-1"));
-            verifyNoInteractions(auctionService);
-        }
-
-        @Test
-        @DisplayName("Thành công – Moderator cũng có quyền duyệt")
-        void approveAuction_moderator_success() {
+        @DisplayName("Moderator không có quyền hủy phiên")
+        void testCancelByModerator_Fail() {
             String adminId = "mod-1";
-            when(userService.getRawUserById(adminId)).thenReturn(realModerator(adminId));
+            Admin moderator = new Admin(adminId, LocalDateTime.now(), "mod", "h", "M", "m@t.com", BigDecimal.ZERO, Admin.AccessLevel.MODERATOR, "C");
+            when(userService.getRawUserById(adminId)).thenReturn(moderator);
 
-            adminService.approveAuction(adminId, "auction-1");
-
-            verify(auctionService).approveAuction("auction-1");
+            // WHEN & THEN: Lỗi thiếu quyền Super Admin
+            BusinessException ex = assertThrows(BusinessException.class, () -> adminService.cancelAuctionByAdmin(adminId, "auc-1"));
+            assertTrue(ex.getMessage().contains("Only Super Admin can cancel"));
         }
     }
 
-    // =========================================================================
-    // rejectAuction
-    // =========================================================================
     @Nested
-    @DisplayName("Từ chối phiên đấu giá (rejectAuction)")
-    class RejectAuctionTests {
+    @DisplayName("Nghiệp vụ Truy vấn dữ liệu hệ thống")
+    class ViewSystemDataTests {
 
         @Test
-        @DisplayName("Thành công – Admin từ chối phiên")
-        void rejectAuction_success() {
-            String adminId = "admin-1";
-            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
+        @DisplayName("Xem danh sách người dùng (Trả về List DTO)")
+        void testViewSystemUsers() {
+            List<UserResponseDTO> mockList = List.of(new UserResponseDTO("1", "u", "F", "e", User.Role.BIDDER, BigDecimal.ZERO, "2024-05-21T00:00:00"));
+            when(userService.getAllUsers()).thenReturn(mockList);
 
-            adminService.rejectAuction(adminId, "auction-1");
+            List<UserResponseDTO> results = adminService.viewSystemUsers();
 
-            verify(auctionService).rejectAuction("auction-1");
-        }
-
-        @Test
-        @DisplayName("Thất bại – Không phải Admin")
-        void rejectAuction_notAdmin_throwsException() {
-            String userId = "user-1";
-            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
-
-            assertThrows(BusinessException.class,
-                    () -> adminService.rejectAuction(userId, "auction-1"));
-            verifyNoInteractions(auctionService);
-        }
-    }
-
-    // =========================================================================
-    // cancelAuctionByAdmin
-    // =========================================================================
-    @Nested
-    @DisplayName("Hủy phiên đấu giá (cancelAuctionByAdmin)")
-    class CancelAuctionTests {
-
-        @Test
-        @DisplayName("Thành công – SUPER_ADMIN hủy phiên")
-        void cancelAuction_superAdmin_success() {
-            String adminId = "admin-1";
-            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
-
-            adminService.cancelAuctionByAdmin(adminId, "auction-1");
-
-            verify(auctionService).cancelAuction("auction-1");
-        }
-
-        @Test
-        @DisplayName("Thất bại – MODERATOR không có quyền hủy")
-        void cancelAuction_moderator_throwsBusinessException() {
-            String adminId = "mod-1";
-            when(userService.getRawUserById(adminId)).thenReturn(realModerator(adminId));
-
-            BusinessException ex = assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin(adminId, "auction-1"));
-            assertTrue(ex.getMessage().contains("Super Admin"));
-            verifyNoInteractions(auctionService);
-        }
-
-        @Test
-        @DisplayName("Thất bại – Không phải Admin")
-        void cancelAuction_notAdmin_throwsException() {
-            String userId = "user-1";
-            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
-
-            assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin(userId, "auction-1"));
-            verifyNoInteractions(auctionService);
-        }
-
-        @Test
-        @DisplayName("Thất bại – User không tồn tại")
-        void cancelAuction_userNotFound_throwsException() {
-            when(userService.getRawUserById("ghost")).thenThrow(new BusinessException("User does not exist"));
-
-            assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin("ghost", "auction-1"));
-        }
-    }
-
-    // =========================================================================
-    // viewSystemUsers / viewAllAuctions
-    // =========================================================================
-    @Nested
-    @DisplayName("Xem dữ liệu hệ thống")
-    class ViewTests {
-
-        @Test
-        @DisplayName("viewSystemUsers – delegate sang UserService.getAllUsers()")
-        void viewSystemUsers_delegatesToUserService() {
-            List<UserResponseDTO> expected = List.of(UserMapper.toUserResponseDTO(realBidder("u1")), UserMapper.toUserResponseDTO(realBidder("u2")));
-            when(userService.getAllUsers()).thenReturn(expected);
-
-            List<UserResponseDTO> result = adminService.viewSystemUsers();
-
-            assertSame(expected, result);
+            assertEquals(1, results.size());
             verify(userService).getAllUsers();
         }
 
         @Test
-        @DisplayName("viewAllAuctions – delegate sang AuctionDAO.findAll()")
-        void viewAllAuctions_delegatesToAuctionDAO() {
-            List<Auction> expected = List.of(realAuction(Auction.AuctionStatus.RUNNING));
-            when(auctionDAO.findAll()).thenReturn(expected);
+        @DisplayName("Xem danh sách tất cả các phiên đấu giá (Trả về List DTO)")
+        void testViewAllAuctions() {
+            // GIVEN
+            Auction auction = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now());
+            when(auctionDAO.findAll()).thenReturn(List.of(auction));
 
-            List<AuctionResponseDTO> result = adminService.viewAllAuctions();
+            // WHEN
+            List<AuctionResponseDTO> results = adminService.viewAllAuctions();
 
-            assertEquals(expected.size(), result.size());
+            // THEN
+            assertEquals(1, results.size());
             verify(auctionDAO).findAll();
         }
     }

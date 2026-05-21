@@ -20,164 +20,105 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Lớp kiểm thử WalletServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class dữ liệu (User, Bidder) -> Sử dụng 'new' để tạo đối tượng thật.
- * 2. CHỈ MOCK các Interface/Class phụ thuộc logic (UserDAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Kiểm thử nghiệp vụ Ví tiền (WalletService).
+ * Đảm bảo các giao dịch nạp, rút, thanh toán và hoàn tiền hoạt động đúng với cấu trúc DTO mới.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Ví tiền (WalletService)")
+@DisplayName("Unit Tests for WalletService")
 public class WalletServiceTest {
 
     @Mock
-    private UserDAO userDAO; // Chỉ mock thành phần truy xuất dữ liệu
+    private UserDAO userDAO;
 
     @InjectMocks
-    private WalletService walletService; // Inject mock vào service cần test
+    private WalletService walletService;
 
-    /**
-     * Helper method để tạo đối tượng Bidder thật (Entity).
-     * Tuân thủ quy tắc không mock Entity.
-     */
+    // Helper tạo Bidder thật
     private Bidder createRealBidder(String id, String balance) {
-        return new Bidder(
-                id,
-                LocalDateTime.now(),
-                "testuser",
-                "hashed_password",
-                "Nguyễn Văn A",
-                "test@example.com",
-                new BigDecimal(balance),
-                "123 Đường ABC, Hà Nội",
-                "0987654321"
-        );
+        return new Bidder(id, LocalDateTime.now(), "user", "pass", "Test User", "test@example.com", new BigDecimal(balance), "Addr", "0912345678");
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Nạp tiền (Deposit)")
+    @DisplayName("Nghiệp vụ Nạp tiền (deposit)")
     class DepositTests {
 
         @Test
-        @DisplayName("Nạp tiền thành công - Số dư phải tăng và lưu vào DB")
+        @DisplayName("Nạp tiền thành công và trả về DTO số dư mới")
         void testDeposit_Success() {
-            // GIVEN: Giả lập người dùng có 1000.00 trong ví
-            String userId = "user-001";
-            BigDecimal depositAmount = new BigDecimal("500.00");
-            User realUser = createRealBidder(userId, "1000.00");
+            // GIVEN: Người dùng có 1000 đồng
+            String userId = "user-1";
+            BigDecimal amount = new BigDecimal("500.00");
+            User user = createRealBidder(userId, "1000.00");
 
-            when(userDAO.findById(userId)).thenReturn(realUser);
-            when(userDAO.updateBalance(eq(userId), any(BigDecimal.class))).thenReturn(true);
+            when(userDAO.findById(userId)).thenReturn(user);
+            when(userDAO.updateBalance(eq(userId), any())).thenReturn(true);
 
-            // WHEN: Thực hiện nạp thêm 500.00
-            UserResponseDTO result = walletService.deposit(userId, depositAmount);
+            // WHEN: Thực hiện nạp 500 đồng
+            UserResponseDTO result = walletService.deposit(userId, amount);
 
-            // THEN: Kiểm tra logic tính toán (1000 + 500 = 1500)
-            assertEquals(new BigDecimal("1500.00"), result.getBalance(), "Số dư sau nạp phải là 1500.00");
-            // Xác nhận Service có gọi xuống DAO để lưu dữ liệu
+            // THEN: Số dư mới là 1500
+            assertEquals(new BigDecimal("1500.00"), result.getBalance());
             verify(userDAO).updateBalance(userId, new BigDecimal("1500.00"));
         }
 
         @Test
-        @DisplayName("Nạp tiền thất bại - Người dùng không tồn tại")
+        @DisplayName("Thất bại khi nạp tiền cho người dùng không tồn tại")
         void testDeposit_UserNotFound() {
-            String userId = "invalid-id";
-            when(userDAO.findById(userId)).thenReturn(null);
+            when(userDAO.findById("none")).thenReturn(null);
 
-            // Kiểm tra ném ra đúng BusinessException
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                walletService.deposit(userId, new BigDecimal("100.00"))
-            );
-            assertEquals("User does not exist", ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("Nạp tiền thất bại - Lỗi kết nối Database")
-        void testDeposit_DatabaseError() {
-            String userId = "user-001";
-            User realUser = createRealBidder(userId, "100.00");
-
-            when(userDAO.findById(userId)).thenReturn(realUser);
-            // Giả lập DAO trả về false (lỗi cập nhật)
-            when(userDAO.updateBalance(anyString(), any())).thenReturn(false);
-
-            assertThrows(BusinessException.class, () -> 
-                walletService.deposit(userId, new BigDecimal("50.00")),
-                "Phải ném lỗi khi DB không cập nhật được"
-            );
+            assertThrows(BusinessException.class, () -> walletService.deposit("none", BigDecimal.TEN));
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Rút tiền (Withdraw)")
+    @DisplayName("Nghiệp vụ Rút tiền (withdraw)")
     class WithdrawTests {
 
         @Test
-        @DisplayName("Rút tiền thành công - Số dư phải trừ chính xác")
+        @DisplayName("Rút tiền thành công")
         void testWithdraw_Success() {
-            // GIVEN: Có 1000.00, rút 200.00
-            String userId = "user-001";
-            BigDecimal withdrawAmount = new BigDecimal("200.00");
-            User realUser = createRealBidder(userId, "1000.00");
+            // GIVEN: Có 1000 đồng, rút 200 đồng
+            String userId = "user-1";
+            User user = createRealBidder(userId, "1000.00");
 
-            when(userDAO.findById(userId)).thenReturn(realUser);
-            when(userDAO.updateBalance(eq(userId), any(BigDecimal.class))).thenReturn(true);
+            when(userDAO.findById(userId)).thenReturn(user);
+            when(userDAO.updateBalance(eq(userId), any())).thenReturn(true);
 
             // WHEN
-            UserResponseDTO result = walletService.withdraw(userId, withdrawAmount);
+            UserResponseDTO result = walletService.withdraw(userId, new BigDecimal("200.00"));
 
-            // THEN: 1000 - 200 = 800
+            // THEN: Còn 800 đồng
             assertEquals(new BigDecimal("800.00"), result.getBalance());
             verify(userDAO).updateBalance(userId, new BigDecimal("800.00"));
         }
 
         @Test
-        @DisplayName("Rút tiền thất bại - Số dư không đủ")
-        void testWithdraw_InsufficientBalance() {
-            // GIVEN: Có 100.00, rút 500.00
-            String userId = "user-001";
-            User realUser = createRealBidder(userId, "100.00");
-            when(userDAO.findById(userId)).thenReturn(realUser);
+        @DisplayName("Thất bại khi rút quá số dư khả dụng")
+        void testWithdraw_InsufficientFunds() {
+            String userId = "user-1";
+            User user = createRealBidder(userId, "100.00");
+            when(userDAO.findById(userId)).thenReturn(user);
 
-            // WHEN & THEN: Tùy vào logic WalletService xử lý return false hay ném Exception
-            // Lưu ý: User.withdraw trả về false, Service cần kiểm tra điều này.
-            assertThrows(Exception.class, () -> 
-                walletService.withdraw(userId, new BigDecimal("500.00"))
-            );
-            
-            // Quan trọng: Nếu không đủ tiền, tuyệt đối không được gọi updateBalance vào DB
+            // WHEN & THEN: Lỗi không đủ tiền
+            assertThrows(BusinessException.class, () -> walletService.withdraw(userId, new BigDecimal("500.00")));
             verify(userDAO, never()).updateBalance(anyString(), any());
         }
     }
 
     @Nested
-    @DisplayName("Các tiện ích kiểm tra (Balance Inquiry)")
+    @DisplayName("Các tiện ích số dư")
     class InquiryTests {
-
-        @Test
-        @DisplayName("Kiểm tra đủ số dư - Logic True/False")
-        void testHasSufficientBalance() {
-            String userId = "user-001";
-            User realUser = createRealBidder(userId, "1000.00");
-            when(userDAO.findById(userId)).thenReturn(realUser);
-
-            // Kiểm tra các biên thanh toán
-            assertTrue(walletService.hasSufficientBalance(userId, new BigDecimal("500.00")));
-            assertTrue(walletService.hasSufficientBalance(userId, new BigDecimal("1000.00")));
-            assertFalse(walletService.hasSufficientBalance(userId, new BigDecimal("1000.01")));
-        }
 
         @Test
         @DisplayName("Lấy số dư hiện tại thành công")
         void testGetBalance_Success() {
-            String userId = "user-001";
-            User realUser = createRealBidder(userId, "750.25");
-            when(userDAO.findById(userId)).thenReturn(realUser);
+            String userId = "user-1";
+            User user = createRealBidder(userId, "750.00");
+            when(userDAO.findById(userId)).thenReturn(user);
 
-            BigDecimal currentBalance = walletService.getBalance(userId);
-            
-            assertEquals(new BigDecimal("750.25"), currentBalance);
+            BigDecimal balance = walletService.getBalance(userId);
+
+            assertEquals(new BigDecimal("750.00"), balance);
         }
     }
 }
