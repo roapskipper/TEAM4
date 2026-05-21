@@ -3,6 +3,8 @@ package com.team4.service;
 import com.team4.dao.AuctionDAO;
 import com.team4.dao.AutoBiddingDAO;
 import com.team4.dao.UserDAO;
+import com.team4.dto.bidding.AutoBidRequestDTO;
+import com.team4.dto.bidding.AutoBidResponseDTO;
 import com.team4.model.Auction;
 import com.team4.model.AutoBidding;
 import com.team4.model.Bidder;
@@ -80,7 +82,7 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.insert(any(AutoBidding.class))).thenReturn(true);
 
             // WHEN
-            AutoBidding result = autoBiddingService.enableAutoBidding(bidderId, auctionId, maxLimit);
+            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, maxLimit));
 
             // THEN
             assertNotNull(result);
@@ -109,7 +111,7 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.update(oldConfig)).thenReturn(true);
 
             // WHEN
-            AutoBidding result = autoBiddingService.enableAutoBidding(bidderId, auctionId, newLimit);
+            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, newLimit));
 
             // THEN
             assertTrue(result.isActive());
@@ -127,7 +129,7 @@ public class AutoBiddingServiceTest {
             when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
 
             assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("100.00"))
+                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("100.00")))
             );
         }
 
@@ -141,7 +143,7 @@ public class AutoBiddingServiceTest {
 
             // Cố tình đặt giới hạn 150 (nhỏ hơn 200)
             assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("150.00"))
+                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("150.00")))
             );
         }
 
@@ -154,7 +156,7 @@ public class AutoBiddingServiceTest {
             when(auctionDAO.findById("auc-1")).thenReturn(auction);
 
             assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding(sellerId, "auc-1", new BigDecimal("500.00"))
+                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO("auc-1", sellerId, new BigDecimal("500.00")))
             );
         }
 
@@ -169,7 +171,7 @@ public class AutoBiddingServiceTest {
 
             // 4,500,000 (4.5M) exceeds allowedMax (4M)
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("4500000.00"))
+                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("4500000.00")))
             );
             assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
         }
@@ -185,7 +187,7 @@ public class AutoBiddingServiceTest {
 
             // 500,000,001 exceeds ABSOLUTE_MAX (500M)
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                autoBiddingService.enableAutoBidding("b1", auctionId, new BigDecimal("500000001.00"))
+                autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, "b1", new BigDecimal("500000001.00")))
             );
             assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
         }
@@ -206,7 +208,7 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(null);
             when(autoBiddingDAO.insert(any(AutoBidding.class))).thenReturn(true);
 
-            AutoBidding result = autoBiddingService.enableAutoBidding(bidderId, auctionId, maxLimit);
+            AutoBidResponseDTO result = autoBiddingService.enableAutoBidding(new AutoBidRequestDTO(auctionId, bidderId, maxLimit));
             assertNotNull(result);
             assertEquals(maxLimit, result.getMaxLimit());
         }
@@ -229,10 +231,10 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.update(config)).thenReturn(true);
 
             // WHEN
-            boolean updated = autoBiddingService.updateAutoBidding(configId, newLimit);
+            AutoBidResponseDTO updated = autoBiddingService.updateAutoBidding(configId, newLimit);
 
             // THEN
-            assertTrue(updated);
+            assertNotNull(updated);
             assertEquals(newLimit, config.getMaxLimit());
             verify(autoBiddingDAO).update(config);
         }
@@ -278,8 +280,8 @@ public class AutoBiddingServiceTest {
             when(auctionDAO.findById("auc-1")).thenReturn(auction);
             when(autoBiddingDAO.update(config)).thenReturn(true);
 
-            boolean updated = autoBiddingService.updateAutoBidding(configId, newLimit);
-            assertTrue(updated);
+            AutoBidResponseDTO updated = autoBiddingService.updateAutoBidding(configId, newLimit);
+            assertNotNull(updated);
             assertEquals(newLimit, config.getMaxLimit());
         }
     }
@@ -299,10 +301,9 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.updateActive(configId, false)).thenReturn(true);
 
             // WHEN
-            boolean disabled = autoBiddingService.disableAutoBidding(configId, "auc-1");
+            autoBiddingService.disableAutoBidding(configId);
 
             // THEN
-            assertTrue(disabled);
             assertFalse(config.isActive());
             verify(autoBiddingDAO).updateActive(configId, false);
         }
@@ -317,7 +318,7 @@ public class AutoBiddingServiceTest {
             when(autoBiddingDAO.findById(configId)).thenReturn(config);
 
             assertThrows(BusinessException.class, () -> 
-                autoBiddingService.disableAutoBidding(configId, "auc-1")
+                autoBiddingService.disableAutoBidding(configId)
             );
         }
     }
@@ -335,7 +336,7 @@ public class AutoBiddingServiceTest {
 
             when(autoBiddingDAO.findByAuctionAndBidder(auctionId, bidderId)).thenReturn(config);
 
-            AutoBidding result = autoBiddingService.findConfig(bidderId, auctionId);
+            AutoBidResponseDTO result = autoBiddingService.findConfig(bidderId, auctionId);
 
             assertNotNull(result);
             assertEquals(bidderId, result.getBidderId());
@@ -362,7 +363,7 @@ public class AutoBiddingServiceTest {
 
             when(autoBiddingDAO.findActiveByAuctionId(auctionId)).thenReturn(activeList);
 
-            List<AutoBidding> results = autoBiddingService.findActiveConfigs(auctionId);
+            List<AutoBidResponseDTO> results = autoBiddingService.findActiveConfigs(auctionId);
 
             assertEquals(2, results.size());
             verify(autoBiddingDAO).findActiveByAuctionId(auctionId);

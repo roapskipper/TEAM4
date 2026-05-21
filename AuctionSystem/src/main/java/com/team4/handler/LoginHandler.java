@@ -1,13 +1,15 @@
 package com.team4.handler;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.impl.UserDAOImpl;
-import com.team4.model.Admin;
-import com.team4.model.User;
+import com.team4.dto.auth.LoginRequestDTO;
+import com.team4.dto.auth.LoginResponseDTO;
 import com.team4.server.ApiServer;
+import com.team4.server.Server;
 import com.team4.service.AuthenticationService;
+import com.team4.service.JwtService;
 import com.team4.util.BusinessException;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class LoginHandler implements HttpHandler {
-    private AuthenticationService authService = new AuthenticationService(new UserDAOImpl());
+    private AuthenticationService authService = new AuthenticationService(new UserDAOImpl(), new JwtService());
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -32,8 +34,9 @@ public class LoginHandler implements HttpHandler {
         String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         is.close();
 
-        String username = ApiServer.parseParam(body, "username");
-        String password = ApiServer.parseParam(body, "password");
+        // Parse form-urlencoded (giữ tương thích với client và tests hiện tại)
+        String username  = ApiServer.parseParam(body, "username");
+        String password  = ApiServer.parseParam(body, "password");
         String adminCode = ApiServer.parseParam(body, "adminCode");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
@@ -43,21 +46,32 @@ public class LoginHandler implements HttpHandler {
         }
 
         try {
-            User user;
+            // Tạo LoginRequestDTO từ params đã parse (no-arg + set fields via Gson)
+            com.google.gson.JsonObject p = new com.google.gson.JsonObject();
+            p.addProperty("username", username);
+            p.addProperty("password", password);
+            if (adminCode != null) p.addProperty("adminCode", adminCode);
+            LoginRequestDTO req = Server.getGson().fromJson(p, LoginRequestDTO.class);
+
+            LoginResponseDTO loginResponse;
             if (adminCode != null && !adminCode.isEmpty()) {
-                user = authService.loginAdmin(username, password, adminCode);
+                // Đăng nhập Admin
+                loginResponse = authService.loginAdmin(req);
             } else {
-                user = authService.login(username, password);
+                // Thử Bidder trước; nếu tài khoản không phải Bidder, thử Seller
+                try {
+                    loginResponse = authService.loginBidder(req);
+                } catch (BusinessException e) {
+                    // "not registered as a Bidder" → thử login Seller
+                    if (e.getMessage() != null && e.getMessage().contains("Bidder")) {
+                        loginResponse = authService.loginSeller(req);
+                    } else {
+                        throw e; // sai mật khẩu / tài khoản không tồn tại
+                    }
+                }
             }
-            JsonObject data = new JsonObject();
-            data.addProperty("userId", user.getId());
-            data.addProperty("username", user.getUsername());
-            data.addProperty("role", user.getRole().name());
-            data.addProperty("fullName", user.getFullName());
-            data.addProperty("balance", user.getBalance());
-            if (user instanceof Admin admin) {
-                data.addProperty("accessLevel", admin.getAccessLevel().getLevel());
-            }
+
+            JsonElement data = Server.getGson().toJsonTree(loginResponse);
             ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 401, ApiServer.buildResponse("ERROR", e.getMessage(), null));

@@ -1,6 +1,7 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
@@ -69,7 +70,7 @@ public class UserServiceTest {
             when(userDAO.findById(userId)).thenReturn(realUser);
 
             // WHEN: Thực hiện tìm kiếm theo ID
-            User result = userService.getUserById(userId);
+            UserResponseDTO result = userService.getUserById(userId);
 
             // THEN: 
             // 1. Phải trả về đúng người dùng đó
@@ -86,11 +87,11 @@ public class UserServiceTest {
             // GIVEN: Không tìm thấy người dùng
             when(userDAO.findById("none")).thenReturn(null);
 
-            // WHEN
-            User result = userService.getUserById("none");
-
-            // THEN: Trả về null (theo logic hiện tại của service)
-            assertNull(result);
+            // WHEN & THEN
+            BusinessException ex = assertThrows(BusinessException.class, () -> 
+                userService.getUserById("none")
+            );
+            assertEquals("User does not exist", ex.getMessage());
         }
     }
 
@@ -108,7 +109,7 @@ public class UserServiceTest {
             when(userDAO.update(any(User.class))).thenReturn(true);
 
             // WHEN: Cập nhật tên mới, email có chữ hoa "NEW@gmail.com" và sđt mới
-            User updated = userService.updateProfile(userId, "Tên Mới", "NEW@gmail.com", "0987654321");
+            UserResponseDTO updated = userService.updateProfile(userId, "Tên Mới", "NEW@gmail.com", "0987654321");
 
             // THEN: 
             // 1. Dữ liệu trong đối tượng phải thay đổi (email tự động về chữ thường do logic Model)
@@ -166,7 +167,7 @@ public class UserServiceTest {
             when(userDAO.findAll()).thenReturn(list);
 
             // WHEN
-            List<User> results = userService.getAllUsers();
+            List<UserResponseDTO> results = userService.getAllUsers();
 
             // THEN
             assertEquals(2, results.size());
@@ -180,7 +181,7 @@ public class UserServiceTest {
             when(userDAO.findAll()).thenReturn(Collections.emptyList());
 
             // WHEN
-            List<User> results = userService.getAllUsers();
+            List<UserResponseDTO> results = userService.getAllUsers();
 
             // THEN: Phải trả về list rỗng, không được null
             assertNotNull(results);

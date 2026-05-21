@@ -4,9 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.team4.model.Admin;
-import com.team4.model.Bidder;
-import com.team4.model.Seller;
+import com.team4.mapper.UserMapper;
+import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.server.Server;
@@ -48,53 +47,43 @@ public class AdminUsersHandler implements HttpHandler {
     }
 
     private void handleListUsers(HttpExchange exchange, String query) throws IOException {
-        List<User> users = Server.getUserService().getAllUsers();
+        // getAllUsers() giờ trả về List<UserResponseDTO>
+        List<UserResponseDTO> users = Server.getUserService().getAllUsers();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
 
         JsonArray data = new JsonArray();
-        for (User user : users) {
-            if (!matchesQuery(user, normalizedQuery)) {
+        for (UserResponseDTO dto : users) {
+            if (!matchesQuery(dto, normalizedQuery)) {
                 continue;
             }
-            data.add(toJson(user));
+            data.add(toJson(dto));
         }
 
         ApiServer.sendResponse(exchange, 200,
                 ApiServer.buildResponse("SUCCESS", "Users loaded successfully", data));
     }
 
-    private boolean matchesQuery(User user, String query) {
+    private boolean matchesQuery(UserResponseDTO dto, String query) {
         if (query == null || query.isBlank()) {
             return true;
         }
-        return contains(user.getUsername(), query)
-                || contains(user.getFullName(), query)
-                || contains(user.getEmail(), query)
-                || user.getRole().name().toLowerCase(Locale.ROOT).contains(query);
+        return contains(dto.getUsername(), query)
+                || contains(dto.getFullName(), query)
+                || contains(dto.getEmail(), query)
+                || dto.getRole().name().toLowerCase(Locale.ROOT).contains(query);
     }
 
     private boolean contains(String value, String query) {
         return value != null && value.toLowerCase(Locale.ROOT).contains(query);
     }
 
-    private JsonObject toJson(User user) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("id", user.getId());
-        obj.addProperty("username", user.getUsername());
-        obj.addProperty("fullName", user.getFullName());
-        obj.addProperty("email", user.getEmail());
-        obj.addProperty("role", user.getRole().name());
-        obj.addProperty("createdAt", user.getCreatedAt().toString());
+    /**
+     * Serialize UserResponseDTO sang JsonObject, thêm status (hardcode ACTIVE).
+     * Lưu ý: không có accessLevel vì UserResponseDTO không chứa trường này.
+     */
+    private JsonObject toJson(UserResponseDTO dto) {
+        JsonObject obj = Server.getGson().toJsonTree(dto).getAsJsonObject();
         obj.addProperty("status", "ACTIVE");
-
-        if (user instanceof Admin admin) {
-            obj.addProperty("accessLevel", admin.getAccessLevel().name());
-        } else if (user instanceof Seller seller) {
-            obj.addProperty("storeName", seller.getStoreName());
-            obj.addProperty("rating", seller.getRating());
-        } else if (user instanceof Bidder bidder) {
-            obj.addProperty("phoneNumber", bidder.getPhoneNumber());
-        }
         return obj;
     }
 

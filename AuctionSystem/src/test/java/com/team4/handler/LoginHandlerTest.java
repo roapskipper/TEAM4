@@ -2,7 +2,8 @@ package com.team4.handler;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import com.team4.model.Bidder;
+import com.team4.dto.auth.LoginRequestDTO;
+import com.team4.dto.auth.LoginResponseDTO;
 import com.team4.model.User;
 import com.team4.service.AuthenticationService;
 import com.team4.util.BusinessException;
@@ -21,9 +22,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -77,20 +78,11 @@ public class LoginHandlerTest {
     }
 
     // -------------------------------------------------------------------------
-    // Helper: tạo Bidder thật (không mock entity)
+    // Helper: tạo LoginResponseDTO giả cho một Bidder
     // -------------------------------------------------------------------------
-    private Bidder realBidder(String id) {
-        return new Bidder(
-                id,
-                LocalDateTime.now(),
-                "testuser",
-                "$2a$12$hashedpasswordhashvaluexxxxxxxxx",   // giả lập hash
-                "Nguyen Van A",
-                "test@example.com",
-                BigDecimal.ZERO,
-                "123 ABC St",
-                "0987654321"
-        );
+    private LoginResponseDTO fakeBidderResponse(String userId) {
+        return new LoginResponseDTO(userId, "testuser", User.Role.BIDDER,
+                "Nguyen Van A", null, BigDecimal.ZERO, null);
     }
 
     // =========================================================================
@@ -178,8 +170,9 @@ public class LoginHandlerTest {
         @Test
         @DisplayName("Đăng nhập thành công → 200 + userId / role trong JSON")
         void login_success_returns200() throws IOException {
-            Bidder bidder = realBidder("bidder-001");
-            when(authService.login("testuser", "correct_pass")).thenReturn(bidder);
+            // AuthService mới dùng loginBidder(LoginRequestDTO) → LoginResponseDTO
+            when(authService.loginBidder(any(LoginRequestDTO.class)))
+                    .thenReturn(fakeBidderResponse("bidder-001"));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf("username=testuser&password=correct_pass"));
@@ -196,7 +189,7 @@ public class LoginHandlerTest {
         @Test
         @DisplayName("Sai mật khẩu → 401 + ERROR")
         void login_wrongPassword_returns401() throws IOException {
-            when(authService.login("testuser", "wrong_pass"))
+            when(authService.loginBidder(any(LoginRequestDTO.class)))
                     .thenThrow(new BusinessException("Mật khẩu không đúng"));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
@@ -213,7 +206,7 @@ public class LoginHandlerTest {
         @Test
         @DisplayName("Username không tồn tại → 401 + ERROR")
         void login_userNotFound_returns401() throws IOException {
-            when(authService.login("unknown", "any_pass"))
+            when(authService.loginBidder(any(LoginRequestDTO.class)))
                     .thenThrow(new BusinessException("Tên đăng nhập không tồn tại"));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
@@ -235,7 +228,7 @@ public class LoginHandlerTest {
         @Test
         @DisplayName("adminCode sai → 401 + ERROR")
         void login_wrongAdminCode_returns401() throws IOException {
-            when(authService.loginAdmin("admin", "pass123", "wrong_code"))
+            when(authService.loginAdmin(any(LoginRequestDTO.class)))
                     .thenThrow(new BusinessException("Mã admin không đúng"));
 
             when(exchange.getRequestMethod()).thenReturn("POST");

@@ -2,6 +2,7 @@ package com.team4.handler;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import com.team4.dto.auth.RegisterBidderRequestDTO;
 import com.team4.service.AuthenticationService;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -140,9 +141,8 @@ public class RegisterBidderHandlerTest {
         @Test
         @DisplayName("Đủ thông tin → 200 + SUCCESS")
         void register_success_returns200() throws IOException {
-            // authService.registerBidder không ném exception → thành công
-            doNothing().when(authService).registerBidder(
-                    anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+            // authService.registerBidder(RegisterBidderRequestDTO) → không ném exception → thành công
+            doNothing().when(authService).registerBidder(any(RegisterBidderRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
@@ -160,8 +160,7 @@ public class RegisterBidderHandlerTest {
         @Test
         @DisplayName("Thiếu optional fields → vẫn đăng ký được với chuỗi rỗng")
         void register_withoutOptionalFields_stillCallsService() throws IOException {
-            doNothing().when(authService).registerBidder(
-                    eq("alice"), anyString(), eq(""), eq(""), eq(""), eq(""));
+            doNothing().when(authService).registerBidder(any(RegisterBidderRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf("username=alice&password=Pass1234"));
@@ -183,8 +182,7 @@ public class RegisterBidderHandlerTest {
         @DisplayName("Username đã tồn tại → 400 + ERROR")
         void register_duplicateUsername_returns400() throws IOException {
             doThrow(new BusinessException("Tên đăng nhập đã tồn tại"))
-                    .when(authService).registerBidder(
-                            anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+                    .when(authService).registerBidder(any(RegisterBidderRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
@@ -203,8 +201,7 @@ public class RegisterBidderHandlerTest {
         @DisplayName("Lỗi nội bộ bất ngờ → 500 + ERROR")
         void register_unexpectedException_returns500() throws IOException {
             doThrow(new RuntimeException("DB connection failed"))
-                    .when(authService).registerBidder(
-                            anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+                    .when(authService).registerBidder(any(RegisterBidderRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(

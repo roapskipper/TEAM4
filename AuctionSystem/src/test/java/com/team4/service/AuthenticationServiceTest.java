@@ -1,6 +1,10 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.dto.auth.LoginRequestDTO;
+import com.team4.dto.auth.LoginResponseDTO;
+import com.team4.dto.auth.RegisterBidderRequestDTO;
+import com.team4.dto.auth.RegisterSellerRequestDTO;
 import com.team4.model.Admin;
 import com.team4.model.Bidder;
 import com.team4.model.Seller;
@@ -37,6 +41,9 @@ public class AuthenticationServiceTest {
     @Mock
     private UserDAO userDAO;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private AuthenticationService authService;
 
@@ -56,7 +63,7 @@ public class AuthenticationServiceTest {
             when(userDAO.insert(any(Bidder.class))).thenReturn(true);
 
             // WHEN: Thực hiện đăng ký
-            authService.registerBidder(username, "Password123", "Người Mua Mới", "bidder@test.com", "Hà Nội", "0912345678");
+            authService.registerBidder(new RegisterBidderRequestDTO(username, "Password123", "Người Mua Mới", "bidder@test.com", "Hà Nội", "0912345678"));
 
             // THEN: Phải gọi DAO để lưu thông tin
             verify(userDAO).insert(any(Bidder.class));
@@ -71,7 +78,7 @@ public class AuthenticationServiceTest {
             when(userDAO.insert(any(Seller.class))).thenReturn(true);
 
             // WHEN
-            authService.registerSeller(username, "Password123", "Người Bán Mới", "seller@test.com", "Cửa hàng ABC");
+            authService.registerSeller(new RegisterSellerRequestDTO(username, "Password123", "Người Bán Mới", "seller@test.com", "Cửa hàng ABC"));
 
             // THEN
             verify(userDAO).insert(any(Seller.class));
@@ -87,9 +94,9 @@ public class AuthenticationServiceTest {
 
             // WHEN & THEN: Kỳ vọng ném BusinessException
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.registerBidder(username, "Pass", "Name", "e@test.com", "Adr", "01235748768")
+                authService.registerBidder(new RegisterBidderRequestDTO(username, "Name", "Password123", "e@test.com", "Adr", "01235748768"))
             );
-            assertEquals("Username already exists", ex.getMessage());
+            assertEquals("Username already exists.", ex.getMessage());
             verify(userDAO, never()).insert(any());
         }
     }
@@ -108,9 +115,10 @@ public class AuthenticationServiceTest {
             User realUser = new Bidder(username, hashedPass, "Nguyễn Văn A", "a@test.com", "HN", "0996664646");
 
             when(userDAO.findByUsername(username)).thenReturn(realUser);
+            when(jwtService.generateToken(any())).thenReturn("mock-token");
 
             // WHEN
-            User result = authService.login(username, rawPass);
+            LoginResponseDTO result = authService.loginBidder(new LoginRequestDTO(username, rawPass, null));
 
             // THEN
             assertNotNull(result);
@@ -129,9 +137,9 @@ public class AuthenticationServiceTest {
 
             // WHEN & THEN: Đăng nhập với mật khẩu "WrongPass"
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.login(username, "WrongPass")
+                authService.loginBidder(new LoginRequestDTO(username, "WrongPass", null))
             );
-            assertEquals("Incorrect password", ex.getMessage());
+            assertEquals("Invalid username or password.", ex.getMessage());
         }
 
         @Test
@@ -140,7 +148,7 @@ public class AuthenticationServiceTest {
             when(userDAO.findByUsername("unknown")).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> 
-                authService.login("unknown", "any_pass")
+                authService.loginBidder(new LoginRequestDTO("unknown", "any_pass", null))
             );
         }
     }
@@ -165,13 +173,14 @@ public class AuthenticationServiceTest {
             Admin realAdmin = new Admin(username, hashedPass, "Hệ Thống", "admin@test.com", Admin.AccessLevel.SUPER_ADMIN, hashedCode);
 
             when(userDAO.findByUsername(username)).thenReturn(realAdmin);
+            when(jwtService.generateToken(any())).thenReturn("mock-admin-token");
 
             // WHEN
-            Admin result = authService.loginAdmin(username, rawPass, rawCode);
+            LoginResponseDTO result = authService.loginAdmin(new LoginRequestDTO(username, rawPass, rawCode));
 
             // THEN
             assertNotNull(result);
-            assertEquals(Admin.AccessLevel.SUPER_ADMIN, result.getAccessLevel());
+            assertEquals(username, result.getUsername());
         }
 
         @Test
@@ -186,9 +195,9 @@ public class AuthenticationServiceTest {
 
             // WHEN & THEN: Nhập đúng pass nhưng sai admin code
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.loginAdmin(username, rawPass, "WrongCode@123")
+                authService.loginAdmin(new LoginRequestDTO(username, rawPass, "WrongCode@123"))
             );
-            assertEquals("Incorrect admin code", ex.getMessage());
+            assertEquals("Invalid admin security code.", ex.getMessage());
         }
 
         @Test
@@ -196,13 +205,13 @@ public class AuthenticationServiceTest {
         void testLoginAdmin_NotAnAdmin() {
             String username = "regular_bidder";
             // Đối tượng thật là Bidder, không phải Admin
-            User bidder = new Bidder(username, "hash", "Tên", "e@t.com", "HN", "0912587548");
+            User bidder = new Bidder(username, PasswordHasher.hashPassword("pass"), "Tên", "e@t.com", "HN", "0912587548");
             when(userDAO.findByUsername(username)).thenReturn(bidder);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                authService.loginAdmin(username, "pass", "code")
+                authService.loginAdmin(new LoginRequestDTO(username, "pass", "code"))
             );
-            assertEquals("Account does not have admin privileges", ex.getMessage());
+            assertEquals("Access denied. Admin privileges required.", ex.getMessage());
         }
     }
 
@@ -240,7 +249,7 @@ public class AuthenticationServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 authService.changePassword(userId, "WrongOld", "NewPass")
             );
-            assertEquals("Old password is incorrect", ex.getMessage());
+            assertEquals("Authentication failed. Current password incorrect.", ex.getMessage());
             verify(userDAO, never()).update(any());
         }
     }

@@ -1,6 +1,9 @@
 package com.team4.service;
 
 import com.team4.dao.AuctionDAO;
+import com.team4.dto.auction.AuctionResponseDTO;
+import com.team4.dto.auth.UserResponseDTO;
+import com.team4.mapper.UserMapper;
 import com.team4.model.Admin;
 import com.team4.model.Auction;
 import com.team4.model.Bidder;
@@ -103,7 +106,7 @@ public class AdminServiceTest {
         void approveAuction_success() {
             String adminId = "admin-1";
             String auctionId = "auction-1";
-            when(userService.getUserById(adminId)).thenReturn(realSuperAdmin(adminId));
+            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
 
             adminService.approveAuction(adminId, auctionId);
 
@@ -114,9 +117,9 @@ public class AdminServiceTest {
         @DisplayName("Thất bại – Người dùng không phải Admin")
         void approveAuction_notAdmin_throwsException() {
             String userId = "user-1";
-            when(userService.getUserById(userId)).thenReturn(realBidder(userId));
+            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
 
-            assertThrows(IllegalArgumentException.class,
+            assertThrows(BusinessException.class,
                     () -> adminService.approveAuction(userId, "auction-1"));
             verifyNoInteractions(auctionService);
         }
@@ -124,9 +127,9 @@ public class AdminServiceTest {
         @Test
         @DisplayName("Thất bại – Người dùng không tồn tại")
         void approveAuction_userNotFound_throwsException() {
-            when(userService.getUserById("ghost")).thenReturn(null);
+            when(userService.getRawUserById("ghost")).thenThrow(new BusinessException("User does not exist"));
 
-            assertThrows(IllegalArgumentException.class,
+            assertThrows(BusinessException.class,
                     () -> adminService.approveAuction("ghost", "auction-1"));
             verifyNoInteractions(auctionService);
         }
@@ -135,7 +138,7 @@ public class AdminServiceTest {
         @DisplayName("Thành công – Moderator cũng có quyền duyệt")
         void approveAuction_moderator_success() {
             String adminId = "mod-1";
-            when(userService.getUserById(adminId)).thenReturn(realModerator(adminId));
+            when(userService.getRawUserById(adminId)).thenReturn(realModerator(adminId));
 
             adminService.approveAuction(adminId, "auction-1");
 
@@ -154,7 +157,7 @@ public class AdminServiceTest {
         @DisplayName("Thành công – Admin từ chối phiên")
         void rejectAuction_success() {
             String adminId = "admin-1";
-            when(userService.getUserById(adminId)).thenReturn(realSuperAdmin(adminId));
+            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
 
             adminService.rejectAuction(adminId, "auction-1");
 
@@ -165,9 +168,9 @@ public class AdminServiceTest {
         @DisplayName("Thất bại – Không phải Admin")
         void rejectAuction_notAdmin_throwsException() {
             String userId = "user-1";
-            when(userService.getUserById(userId)).thenReturn(realBidder(userId));
+            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
 
-            assertThrows(IllegalArgumentException.class,
+            assertThrows(BusinessException.class,
                     () -> adminService.rejectAuction(userId, "auction-1"));
             verifyNoInteractions(auctionService);
         }
@@ -184,9 +187,9 @@ public class AdminServiceTest {
         @DisplayName("Thành công – SUPER_ADMIN hủy phiên")
         void cancelAuction_superAdmin_success() {
             String adminId = "admin-1";
-            when(userService.getUserById(adminId)).thenReturn(realSuperAdmin(adminId));
+            when(userService.getRawUserById(adminId)).thenReturn(realSuperAdmin(adminId));
 
-            adminService.cancelAuctionByAdmin("auction-1", adminId);
+            adminService.cancelAuctionByAdmin(adminId, "auction-1");
 
             verify(auctionService).cancelAuction("auction-1");
         }
@@ -195,10 +198,10 @@ public class AdminServiceTest {
         @DisplayName("Thất bại – MODERATOR không có quyền hủy")
         void cancelAuction_moderator_throwsBusinessException() {
             String adminId = "mod-1";
-            when(userService.getUserById(adminId)).thenReturn(realModerator(adminId));
+            when(userService.getRawUserById(adminId)).thenReturn(realModerator(adminId));
 
             BusinessException ex = assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin("auction-1", adminId));
+                    () -> adminService.cancelAuctionByAdmin(adminId, "auction-1"));
             assertTrue(ex.getMessage().contains("Super Admin"));
             verifyNoInteractions(auctionService);
         }
@@ -207,20 +210,20 @@ public class AdminServiceTest {
         @DisplayName("Thất bại – Không phải Admin")
         void cancelAuction_notAdmin_throwsException() {
             String userId = "user-1";
-            when(userService.getUserById(userId)).thenReturn(realBidder(userId));
+            when(userService.getRawUserById(userId)).thenReturn(realBidder(userId));
 
             assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin("auction-1", userId));
+                    () -> adminService.cancelAuctionByAdmin(userId, "auction-1"));
             verifyNoInteractions(auctionService);
         }
 
         @Test
         @DisplayName("Thất bại – User không tồn tại")
         void cancelAuction_userNotFound_throwsException() {
-            when(userService.getUserById("ghost")).thenReturn(null);
+            when(userService.getRawUserById("ghost")).thenThrow(new BusinessException("User does not exist"));
 
             assertThrows(BusinessException.class,
-                    () -> adminService.cancelAuctionByAdmin("auction-1", "ghost"));
+                    () -> adminService.cancelAuctionByAdmin("ghost", "auction-1"));
         }
     }
 
@@ -234,10 +237,10 @@ public class AdminServiceTest {
         @Test
         @DisplayName("viewSystemUsers – delegate sang UserService.getAllUsers()")
         void viewSystemUsers_delegatesToUserService() {
-            List<User> expected = List.of(realBidder("u1"), realBidder("u2"));
+            List<UserResponseDTO> expected = List.of(UserMapper.toUserResponseDTO(realBidder("u1")), UserMapper.toUserResponseDTO(realBidder("u2")));
             when(userService.getAllUsers()).thenReturn(expected);
 
-            List<User> result = adminService.viewSystemUsers();
+            List<UserResponseDTO> result = adminService.viewSystemUsers();
 
             assertSame(expected, result);
             verify(userService).getAllUsers();
@@ -249,9 +252,9 @@ public class AdminServiceTest {
             List<Auction> expected = List.of(realAuction(Auction.AuctionStatus.RUNNING));
             when(auctionDAO.findAll()).thenReturn(expected);
 
-            List<Auction> result = adminService.viewAllAuctions();
+            List<AuctionResponseDTO> result = adminService.viewAllAuctions();
 
-            assertSame(expected, result);
+            assertEquals(expected.size(), result.size());
             verify(auctionDAO).findAll();
         }
     }

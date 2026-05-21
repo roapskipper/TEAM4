@@ -25,7 +25,7 @@ public class JwtService {
     private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
     // Chuỗi bí mật (Cần đưa vào biến môi trường trong thực tế)
-    private static final String SECRET_STRING = "DayLaChuoiBiMatSieuDaiVaKhongTheDoanNoiCuaToi_HayThayTheBangChuoiCuaBan_1234567890";
+    private static final String SECRET_STRING = "VGhpcyBJcyBBIFZlcnkgU2VjdXJlIEFuZCBMb25nIFNlY3JldCBLZXkgRm9yIEpXVCBBdXRoZW50aWNhdGlvbg==";
 
     private static final Key SECRET_KEY = new SecretKeySpec(Base64.getDecoder().decode(SECRET_STRING),
             SignatureAlgorithm.HS256.getJcaName());

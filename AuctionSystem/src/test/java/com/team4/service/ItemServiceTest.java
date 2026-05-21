@@ -2,6 +2,8 @@ package com.team4.service;
 
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
+import com.team4.dto.item.CreateArtRequestDTO;
+import com.team4.dto.item.ItemResponseDTO;
 import com.team4.factory.ItemRequest;
 import com.team4.model.*;
 import com.team4.util.BusinessException;
@@ -100,7 +102,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 itemService.createItem(sellerId, req)
             );
-            assertEquals("Seller does not exist.", ex.getMessage());
+            assertEquals("Người bán không tồn tại.", ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
@@ -170,7 +172,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 itemService.updateItem(hackerId, itemId, "Hack", "Hack")
             );
-            assertEquals("Ownership error.", ex.getMessage());
+            assertEquals("Lỗi về quyền sở hữu.", ex.getMessage());
             verify(itemDAO, never()).update(any());
         }
     }

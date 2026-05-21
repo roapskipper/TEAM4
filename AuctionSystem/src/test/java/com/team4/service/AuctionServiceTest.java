@@ -2,6 +2,9 @@ package com.team4.service;
 
 import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
+import com.team4.dao.UserDAO;
+import com.team4.dto.auction.AuctionResponseDTO;
+import com.team4.dto.auction.CreateAuctionRequestDTO;
 import com.team4.model.Art;
 import com.team4.model.Auction;
 import com.team4.model.Item;
@@ -39,6 +42,9 @@ public class AuctionServiceTest {
 
     @Mock
     private ItemDAO itemDAO;
+
+    @Mock
+    private UserDAO userDAO;
 
     @InjectMocks
     private AuctionService auctionService;
@@ -97,9 +103,9 @@ public class AuctionServiceTest {
             when(itemDAO.findById(itemId)).thenReturn(realItem);
             when(auctionDAO.insert(any(Auction.class))).thenReturn(true);
 
-            // WHEN: Thực hiện tạo phiên
-            Auction result = auctionService.createAuction(
-                itemId, sellerId, new BigDecimal("1000.00"), new BigDecimal("50.00"), LocalDateTime.now().plusDays(7)
+            // WHEN
+            AuctionResponseDTO result = auctionService.createAuction(
+                    new CreateAuctionRequestDTO(itemId, sellerId, new BigDecimal("1000.00"), new BigDecimal("50.00"), LocalDateTime.now().plusDays(7))
             );
 
             // THEN: 
@@ -118,7 +124,7 @@ public class AuctionServiceTest {
             when(itemDAO.findById(itemId)).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(itemId, "seller-1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now())
+                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, "seller-1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now()))
             );
         }
 
@@ -132,7 +138,7 @@ public class AuctionServiceTest {
             when(itemDAO.findById(itemId)).thenReturn(realItem);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now())
+                auctionService.createAuction(new CreateAuctionRequestDTO(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now()))
             );
             assertEquals("Seller does not own this item", ex.getMessage());
         }
@@ -149,9 +155,10 @@ public class AuctionServiceTest {
             String auctionId = "auc-123";
             Auction pendingAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.PENDING);
             when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
+            when(auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.RUNNING)).thenReturn(true);
 
             // WHEN
-            Auction result = auctionService.approveAuction(auctionId);
+            AuctionResponseDTO result = auctionService.approveAuction(auctionId);
 
             // THEN
             assertEquals(Auction.AuctionStatus.RUNNING, result.getStatus());
@@ -175,6 +182,7 @@ public class AuctionServiceTest {
             String auctionId = "auc-123";
             Auction pendingAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.PENDING);
             when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
+            when(auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED)).thenReturn(true);
 
             // WHEN
             auctionService.rejectAuction(auctionId);
@@ -223,9 +231,10 @@ public class AuctionServiceTest {
             String auctionId = "auc-123";
             Auction finishedAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.FINISHED);
             when(auctionDAO.findById(auctionId)).thenReturn(finishedAuction);
+            when(auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.PAID)).thenReturn(true);
 
             // WHEN
-            Auction result = auctionService.markPaid(auctionId);
+            AuctionResponseDTO result = auctionService.markPaid(auctionId);
 
             // THEN
             assertEquals(Auction.AuctionStatus.PAID, result.getStatus());
@@ -253,6 +262,7 @@ public class AuctionServiceTest {
             String auctionId = "auc-123";
             Auction runningAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.RUNNING);
             when(auctionDAO.findById(auctionId)).thenReturn(runningAuction);
+            when(auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.CANCELLED)).thenReturn(true);
 
             // WHEN
             auctionService.cancelAuction(auctionId);

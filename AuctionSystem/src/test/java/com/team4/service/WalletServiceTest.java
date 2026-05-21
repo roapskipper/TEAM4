@@ -1,6 +1,7 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
@@ -70,7 +71,7 @@ public class WalletServiceTest {
             when(userDAO.updateBalance(eq(userId), any(BigDecimal.class))).thenReturn(true);
 
             // WHEN: Thực hiện nạp thêm 500.00
-            User result = walletService.deposit(userId, depositAmount);
+            UserResponseDTO result = walletService.deposit(userId, depositAmount);
 
             // THEN: Kiểm tra logic tính toán (1000 + 500 = 1500)
             assertEquals(new BigDecimal("1500.00"), result.getBalance(), "Số dư sau nạp phải là 1500.00");
@@ -124,7 +125,7 @@ public class WalletServiceTest {
             when(userDAO.updateBalance(eq(userId), any(BigDecimal.class))).thenReturn(true);
 
             // WHEN
-            User result = walletService.withdraw(userId, withdrawAmount);
+            UserResponseDTO result = walletService.withdraw(userId, withdrawAmount);
 
             // THEN: 1000 - 200 = 800
             assertEquals(new BigDecimal("800.00"), result.getBalance());
@@ -174,7 +175,7 @@ public class WalletServiceTest {
             User realUser = createRealBidder(userId, "750.25");
             when(userDAO.findById(userId)).thenReturn(realUser);
 
-            BigDecimal currentBalance = walletService.balance(userId);
+            BigDecimal currentBalance = walletService.getBalance(userId);
             
             assertEquals(new BigDecimal("750.25"), currentBalance);
         }

@@ -5,6 +5,7 @@ import com.team4.dao.AutoBiddingDAO;
 import com.team4.dao.BidTransactionDAO;
 import com.team4.dao.UserDAO;
 import com.team4.db.DatabaseManager;
+import com.team4.dto.bidding.BidRequestDTO;
 import com.team4.model.*;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.AfterEach;
@@ -93,7 +94,7 @@ public class BiddingServiceTest {
             when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid(auctionId, "bidder-1", new BigDecimal("500.00"))
+                biddingService.placeBid(new BidRequestDTO(auctionId, "bidder-1", new BigDecimal("500.00")))
             );
             
             // Đảm bảo có rollback khi lỗi
@@ -111,9 +112,9 @@ public class BiddingServiceTest {
             when(userDAO.findById(mockConn, sellerId)).thenReturn(bidder);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid("auc-1", sellerId, new BigDecimal("500.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", sellerId, new BigDecimal("500.00")))
             );
-            assertTrue(ex.getMessage().contains("Seller cannot bid"));
+            assertTrue(ex.getMessage().contains("Sellers are not allowed"));
         }
 
         @Test
@@ -127,7 +128,7 @@ public class BiddingServiceTest {
             when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
 
             assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("105.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", "bidder-new", new BigDecimal("105.00")))
             );
         }
 
@@ -141,7 +142,7 @@ public class BiddingServiceTest {
             when(userDAO.findById(mockConn, "bidder-1")).thenReturn(bidder);
 
             assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid("auc-1", "bidder-1", new BigDecimal("200.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", "bidder-1", new BigDecimal("200.00")))
             );
         }
 
@@ -156,9 +157,9 @@ public class BiddingServiceTest {
             when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("4000001.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", "bidder-new", new BigDecimal("4000001.00")))
             );
-            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+            assertTrue(ex.getMessage().contains("maximum allowed limit"));
         }
 
         @Test
@@ -172,9 +173,9 @@ public class BiddingServiceTest {
             when(userDAO.findById(mockConn, "bidder-new")).thenReturn(bidder);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("500000001.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", "bidder-new", new BigDecimal("500000001.00")))
             );
-            assertTrue(ex.getMessage().contains("policy limit") || ex.getMessage().contains("allowed maximum"));
+            assertTrue(ex.getMessage().contains("maximum allowed limit"));
         }
 
         @Test
@@ -196,7 +197,7 @@ public class BiddingServiceTest {
             when(bidTransactionDAO.insert(eq(mockConn), any())).thenReturn(true);
 
             assertDoesNotThrow(() -> 
-                biddingService.placeBid("auc-1", "bidder-new", new BigDecimal("4000000.00"))
+                biddingService.placeBid(new BidRequestDTO("auc-1", "bidder-new", new BigDecimal("4000000.00")))
             );
         }
     }
@@ -229,7 +230,7 @@ public class BiddingServiceTest {
             when(bidTransactionDAO.insert(eq(mockConn), any())).thenReturn(true);
 
             // WHEN
-            biddingService.placeBid(auctionId, bidderId, maxAmount);
+            biddingService.placeBid(new BidRequestDTO(auctionId, bidderId, maxAmount));
 
             // THEN: Người đầu tiên bid thì giá hiển thị vẫn là giá hiện tại (khởi điểm)
             verify(auctionDAO).updateCurrentBid(mockConn, auctionId, new BigDecimal("100.00"), bidderId);
@@ -264,7 +265,7 @@ public class BiddingServiceTest {
 
             // WHEN
             when(autoBiddingDAO.updateActive(any(), anyString(), anyBoolean())).thenReturn(true);
-            biddingService.placeBid(auctionId, bidderB, new BigDecimal("500.00"));
+            biddingService.placeBid(new BidRequestDTO(auctionId, bidderB, new BigDecimal("500.00")));
 
             // THEN: B dẫn đầu, giá hiển thị = maxLimit của A (200) + increment (10) = 210
             verify(auctionDAO).updateCurrentBid(mockConn, auctionId, new BigDecimal("210.00"), bidderB);
@@ -296,12 +297,11 @@ public class BiddingServiceTest {
             when(autoBiddingDAO.updateActive(eq(mockConn), eq("conf-A"), eq(false))).thenReturn(true);
 
             // WHEN
-            biddingService.placeBid(auctionId, bidderB, new BigDecimal("400000.00"));
+            biddingService.placeBid(new BidRequestDTO(auctionId, bidderB, new BigDecimal("400000.00")));
 
             // THEN: Winner is B, displayPrice = A's max (200k) + increment (10k) = 210k
             // A (max 200k) is exhausted because 200k <= 210k. A must be deactivated.
             verify(autoBiddingDAO).updateActive(mockConn, "conf-A", false);
-            assertFalse(configA.isActive());
         }
     }
 
@@ -332,7 +332,7 @@ public class BiddingServiceTest {
             when(bidTransactionDAO.insert(any(), any())).thenReturn(true);
 
             // WHEN
-            biddingService.placeBid(auctionId, "bidder-1", new BigDecimal("500.00"));
+            biddingService.placeBid(new BidRequestDTO(auctionId, "bidder-1", new BigDecimal("500.00")));
 
             // THEN: Phải có gọi updateEndTime lên DB
             verify(auctionDAO).updateEndTime(eq(mockConn), eq(auctionId), any());
@@ -350,7 +350,7 @@ public class BiddingServiceTest {
             when(auctionDAO.findById(mockConn, auctionId)).thenThrow(new RuntimeException("Lỗi kết nối bất ngờ"));
 
             assertThrows(BusinessException.class, () -> 
-                biddingService.placeBid(auctionId, "bidder-1", new BigDecimal("500.00"))
+                biddingService.placeBid(new BidRequestDTO(auctionId, "bidder-1", new BigDecimal("500.00")))
             );
 
             // Kiểm tra xem rollback đã được gọi chưa
