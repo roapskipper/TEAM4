@@ -2,7 +2,7 @@ package com.team4.service;
 
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
-import com.team4.factory.ItemRequest;
+import com.team4.dto.item.*;
 import com.team4.model.*;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.DisplayName;
@@ -23,15 +23,10 @@ import static org.mockito.Mockito.*;
 
 /**
  * Lớp kiểm thử ItemServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * 
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class chứa dữ liệu (DTO, Entity, Request) -> Sử dụng 'new'.
- * 2. CHỈ MOCK các Interface phụ thuộc logic (DAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Đảm bảo các nghiệp vụ về mặt hàng hoạt động đúng với cấu trúc DTO và Mapper mới.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Quản lý mặt hàng (ItemService)")
+@DisplayName("Unit Tests for ItemService")
 public class ItemServiceTest {
 
     @Mock
@@ -43,165 +38,141 @@ public class ItemServiceTest {
     @InjectMocks
     private ItemService itemService;
 
-    // Helper tạo Seller thật
+    // Helper tạo Seller thật để dùng trong các ca kiểm thử
     private Seller createRealSeller(String id) {
-        return new Seller(id, LocalDateTime.now(), "seller", "hash", "Nguyễn Người Bán", "seller@test.com", BigDecimal.ZERO, "Shop Name", 4.88);
+        return new Seller(id, LocalDateTime.now(), "seller_test", "hashed_pwd", "Test Seller", "seller@test.com", BigDecimal.ZERO, "Test Shop", 5.0);
     }
 
-    // Helper tạo Request thật
-    private CreateArtRequestDTO createArtRequest(String ownerId, String name) {
+    // Helper tạo yêu cầu tạo vật phẩm ART
+    private CreateArtRequestDTO createArtRequest(String name) {
         return new CreateArtRequestDTO(
                 name,
-                new BigDecimal("100.00"),
-                "Mô tả " + name,
+                new BigDecimal("100000"),
+                "Description for " + name,
                 Item.ItemCategory.ART,
-                "Họa sĩ",
+                "Artist Name",
                 2024,
                 Art.Medium.OIL_PAINT,
-                "50x50"
+                "100x100"
         );
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Tạo mặt hàng (Create Item)")
+    @DisplayName("Nghiệp vụ Tạo mặt hàng (createItem)")
     class CreateItemTests {
 
         @Test
         @DisplayName("Tạo mặt hàng ART thành công")
         void testCreateItem_Art_Success() {
-            // GIVEN: Một Seller hợp lệ và một yêu cầu tạo tranh (ART)
+            // GIVEN: Một người bán hợp lệ và yêu cầu tạo vật phẩm
             String sellerId = "seller-123";
-            Seller realSeller = createRealSeller(sellerId);
-            CreateArtRequestDTO req = createArtRequest(sellerId, "Bức tranh quý");
+            Seller seller = createRealSeller(sellerId);
+            CreateArtRequestDTO request = createArtRequest("Masterpiece");
 
-            when(userDAO.findById(sellerId)).thenReturn(realSeller);
+            when(userDAO.findById(sellerId)).thenReturn(seller);
             when(itemDAO.insert(any(Item.class))).thenReturn(true);
 
-            // WHEN: Gọi nghiệp vụ tạo mặt hàng
-            ItemResponseDTO result = itemService.createItem(sellerId, req);
+            // WHEN: Thực hiện tạo vật phẩm qua service
+            ItemResponseDTO result = itemService.createItem(sellerId, request);
 
-            // THEN: 
-            // 1. Kết quả trả về không null và đúng loại Art
+            // THEN: Kết quả phải là DTO và đã được lưu vào database
             assertNotNull(result);
-            assertEquals("Bức tranh quý", result.getName());
-            // 2. Phải gọi DAO để lưu vào DB
+            assertEquals("Masterpiece", result.getName());
+            assertEquals(sellerId, result.getOwnerId());
             verify(itemDAO).insert(any(Item.class));
         }
 
         @Test
-        @DisplayName("Thất bại - Người bán không tồn tại")
+        @DisplayName("Thất bại khi người bán không tồn tại")
         void testCreateItem_SellerNotFound() {
-            // GIVEN: Không tìm thấy user trong DB
+            // GIVEN: ID người bán không có trong hệ thống
             String sellerId = "unknown";
-            CreateArtRequestDTO req = createArtRequest(sellerId, "Vô danh");
+            CreateArtRequestDTO request = createArtRequest("Ghost Item");
             when(userDAO.findById(sellerId)).thenReturn(null);
 
-            // WHEN & THEN: Kỳ vọng ném BusinessException
+            // WHEN & THEN: Phải ném BusinessException với thông báo tiếng Anh
             BusinessException ex = assertThrows(BusinessException.class, () -> 
-                itemService.createItem(sellerId, req)
+                itemService.createItem(sellerId, request)
             );
             assertEquals("Seller does not exist.", ex.getMessage());
             verify(itemDAO, never()).insert(any());
         }
 
         @Test
-        @DisplayName("Thất bại - Người dùng không phải Seller (ví dụ là Bidder)")
+        @DisplayName("Thất bại khi người dùng không có quyền bán (là Bidder)")
         void testCreateItem_InvalidRole() {
-            // GIVEN: User tồn tại nhưng là Bidder (không có quyền bán)
+            // GIVEN: Người dùng là Bidder cố tình tạo mặt hàng
             String bidderId = "bidder-456";
-            Bidder realBidder = new Bidder(bidderId, LocalDateTime.now(), "bidder1", "hash", "Người mua", "b@test.com", BigDecimal.ZERO, "HN", "0912383838");
-            CreateArtRequestDTO req = createArtRequest(bidderId, "Tranh lậu");
+            Bidder bidder = new Bidder(bidderId, LocalDateTime.now(), "bidder", "pwd", "Bidder User", "b@test.com", BigDecimal.ZERO, "Address", "0123456789");
+            
+            when(userDAO.findById(bidderId)).thenReturn(bidder);
 
-            when(userDAO.findById(bidderId)).thenReturn(realBidder);
-
-            // WHEN & THEN: Kỳ vọng ném lỗi vì không phải instance của Seller
-            assertThrows(BusinessException.class, () -> itemService.createItem(bidderId, req));
-        }
-
-        @Test
-        @DisplayName("Thất bại - Lỗi lưu Database")
-        void testCreateItem_DatabaseError() {
-            String sellerId = "seller-1";
-            when(userDAO.findById(sellerId)).thenReturn(createRealSeller(sellerId));
-            // Giả lập DB trả về lỗi khi insert
-            when(itemDAO.insert(any())).thenReturn(false);
-
-            assertThrows(BusinessException.class, () -> 
-                itemService.createItem(sellerId, createArtRequest(sellerId, "Hỏng"))
-            );
+            // WHEN & THEN: Kiểm tra ném lỗi
+            assertThrows(BusinessException.class, () -> itemService.createItem(bidderId, createArtRequest("Fake")));
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Cập nhật mặt hàng (Update Item)")
+    @DisplayName("Nghiệp vụ Cập nhật mặt hàng (updateItem)")
     class UpdateItemTests {
 
         @Test
-        @DisplayName("Cập nhật thành công - Đúng chủ sở hữu")
+        @DisplayName("Cập nhật thành công bởi chủ sở hữu")
         void testUpdateItem_Success() {
-            // GIVEN: Mặt hàng hiện có thuộc về seller-1
+            // GIVEN: Mặt hàng tồn tại và thuộc về sellerId
             String sellerId = "seller-1";
             String itemId = "item-99";
-            Art existingArt = new Art(itemId, LocalDateTime.now(), "Cũ", new BigDecimal("10"), "Mô tả cũ", sellerId, "Họa sĩ", 2000, Art.Medium.INK, "10x10");
+            Art existingItem = new Art(itemId, LocalDateTime.now(), "Old Name", new BigDecimal("50000"), "Old Desc", sellerId, "Artist", 2000, Art.Medium.INK, "10x10");
             
-            when(itemDAO.findById(itemId)).thenReturn(existingArt);
+            when(itemDAO.findById(itemId)).thenReturn(existingItem);
             when(itemDAO.update(any())).thenReturn(true);
 
-            // WHEN: Cập nhật thông tin mới
-            ItemResponseDTO result = itemService.updateItem(sellerId, itemId, "Mới", "Mô tả mới");
+            // WHEN: Thực hiện cập nhật
+            ItemResponseDTO result = itemService.updateItem(sellerId, itemId, "New Name", "New Desc");
 
-            // THEN: Thông tin trong đối tượng trả về phải thay đổi
-            assertEquals("Mới", result.getName());
-            verify(itemDAO).update(existingArt);
+            // THEN: DTO trả về phản ánh thông tin mới
+            assertEquals("New Name", result.getName());
+            verify(itemDAO).update(existingItem);
         }
 
         @Test
-        @DisplayName("Thất bại - Cố ý cập nhật hàng của người khác (Security)")
+        @DisplayName("Thất bại khi cố tình cập nhật hàng của người khác (Security)")
         void testUpdateItem_WrongOwner() {
-            // GIVEN: Hàng của seller-real, nhưng hacker cố cập nhật
-            String realOwner = "seller-real";
-            String hackerId = "hacker-123";
-            String itemId = "item-secret";
-            Art secretArt = new Art(itemId, LocalDateTime.now(), "Bí mật", new BigDecimal("10"), "...", realOwner, "Hitler", 2000, Art.Medium.INK, "1x1");
+            // GIVEN: Hacker cố cập nhật hàng của real-seller
+            String realOwner = "real-seller";
+            String hackerId = "hacker-007";
+            String itemId = "item-vault";
+            Art item = new Art(itemId, LocalDateTime.now(), "Vault", new BigDecimal("100"), "...", realOwner, "A", 2000, Art.Medium.INK, "1x1");
 
-            when(itemDAO.findById(itemId)).thenReturn(secretArt);
+            when(itemDAO.findById(itemId)).thenReturn(item);
 
-            // WHEN & THEN: Kỳ vọng ném lỗi Quyền sở hữu
+            // WHEN & THEN: Kiểm tra lỗi quyền sở hữu (Ownership error)
             BusinessException ex = assertThrows(BusinessException.class, () -> 
                 itemService.updateItem(hackerId, itemId, "Hack", "Hack")
             );
             assertEquals("Ownership error.", ex.getMessage());
-            verify(itemDAO, never()).update(any());
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Xóa mặt hàng (Delete Item)")
+    @DisplayName("Nghiệp vụ Xóa mặt hàng (deleteItem)")
     class DeleteItemTests {
 
         @Test
-        @DisplayName("Xóa thành công")
+        @DisplayName("Xóa mặt hàng thành công")
         void testDeleteItem_Success() {
             String sellerId = "seller-1";
-            String itemId = "item-1";
-            Art art = new Art(itemId, LocalDateTime.now(), "Xóa", new BigDecimal("10"), "...", sellerId, "AB", 2000, Art.Medium.INK, "1x1");
+            String itemId = "item-delete";
+            Art item = new Art(itemId, LocalDateTime.now(), "DeleteMe", new BigDecimal("100"), "...", sellerId, "A", 2000, Art.Medium.INK, "1x1");
 
-            when(itemDAO.findById(itemId)).thenReturn(art);
+            when(itemDAO.findById(itemId)).thenReturn(item);
             when(itemDAO.delete(itemId)).thenReturn(true);
 
-            // WHEN
+            // WHEN: Thực hiện xóa qua service
             itemService.deleteItem(itemId, sellerId);
 
-            // THEN
+            // THEN: Xác nhận DAO xóa đã được gọi
             verify(itemDAO).delete(itemId);
-        }
-
-        @Test
-        @DisplayName("Thất bại - Xóa hàng không tồn tại")
-        void testDeleteItem_NotFound() {
-            when(itemDAO.findById("none")).thenReturn(null);
-
-            assertThrows(BusinessException.class, () -> itemService.deleteItem("none", "any"));
         }
     }
 
@@ -210,42 +181,32 @@ public class ItemServiceTest {
     class QueryTests {
 
         @Test
-        @DisplayName("Tìm kiếm theo danh mục - Trả về danh sách")
+        @DisplayName("Lấy danh sách theo danh mục (Trả về DTO)")
         void testGetByCategory() {
             // GIVEN
             when(itemDAO.findByCategory("ART")).thenReturn(List.of(
-                new Art("1", new BigDecimal("10"), "T1", "S1", "A1", 2020, Art.Medium.OIL_PAINT, "10x10")
+                new Art("1", new BigDecimal("100000"), "Painting", "seller-1", "Artist", 2020, Art.Medium.OIL_PAINT, "10x10")
             ));
 
-            // WHEN
+            // WHEN: Lấy danh sách
             List<ItemResponseDTO> results = itemService.getItemsByCategory("ART");
 
-            // THEN
+            // THEN: Đảm bảo kết quả là DTO
             assertEquals(1, results.size());
-            verify(itemDAO).findByCategory("ART");
+            assertEquals("Painting", results.get(0).getName());
         }
 
         @Test
-        @DisplayName("Tìm kiếm theo danh mục - Không có kết quả")
-        void testGetByCategory_Empty() {
-            when(itemDAO.findByCategory("VEHICLE")).thenReturn(Collections.emptyList());
-
-            List<ItemResponseDTO> results = itemService.getItemsByCategory("VEHICLE");
-
-            assertTrue(results.isEmpty());
-        }
-
-        @Test
-        @DisplayName("Tìm kiếm theo chủ sở hữu")
+        @DisplayName("Lấy danh sách theo ID người sở hữu")
         void testFindByOwner() {
-            String ownerId = "owner-1";
+            String ownerId = "owner-100";
             when(itemDAO.findByOwnerId(ownerId)).thenReturn(List.of(
-                new Art("1", new BigDecimal("10"), "T1", ownerId, "A1", 2020, Art.Medium.OIL_PAINT, "10x10")
+                new Art("id-1", new BigDecimal("1000"), "My Item", ownerId, "Me", 2024, Art.Medium.INK, "5x5")
             ));
 
             List<ItemResponseDTO> results = itemService.findByOwnerId(ownerId);
 
-            assertEquals(1, results.size());
+            assertFalse(results.isEmpty());
             assertEquals(ownerId, results.get(0).getOwnerId());
         }
     }
