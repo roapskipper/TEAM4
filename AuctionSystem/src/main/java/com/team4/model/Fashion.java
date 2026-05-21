@@ -4,9 +4,18 @@ import java.time.LocalDateTime;
 
 /**
  * Fashion: model cho nhóm hàng thời trang.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>size</b>: Required. Cannot be null.</li>
+ * <li><b>condition</b>: Required. Cannot be null.</li>
+ * <li><b>gender</b>: Required. Defaults to UNISEX if blank or missing.</li>
+ * <li><b>brand, material, color</b>: Optional. Defaults to "Unknown" if blank.</li>
+ * <li><b>authentic</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Fashion extends Item {
-    private static final long serialVersionUID = 1L;
+
     public enum Size {
         XS, S, M, L, XL, XXL, XXXL, OTHER
     }
@@ -49,6 +58,10 @@ public class Fashion extends Item {
     private ConditionGrade condition; // tình trạng
     private boolean authentic;       // is_authentic
 
+    public static Gender resolveGender(Gender gender) {
+        return gender == null ? Gender.UNISEX : gender;
+    }
+
     // Constructor khi Seller đăng sản phẩm mới
     public Fashion(String name,
                    BigDecimal startingPrice,
@@ -65,6 +78,7 @@ public class Fashion extends Item {
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Require size
         this.size = size;
         this.material = (material == null || material.trim().isEmpty())
                 ? "Unknown"
@@ -72,8 +86,10 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
+        // Require condition
         this.condition = condition;
+        // Keep authentic optional
         this.authentic = authentic;
         validateBrand(this.brand);
         validateSize(this.size);
@@ -100,6 +116,7 @@ public class Fashion extends Item {
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Require size
         this.size = size;
         this.material = (material == null || material.trim().isEmpty())
                 ? "Unknown"
@@ -107,8 +124,10 @@ public class Fashion extends Item {
         this.color = (color == null || color.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(color);
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
+        // Require condition
         this.condition = condition;
+        // Keep authentic optional
         this.authentic = authentic;
         validateBrand(this.brand);
         validateSize(this.size);
@@ -127,7 +146,7 @@ public class Fashion extends Item {
     }
     private static void validateSize(Size size) {
         if  (size == null)
-            throw new IllegalArgumentException("Size must not be null.");
+            throw new IllegalArgumentException("Fashion size is required.");
     }
     private static void validateMaterial(String material) {
         if (material == null) return;
@@ -145,7 +164,7 @@ public class Fashion extends Item {
         if (gender == null) throw new IllegalArgumentException("Gender must not be null.");
     }
     private static void validateCondition(ConditionGrade condition) {
-        if (condition == null) throw new IllegalArgumentException("Condition grade must not be null.");
+        if (condition == null) throw new IllegalArgumentException("Fashion condition grade is required.");
     }
     // Summary / toString
     @Override
@@ -189,7 +208,7 @@ public class Fashion extends Item {
     }
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) {
-        this.gender = (gender == null ? Gender.UNISEX : gender);
+        this.gender = resolveGender(gender);
         validateGender(this.gender);
     }
     public ConditionGrade getCondition() { return condition; }

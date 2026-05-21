@@ -1,13 +1,14 @@
 package com.team4.handler;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
+import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.Auction;
-import com.team4.model.Bidder;
 import com.team4.model.Item;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
@@ -65,36 +66,16 @@ public class UserHandler implements HttpHandler {
     }
 
     private void handleGetProfile(HttpExchange exchange, String userId) throws IOException {
-        User user = Server.getUserService().getUserById(userId);
-        if (user == null) {
-            ApiServer.sendResponse(exchange, 404, ApiServer.buildResponse("ERROR", "User does not exist", null));
-            return;
-        }
-
-        JsonObject data = new JsonObject();
-        data.addProperty("id", user.getId());
-        data.addProperty("username", user.getUsername());
-        data.addProperty("fullName", user.getFullName());
-        data.addProperty("email", user.getEmail());
-        data.addProperty("role", user.getRole().name());
-        data.addProperty("balance", user.getBalance());
-        
-        if (user instanceof Bidder) {
-            data.addProperty("phoneNumber", ((Bidder) user).getPhoneNumber());
-        } else {
-            data.addProperty("phoneNumber", ""); // For Sellers/Admins if they don't have phone
-        }
-
+        // getUserById() trả về UserResponseDTO, throws BusinessException nếu không tìm thấy
+        com.team4.dto.auth.UserResponseDTO dto = Server.getUserService().getUserById(userId);
+        JsonElement data = Server.getGson().toJsonTree(dto);
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Profile loaded successfully", data));
     }
 
     private void handleGetOwnedItems(HttpExchange exchange, String userId) throws IOException {
-        User user = Server.getUserService().getUserById(userId);
-        if (user == null) {
-            ApiServer.sendResponse(exchange, 404, ApiServer.buildResponse("ERROR", "User does not exist", null));
-            return;
-        }
-        if (user.getRole() != User.Role.BIDDER) {
+        // getUserById() trả về DTO, throws BusinessException nếu không tìm thấy
+        com.team4.dto.auth.UserResponseDTO userDto = Server.getUserService().getUserById(userId);
+        if (userDto.getRole() != User.Role.BIDDER) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Only bidders have won items", null));
             return;
         }
@@ -145,7 +126,7 @@ public class UserHandler implements HttpHandler {
             return;
         }
 
-        User updated = Server.getUserService().updateProfile(userId, fullName, email, phone);
+        com.team4.dto.auth.UserResponseDTO updated = Server.getUserService().updateProfile(userId, fullName, email, phone);
         JsonObject data = new JsonObject();
         data.addProperty("fullName", updated.getFullName());
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Updated successfully", data));

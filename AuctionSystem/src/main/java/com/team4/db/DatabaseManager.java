@@ -74,6 +74,7 @@ public final class DatabaseManager {
             url               = normalizeJdbcUrl(dotenv.get("DB_URL"), DEFAULT_DATABASE);
             username          = requireConfig("DB_USERNAME", dotenv.get("DB_USERNAME"));
             password          = requireConfig("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+
             poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
             idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));

@@ -6,9 +6,16 @@ import java.util.regex.Pattern;
 
 /**
  * Electronics: model cho nhóm hàng điện tử.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>itemCondition</b>: Required. Cannot be null.</li>
+ * <li><b>warrantyMonths</b>: Required. Must be &ge; 0.</li>
+ * <li><b>brand & model</b>: Optional. Defaults to "Unknown" if blank. Max 50 characters each.</li>
+ * <li><b>fullyFunctional</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Electronics extends Item {
-    private static final long serialVersionUID = 1L;
     public enum ConditionGrade {
         POOR,           // Kém
         FAIR,           // Trung bình
@@ -31,6 +38,15 @@ public class Electronics extends Item {
     private ConditionGrade itemCondition;       // tình trạng
     private int warrantyMonths;     // bảo hành (tháng)
     private boolean fullyFunctional; // hoạt động đầy đủ
+
+    public static String resolveBrand(String brand) {
+        return normalizeDefaultString(brand, "Unknown");
+    }
+
+    public static String resolveModel(String model) {
+        return normalizeDefaultString(model, "Unknown");
+    }
+
     // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
     public Electronics(String name,
                        BigDecimal startingPrice,
@@ -42,14 +58,13 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
-        this.brand = (brand == null || brand.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(brand);
-        this.model = (model == null || model.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(model);
+        this.brand = resolveBrand(brand);
+        this.model = resolveModel(model);
+        // Require itemCondition
         this.itemCondition = itemCondition;
+        // Require warrantyMonths >= 0
         this.warrantyMonths = warrantyMonths;
+        // Keep fullyFunctional optional
         this.fullyFunctional = fullyFunctional;
         validateBrand(this.brand);
         validateModel(this.model);
@@ -69,14 +84,13 @@ public class Electronics extends Item {
                        int warrantyMonths,
                        boolean fullyFunctional) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ELECTRONICS, ownerId);
-        this.brand = (brand == null || brand.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(brand);
-        this.model = (model == null || model.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(model);
+        this.brand = resolveBrand(brand);
+        this.model = resolveModel(model);
+        // Require itemCondition
         this.itemCondition = itemCondition;
+        // Require warrantyMonths >= 0
         this.warrantyMonths = warrantyMonths;
+        // Keep fullyFunctional optional
         this.fullyFunctional = fullyFunctional;
         validateBrand(this.brand);
         validateModel(this.model);
@@ -99,12 +113,12 @@ public class Electronics extends Item {
     }
     private static void validateItemCondition(ConditionGrade cond) {
         if (cond == null) {
-            throw new IllegalArgumentException("Item condition must not be blank.");
+            throw new IllegalArgumentException("Electronics item condition is required.");
         }
     }
     private static void validateWarrantyMonths(int months) {
         if (months < 0) {
-            throw new IllegalArgumentException("Warranty months must be >= 0.");
+            throw new IllegalArgumentException("Warranty months cannot be negative.");
         }
     }
     // Summary / toString
@@ -127,12 +141,12 @@ public class Electronics extends Item {
     // Getters / Setters
     public String getBrand() { return brand; }
     public void setBrand(String brand) {
-        this.brand = normalizeOptional(brand);
+        this.brand = resolveBrand(brand);
         validateBrand(this.brand);
     }
     public String getModel() { return model; }
     public void setModel(String model) {
-        this.model = normalizeOptional(model);
+        this.model = resolveModel(model);
         validateModel(this.model);
     }
     public ConditionGrade getItemCondition() { return itemCondition; }

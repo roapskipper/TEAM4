@@ -1,6 +1,8 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.dto.auth.*;
+import com.team4.mapper.AuthMapper;
 import com.team4.model.Admin;
 import com.team4.model.Bidder;
 import com.team4.model.User;
@@ -14,144 +16,146 @@ import org.slf4j.LoggerFactory;
  * Mục đích: xử lý đăng ký, đăng nhập, đổi mật khẩu.
  */
 public class AuthenticationService {
-    private UserDAO userDAO;
+    private final UserDAO userDAO;
+    private final JwtService jwtService;
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
-    public AuthenticationService(UserDAO userDAO) {
+    public AuthenticationService(UserDAO userDAO, JwtService jwtService) {
         this.userDAO = userDAO;
+        this.jwtService = jwtService;
     }
 
     // Tạo tài khoản Bidder mới
-    public void registerBidder(String username, String rawPassword, String fullName, String email, String shippingAddress, String phoneNumber) {
-        logger.info("Registering bidder account username={} email={}", username, email);
-        // Kiểm tra xem username đã tồn tại chưa
-        if (userDAO.findByUsername(username) != null) {
-            logger.warn("Bidder registration failed because username already exists username={}", username);
-            throw new BusinessException("Username already exists");
+    public void registerBidder(RegisterBidderRequestDTO requestDTO) {
+        logger.info("Registering new bidder: username={}, email={}", requestDTO.getUsername(), requestDTO.getEmail());
+        validateNewUser(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPassword());
+        
+        String hashedPassword = PasswordHasher.hashPassword(requestDTO.getPassword());
+        Bidder bidder = new Bidder(
+                requestDTO.getUsername(), 
+                hashedPassword, 
+                requestDTO.getFullName(), 
+                requestDTO.getEmail(), 
+                requestDTO.getShippingAddress(), 
+                requestDTO.getPhoneNumber()
+        );
+        
+        if (!userDAO.insert(bidder)) {
+            logger.error("Failed to save bidder to database: {}", requestDTO.getUsername());
+            throw new BusinessException("Could not complete registration. Please try again.");
         }
-        if (userDAO.findByEmail(email) != null) {
-            logger.warn("Bidder registration failed because email already exists email={}", email);
-            throw new BusinessException("Email already exists");
-        }
-        if (rawPassword == null || rawPassword.length() < 8) {
-            logger.warn("Bidder registration failed because password is too short");
-            throw new BusinessException("Password must be at least 8 characters long");
-        }
-        // Nếu username hợp lệ thì tạo bidder mới
-        // model Bidder sẽ tự động validate fields
-        String hashedPassword = PasswordHasher.hashPassword(rawPassword);
-        Bidder bidder = new Bidder(username, hashedPassword, fullName, email, shippingAddress, phoneNumber);
-        // Lưu vào DB
-        boolean saved = userDAO.insert(bidder);
-        if (!saved) {
-            logger.error("Bidder registration failed due to database save error username={}", username);
-            throw new BusinessException("Unable to create account, please try again");
-        }
-        logger.info("Bidder account registered userId={} username={}", bidder.getId(), username);
+        logger.info("Bidder registered successfully: userId={}", bidder.getId());
     }
 
     // Tạo tài khoản Seller mới
-    public void registerSeller(String username, String rawPassword, String fullName, String email, String storeName) {
-        logger.info("Registering seller account username={} email={} storeName={}", username, email, storeName);
-        if (userDAO.findByUsername(username) != null) {
-            logger.warn("Seller registration failed because username already exists username={}", username);
-            throw new BusinessException("Username already exists");
+    public void registerSeller(RegisterSellerRequestDTO requestDTO) {
+        logger.info("Registering new seller: username={}, email={}", requestDTO.getUsername(), requestDTO.getEmail());
+        validateNewUser(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPassword());
+        
+        String hashedPassword = PasswordHasher.hashPassword(requestDTO.getPassword());
+        Seller seller = new Seller(
+                requestDTO.getUsername(), 
+                hashedPassword, 
+                requestDTO.getFullName(), 
+                requestDTO.getEmail(), 
+                requestDTO.getStoreName()
+        );
+        
+        if (!userDAO.insert(seller)) {
+            logger.error("Failed to save seller to database: {}", requestDTO.getUsername());
+            throw new BusinessException("Could not complete registration. Please try again.");
         }
-        if (userDAO.findByEmail(email) != null) {
-            logger.warn("Seller registration failed because email already exists email={}", email);
-            throw new BusinessException("Email already exists");
-        }
-        if (rawPassword == null || rawPassword.length() < 8) {
-            logger.warn("Seller registration failed because password is too short");
-            throw new BusinessException("Password must be at least 8 characters long");
-        }
-        String hashedPassword = PasswordHasher.hashPassword(rawPassword);
-        Seller seller = new Seller(username, hashedPassword, fullName, email, storeName);
-        boolean saved = userDAO.insert(seller);
-        if (!saved) {
-            logger.error("Seller registration failed due to database save error username={}", username);
-            throw new BusinessException("Unable to create account, please try again");
-        }
-        logger.info("Seller account registered userId={} username={}", seller.getId(), username);
+        logger.info("Seller registered successfully: userId={}", seller.getId());
     }
 
-    // Đăng nhập cho Bidder & Seller
-    public User login(String username, String rawPassword) {
-        logger.info("Signing in username={}", username);
-        User user = userDAO.findByUsername(username);
-        if (user == null) {
-            logger.warn("Sign-in failed because username does not exist username={}", username);
-            throw new BusinessException("Username does not exist");
+    // Đăng nhập cho Bidder
+    public LoginResponseDTO loginBidder(LoginRequestDTO requestDTO) {
+        logger.info("Bidder login attempt: username={}", requestDTO.getUsername());
+        User user = authenticateBase(requestDTO.getUsername(), requestDTO.getPassword());
+        
+        if (user.getRole() != User.Role.BIDDER) {
+            logger.warn("Login rejected: User {} is not a BIDDER (Role: {})", user.getUsername(), user.getRole());
+            throw new BusinessException("This account is not registered as a Bidder.");
         }
-        ensureAccountCanLogin(user);
-        if (!user.verifyPassword(rawPassword)) {
-            logger.warn("Sign-in failed because password is incorrect username={} userId={}", username, user.getId());
-            throw new BusinessException("Incorrect password");
+        
+        String token = jwtService.generateToken(user);
+        return AuthMapper.toLoginResponseDTO(user, token);
+    }
+
+    // Đăng nhập cho Seller
+    public LoginResponseDTO loginSeller(LoginRequestDTO requestDTO) {
+        logger.info("Seller login attempt: username={}", requestDTO.getUsername());
+        User user = authenticateBase(requestDTO.getUsername(), requestDTO.getPassword());
+        
+        if (user.getRole() != User.Role.SELLER) {
+            logger.warn("Login rejected: User {} is not a SELLER (Role: {})", user.getUsername(), user.getRole());
+            throw new BusinessException("This account is not registered as a Seller.");
         }
-        logger.info("Sign-in successful userId={} username={} role={}", user.getId(), username, user.getRole());
-        return user;
+        
+        String token = jwtService.generateToken(user);
+        return AuthMapper.toLoginResponseDTO(user, token);
     }
 
     // Đăng nhập cho Admin
-    public Admin loginAdmin(String username, String rawPassword, String rawAdminCode) {
-        logger.info("Signing in admin username={}", username);
-        User user = userDAO.findByUsername(username);
+    public LoginResponseDTO loginAdmin(LoginRequestDTO requestDTO) {
+        logger.info("Admin login attempt: username={}", requestDTO.getUsername());
+        User user = userDAO.findByUsername(requestDTO.getUsername());
 
-        if (user == null) {
-            logger.warn("Admin sign-in failed because username does not exist username={}", username);
-            throw new BusinessException("Username does not exist");
-
+        if (user == null || !user.verifyPassword(requestDTO.getPassword())) {
+            logger.warn("Admin login failed: Invalid credentials for username={}", requestDTO.getUsername());
+            throw new BusinessException("Invalid username or password.");
         }
-        ensureAccountCanLogin(user);
-
+        
         if (!(user instanceof Admin admin)) {
-            logger.warn("Admin sign-in failed because account does not have admin privileges username={} userId={} role={}",
-                    username, user.getId(), user.getRole());
-            throw new BusinessException("Account does not have admin privileges");
-
+            logger.warn("Login rejected: User {} does not have ADMIN privileges", user.getUsername());
+            throw new BusinessException("Access denied. Admin privileges required.");
         }
 
-        if (!admin.verifyPassword(rawPassword)) {
-            logger.warn("Admin sign-in failed because password is incorrect username={} userId={}", username, admin.getId());
-            throw new BusinessException("Incorrect password");
-
+        // Kiểm tra mã bảo mật riêng của Admin
+        if (!admin.verifyAdminCode(requestDTO.getAdminCode())) {
+            logger.warn("Admin login failed: Incorrect admin code for username={}", requestDTO.getUsername());
+            throw new BusinessException("Invalid admin security code.");
         }
-
-        if (!admin.verifyAdminCode(rawAdminCode)) {
-            logger.warn("Admin sign-in failed because admin code is incorrect username={} userId={}", username, admin.getId());
-            throw new BusinessException("Incorrect admin code");
-
-        }
-
-        logger.info("Admin sign-in successful userId={} username={} accessLevel={}",
-                admin.getId(), username, admin.getAccessLevel());
-        return admin;
+        
+        String token = jwtService.generateToken(user);
+        return AuthMapper.toLoginResponseDTO(user, token);
     }
 
-    // Đỏi mật khẩu
     public void changePassword(String userId, String oldRawPassword, String newRawPassword) {
-        logger.info("Changing password userId={}", userId);
+        logger.info("Password change requested for userId={}", userId);
         User user = userDAO.findById(userId);
-        if (user == null) {
-            logger.warn("Password change failed because user does not exist userId={}", userId);
-            throw new BusinessException("User does not exist");
+        if (user == null || !user.verifyPassword(oldRawPassword)) {
+            throw new BusinessException("Authentication failed. Current password incorrect.");
         }
-        if (!user.verifyPassword(oldRawPassword)) {
-            logger.warn("Password change failed because old password is incorrect userId={}", userId);
-            throw new BusinessException("Old password is incorrect");
+        if (newRawPassword == null || newRawPassword.length() < 6) {
+            throw new BusinessException("New password must be at least 6 characters long.");
         }
+        
         user.changePasswordHash(PasswordHasher.hashPassword(newRawPassword));
         userDAO.update(user);
-        logger.info("Password changed userId={} username={}", userId, user.getUsername());
+        logger.info("Password changed successfully for userId={}", userId);
     }
 
-    private void ensureAccountCanLogin(User user) {
-        String status = userDAO.getAccountStatus(user.getId());
-        if ("BANNED".equalsIgnoreCase(status)) {
-            throw new BusinessException("This account has been banned.");
+    // --- Helpers ---
+
+    private void validateNewUser(String username, String email, String password) {
+        if (userDAO.findByUsername(username) != null) {
+            throw new BusinessException("Username already exists.");
         }
-        if ("SUSPENDED".equalsIgnoreCase(status)) {
-            throw new BusinessException("This account has been suspended.");
+        if (userDAO.findByEmail(email) != null) {
+            throw new BusinessException("Email already exists.");
         }
+        if (password == null || password.length() < 6) {
+            throw new BusinessException("Password must be at least 6 characters long.");
+        }
+    }
+
+    private User authenticateBase(String username, String password) {
+        User user = userDAO.findByUsername(username);
+        if (user == null || !user.verifyPassword(password)) {
+            logger.warn("Authentication failed for username: {}", username);
+            throw new BusinessException("Invalid username or password.");
+        }
+        return user;
     }
 }

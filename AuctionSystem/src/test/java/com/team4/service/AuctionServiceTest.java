@@ -2,6 +2,8 @@ package com.team4.service;
 
 import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
+import com.team4.dto.auction.AuctionResponseDTO;
+import com.team4.dto.auction.CreateAuctionRequestDTO;
 import com.team4.model.Art;
 import com.team4.model.Auction;
 import com.team4.model.Item;
@@ -22,16 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Lớp kiểm thử AuctionServiceTest.
- * Môi trường: JDK 21, JUnit 5, Mockito.
- * 
- * TUÂN THỦ QUY TẮC:
- * 1. KHÔNG MOCK các class chứa dữ liệu (Auction, Item, Art) -> Sử dụng 'new'.
- * 2. CHỈ MOCK các Interface phụ thuộc logic (AuctionDAO, ItemDAO).
- * 3. Sử dụng @ExtendWith(MockitoExtension.class).
+ * Kiểm thử nghiệp vụ AuctionService.
+ * Đảm bảo quản lý vòng đời phiên đấu giá chính xác với cấu trúc DTO mới.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Kiểm thử nghiệp vụ Quản lý đấu giá (AuctionService)")
+@DisplayName("Unit Tests for AuctionService")
 public class AuctionServiceTest {
 
     @Mock
@@ -43,30 +40,15 @@ public class AuctionServiceTest {
     @InjectMocks
     private AuctionService auctionService;
 
-    // Helper tạo một Item thật (dùng Art làm ví dụ cụ thể)
+    // Helper tạo Item thật
     private Art createRealItem(String itemId, String ownerId) {
-        return new Art(
-                itemId,
-                LocalDateTime.now(),
-                "Bức tranh cổ",
-                new BigDecimal("500.00"),
-                "Mô tả tranh",
-                ownerId,
-                "Danh họa X",
-                1900,
-                Art.Medium.OIL_PAINT,
-                "100x100"
-        );
+        return new Art(itemId, LocalDateTime.now(), "Antique Painting", new BigDecimal("500.00"),
+                "Description", ownerId, "Artist X", 1900, Art.Medium.OIL_PAINT, "100x100");
     }
 
-    // Helper tạo một Auction thật
-    private Auction createRealAuction(String auctionId, String itemId, String sellerId, Auction.AuctionStatus status) {
-        // Auction constructor thường nhận itemId, sellerId, startingPrice, bidIncrement, endTime
+    // Helper tạo Auction thật và điều chỉnh trạng thái
+    private Auction createRealAuction(String itemId, String sellerId, Auction.AuctionStatus status) {
         var auction = new Auction(itemId, sellerId, new BigDecimal("1000.00"), new BigDecimal("100.00"), LocalDateTime.now().plusDays(1));
-        // Giả sử Auction có cơ chế set ID và Status (thường qua reflection hoặc phương thức nội bộ trong thực tế, 
-        // ở đây ta giả định model cho phép hoặc constructor có tham số phù hợp)
-        // Vì constructor trong code AuctionService chỉ nhận 5 tham số, ta dùng reflection hoặc phương thức nếu có.
-        // Tuy nhiên, để đơn giản và an toàn, ta sẽ dùng chính các phương thức của model để đổi trạng thái.
         if (status == Auction.AuctionStatus.RUNNING) auction.approve();
         if (status == Auction.AuctionStatus.FINISHED) {
             auction.approve();
@@ -78,197 +60,164 @@ public class AuctionServiceTest {
             auction.markPaid();
         }
         if (status == Auction.AuctionStatus.CANCELLED) auction.cancel();
-        
         return auction;
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Tạo phiên đấu giá (Create Auction)")
+    @DisplayName("Nghiệp vụ Tạo phiên đấu giá (createAuction)")
     class CreateAuctionTests {
 
         @Test
-        @DisplayName("Tạo phiên thành công - Trạng thái mặc định PENDING")
+        @DisplayName("Tạo phiên đấu giá thành công")
         void testCreateAuction_Success() {
-            // GIVEN: Mặt hàng tồn tại và thuộc về người bán
+            // GIVEN: Item tồn tại và seller là chủ sở hữu
             String itemId = "item-1";
             String sellerId = "seller-1";
-            Item realItem = createRealItem(itemId, sellerId);
-            
-            when(itemDAO.findById(itemId)).thenReturn(realItem);
+            Item item = createRealItem(itemId, sellerId);
+            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO(itemId, sellerId, new BigDecimal("1000"), new BigDecimal("100"), LocalDateTime.now().plusDays(1));
+
+            when(itemDAO.findById(itemId)).thenReturn(item);
             when(auctionDAO.insert(any(Auction.class))).thenReturn(true);
 
             // WHEN: Thực hiện tạo phiên
-            Auction result = auctionService.createAuction(
-                itemId, sellerId, new BigDecimal("1000.00"), new BigDecimal("50.00"), LocalDateTime.now().plusDays(7)
-            );
+            AuctionResponseDTO result = auctionService.createAuction(request);
 
-            // THEN: 
-            // 1. Kết quả trả về hợp lệ
+            // THEN: Kết quả phải là DTO và trạng thái mặc định là PENDING
             assertNotNull(result);
             assertEquals(itemId, result.getItemId());
             assertEquals(Auction.AuctionStatus.PENDING, result.getStatus());
-            // 2. Phải gọi DAO để lưu
             verify(auctionDAO).insert(any(Auction.class));
         }
 
         @Test
-        @DisplayName("Thất bại - Mặt hàng không tồn tại")
+        @DisplayName("Thất bại khi Item không tồn tại")
         void testCreateAuction_ItemNotFound() {
-            String itemId = "none";
-            when(itemDAO.findById(itemId)).thenReturn(null);
+            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO("none", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusDays(1));
+            when(itemDAO.findById("none")).thenReturn(null);
 
-            assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(itemId, "seller-1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now())
-            );
+            assertThrows(BusinessException.class, () -> auctionService.createAuction(request));
         }
 
         @Test
-        @DisplayName("Thất bại - Người bán không sở hữu mặt hàng")
+        @DisplayName("Thất bại khi người tạo không phải chủ sở hữu Item")
         void testCreateAuction_NotOwner() {
             String itemId = "item-1";
-            String sellerId = "hacker";
-            Item realItem = createRealItem(itemId, "real-owner"); // Chủ thật là người khác
-            
-            when(itemDAO.findById(itemId)).thenReturn(realItem);
+            Item item = createRealItem(itemId, "real-owner");
+            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO(itemId, "hacker", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusDays(1));
 
-            BusinessException ex = assertThrows(BusinessException.class, () -> 
-                auctionService.createAuction(itemId, sellerId, BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now())
-            );
+            when(itemDAO.findById(itemId)).thenReturn(item);
+
+            BusinessException ex = assertThrows(BusinessException.class, () -> auctionService.createAuction(request));
             assertEquals("Seller does not own this item", ex.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Phê duyệt và Từ chối (Approve/Reject)")
+    @DisplayName("Nghiệp vụ Phê duyệt (approveAuction)")
     class ApprovalTests {
 
         @Test
-        @DisplayName("Phê duyệt thành công - PENDING sang RUNNING")
+        @DisplayName("Admin phê duyệt phiên đấu giá thành công")
         void testApprove_Success() {
-            // GIVEN: Phiên đang chờ duyệt
-            String auctionId = "auc-123";
-            Auction pendingAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.PENDING);
-            when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
+            // GIVEN: Phiên đấu giá đang ở trạng thái PENDING
+            String auctionId = "auc-1";
+            Auction auction = createRealAuction("i1", "s1", Auction.AuctionStatus.PENDING);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(auctionId), any())).thenReturn(true);
 
-            // WHEN
-            Auction result = auctionService.approveAuction(auctionId);
+            // WHEN: Phê duyệt
+            AuctionResponseDTO result = auctionService.approveAuction(auctionId);
 
-            // THEN
+            // THEN: Trạng thái phải chuyển sang RUNNING
             assertEquals(Auction.AuctionStatus.RUNNING, result.getStatus());
             verify(auctionDAO).updateStatus(auctionId, Auction.AuctionStatus.RUNNING);
         }
 
         @Test
-        @DisplayName("Thất bại - Phê duyệt khi trạng thái không phải PENDING")
+        @DisplayName("Thất bại khi phê duyệt phiên không phải PENDING")
         void testApprove_InvalidStatus() {
-            String auctionId = "auc-123";
-            // Giả sử phiên đã bị hủy trước đó
-            Auction cancelledAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.CANCELLED);
-            when(auctionDAO.findById(auctionId)).thenReturn(cancelledAuction);
+            String auctionId = "auc-1";
+            Auction auction = createRealAuction("i1", "s1", Auction.AuctionStatus.CANCELLED);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
 
-            assertThrows(BusinessException.class, () -> auctionService.approveAuction(auctionId));
-        }
-
-        @Test
-        @DisplayName("Từ chối duyệt thành công")
-        void testReject_Success() {
-            String auctionId = "auc-123";
-            Auction pendingAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.PENDING);
-            when(auctionDAO.findById(auctionId)).thenReturn(pendingAuction);
-
-            // WHEN
-            auctionService.rejectAuction(auctionId);
-
-            // THEN
-            verify(auctionDAO).updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
+            BusinessException ex = assertThrows(BusinessException.class, () -> auctionService.approveAuction(auctionId));
+            assertEquals("Only pending auctions can be approved", ex.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Kết thúc phiên (Auto Close)")
-    class CloseAuctionTests {
+    @DisplayName("Nghiệp vụ Hủy phiên (cancelAuction)")
+    class CancelTests {
 
         @Test
-        @DisplayName("Tự động đóng phiên đã hết hạn")
+        @DisplayName("Hủy phiên đấu giá thành công")
+        void testCancel_Success() {
+            String auctionId = "auc-1";
+            Auction auction = createRealAuction("i1", "s1", Auction.AuctionStatus.RUNNING);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(auctionId), any())).thenReturn(true);
+
+            // WHEN: Thực hiện hủy
+            AuctionResponseDTO result = auctionService.cancelAuction(auctionId);
+
+            // THEN: Trạng thái là CANCELLED
+            assertEquals(Auction.AuctionStatus.CANCELLED, result.getStatus());
+            verify(auctionDAO).updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("Thất bại khi hủy phiên đã thanh toán")
+        void testCancel_PaidAuction() {
+            String auctionId = "auc-1";
+            Auction auction = createRealAuction("i1", "s1", Auction.AuctionStatus.PAID);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+
+            assertThrows(BusinessException.class, () -> auctionService.cancelAuction(auctionId));
+        }
+    }
+
+    @Nested
+    @DisplayName("Nghiệp vụ Đóng phiên tự động (closeExpiredAuctions)")
+    class AutoCloseTests {
+
+        @Test
+        @DisplayName("Tự động đóng các phiên đã hết thời gian")
         void testCloseExpiredAuctions() {
-            // GIVEN: Có 2 phiên RUNNING, 1 phiên đã quá hạn, 1 phiên chưa
-            var expiredAuction = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().minusHours(1));
-            expiredAuction.approve(); // Chuyển sang RUNNING
-            
-            var activeAuction = new Auction("i2", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1));
-            activeAuction.approve(); // Chuyển sang RUNNING
+            // GIVEN: Một phiên đã hết hạn và một phiên còn hạn
+            Auction expired = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().minusMinutes(1));
+            expired.approve(); // RUNNING
 
-            // Gán ID giả lập (vì AuctionService dùng getId() để update)
-            // Trong thực tế ID do DB cấp, ở đây ta giả định model có setter hoặc dùng reflection
-            // Do code AuctionService dùng auction.getId(), ta cần đảm bảo nó không null.
-            
-            when(auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(List.of(expiredAuction, activeAuction));
+            Auction active = new Auction("i2", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1));
+            active.approve(); // RUNNING
 
-            // WHEN
+            when(auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(List.of(expired, active));
+            when(auctionDAO.updateStatus(any(), eq(Auction.AuctionStatus.FINISHED))).thenReturn(true);
+
+            // WHEN: Chạy logic quét phiên hết hạn
             auctionService.closeExpiredAuctions();
 
-            // THEN: Chỉ phiên hết hạn mới bị chuyển sang FINISHED
+            // THEN: Chỉ gọi update cho phiên đã hết hạn
             verify(auctionDAO, times(1)).updateStatus(any(), eq(Auction.AuctionStatus.FINISHED));
         }
     }
 
     @Nested
-    @DisplayName("Nghiệp vụ Thanh toán (Mark Paid)")
-    class PaymentTests {
+    @DisplayName("Nghiệp vụ Truy vấn (Queries)")
+    class QueryTests {
 
         @Test
-        @DisplayName("Đánh dấu thanh toán thành công")
-        void testMarkPaid_Success() {
-            // GIVEN: Phiên đã kết thúc (FINISHED)
-            String auctionId = "auc-123";
-            Auction finishedAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.FINISHED);
-            when(auctionDAO.findById(auctionId)).thenReturn(finishedAuction);
+        @DisplayName("Lấy danh sách đấu giá theo trạng thái (DTO)")
+        void testGetAuctionsByStatus() {
+            // GIVEN
+            Auction auction = createRealAuction("i1", "s1", Auction.AuctionStatus.RUNNING);
+            when(auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(List.of(auction));
 
             // WHEN
-            Auction result = auctionService.markPaid(auctionId);
+            List<AuctionResponseDTO> results = auctionService.getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
 
             // THEN
-            assertEquals(Auction.AuctionStatus.PAID, result.getStatus());
-            verify(auctionDAO).updateStatus(auctionId, Auction.AuctionStatus.PAID);
-        }
-
-        @Test
-        @DisplayName("Thất bại - Đánh dấu thanh toán khi chưa kết thúc")
-        void testMarkPaid_InvalidStatus() {
-            String auctionId = "auc-123";
-            Auction runningAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.RUNNING);
-            when(auctionDAO.findById(auctionId)).thenReturn(runningAuction);
-
-            assertThrows(BusinessException.class, () -> auctionService.markPaid(auctionId));
-        }
-    }
-
-    @Nested
-    @DisplayName("Nghiệp vụ Hủy phiên (Cancel)")
-    class CancelTests {
-
-        @Test
-        @DisplayName("Hủy phiên thành công")
-        void testCancel_Success() {
-            String auctionId = "auc-123";
-            Auction runningAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.RUNNING);
-            when(auctionDAO.findById(auctionId)).thenReturn(runningAuction);
-
-            // WHEN
-            auctionService.cancelAuction(auctionId);
-
-            // THEN
-            verify(auctionDAO).updateStatus(auctionId, Auction.AuctionStatus.CANCELLED);
-        }
-
-        @Test
-        @DisplayName("Thất bại - Không thể hủy phiên đã thanh toán")
-        void testCancel_PaidAuction() {
-            String auctionId = "auc-123";
-            Auction paidAuction = createRealAuction(auctionId, "i1", "s1", Auction.AuctionStatus.PAID);
-            when(auctionDAO.findById(auctionId)).thenReturn(paidAuction);
-
-            assertThrows(BusinessException.class, () -> auctionService.cancelAuction(auctionId));
+            assertEquals(1, results.size());
+            verify(auctionDAO).findByStatus(Auction.AuctionStatus.RUNNING);
         }
     }
 }

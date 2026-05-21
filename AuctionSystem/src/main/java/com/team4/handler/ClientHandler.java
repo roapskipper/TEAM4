@@ -7,6 +7,11 @@ import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.AutoBiddingDAOImpl;
 import com.team4.dao.impl.BidTransactionDAOImpl;
 import com.team4.dao.impl.UserDAOImpl;
+import com.team4.dto.auction.AuctionResponseDTO;
+import com.team4.dto.bidding.BidRequestDTO;
+import com.team4.dto.socket.BidUpdateResponseDTO;
+import com.team4.dto.socket.SocketMessageDTO;
+import com.team4.mapper.SocketMapper;
 import com.team4.model.Auction;
 import com.team4.model.BidTransaction;
 import com.team4.network.NetworkMessage;
@@ -46,16 +51,9 @@ public class ClientHandler implements Runnable, BidObserver {
 
     @Override
     public void updateNewBid(Auction auction, BidTransaction transaction) {
-        JsonObject data = new JsonObject();
-        data.addProperty("auctionId", auction.getId());
-        data.addProperty("itemId", auction.getItemId());
-        data.addProperty("bidderId", transaction.getBidderId());
-        data.addProperty("amount", transaction.getBidAmount());
-        if (auction.getEndTime() != null) {
-            data.addProperty("endTime", auction.getEndTime().toString());
-        }
-
-        sendMessage(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", data));
+        // Dùng SocketMapper → SocketMessageDTO<BidUpdateResponseDTO> thay vì build JsonObject thủ công
+        SocketMessageDTO<BidUpdateResponseDTO> msg = SocketMapper.toBidUpdateMessage(auction);
+        sendMessage(Server.getGson().toJson(msg));
     }
 
     @Override
@@ -131,30 +129,29 @@ public class ClientHandler implements Runnable, BidObserver {
             double amount    = data.get("amount").getAsDouble();
 
             try {
-                Auction auction = Server.getAuctionService().getAuctionById(auctionId);
+                // Dùng getRawAuctionById() để lấy model Auction (không phải DTO)
+                Auction auction = Server.getAuctionService().getRawAuctionById(auctionId);
 
                 if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
                     sendMessage(buildResponse("ERROR", "Phien dau gia khong con hoat dong", "BID_FAILED", null));
                     return;
                 }
 
-                // Gọi BiddingService để xử lý proxy bidding
-                biddingService.placeBid(auctionId, bidderId, BigDecimal.valueOf(amount));
+                // Tạo BidRequestDTO và gọi placeBid
+                BidRequestDTO bidDto = new BidRequestDTO(auctionId, bidderId, BigDecimal.valueOf(amount));
+                biddingService.placeBid(bidDto);
 
-                // Lấy lại auction sau khi bid để có giá và endTime mới nhất
-                Auction updatedAuction = Server.getAuctionService().getAuctionById(auctionId);
+                // Lấy lại auction raw để có giá và endTime mới nhất
+                Auction updatedAuction = Server.getAuctionService().getRawAuctionById(auctionId);
 
-                // Broadcast kết quả mới cho tất cả client
-                JsonObject broadcastData = new JsonObject();
-                broadcastData.addProperty("auctionId", auctionId);
-                broadcastData.addProperty("currentPrice", updatedAuction.getCurrentPrice().doubleValue());
-                broadcastData.addProperty("currentHighestBidderId", updatedAuction.getCurrentHighestBidderId());
-                if (updatedAuction.getEndTime() != null) {
-                    broadcastData.addProperty("endTime", updatedAuction.getEndTime().toString());
-                }
-                Server.broadcast(buildResponse("SUCCESS", "Co gia moi!", "BID_UPDATE", broadcastData), null);
+                // Dùng SocketMapper → SocketMessageDTO<BidUpdateResponseDTO> cho cả broadcast và response
+                SocketMessageDTO<BidUpdateResponseDTO> updateMsg = SocketMapper.toBidUpdateMessage(updatedAuction);
+                String updateJson = Server.getGson().toJson(updateMsg);
 
-                sendMessage(buildResponse("SUCCESS", "Dat gia thanh cong!", "BID_SUCCESS", broadcastData));
+                // Broadcast kết quả mới cho tất cả client khác
+                Server.broadcast(updateJson, this);
+                // Trả kết quả thành công cho chính bidder
+                sendMessage(updateJson);
 
             } catch (BusinessException e) {
                 sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));
@@ -166,7 +163,8 @@ public class ClientHandler implements Runnable, BidObserver {
 
     private void handleGetAuctions() {
         try {
-            List<Auction> auctions = Server.getAuctionService().getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
+            // getAuctionsByStatus() giờ trả về List<AuctionResponseDTO>
+            java.util.List<AuctionResponseDTO> auctions = Server.getAuctionService().getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
             sendMessage(buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong", "AUCTIONS_LIST",
                     Server.getGson().toJsonTree(auctions)));
         } catch (BusinessException e) {
