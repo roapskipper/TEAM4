@@ -4,33 +4,129 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="12" prefWidth="460" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+<VBox spacing="0" prefWidth="580" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.team4.controller.AddProductDialogController"
       stylesheets="@style.css"
       styleClass="dialog-root">
     <padding>
-        <Insets top="24" right="24" bottom="24" left="24"/>
+        <Insets top="20" right="20" bottom="16" left="20"/>
     </padding>
 
-    <Label text="Add New Product" styleClass="dialog-title"/>
-    
-    <Label text="Product Name *" styleClass="form-label"/>
-    <TextField fx:id="nameField" promptText="Enter product name (max 100 chars)" styleClass="input-field"/>
-    
-    <Label text="Category *" styleClass="form-label"/>
-    <ComboBox fx:id="categoryBox" maxWidth="Infinity" promptText="Select a category" styleClass="admin-combo"/>
-    
-    <Label text="Starting Price *" styleClass="form-label"/>
-    <TextField fx:id="priceField" promptText="Min 50000 (multiples of 1000)" styleClass="input-field"/>
-    <Label text="Min: 50K VND. Multiple of 1,000. Max: Electronics (5B), Vehicle (10B), Art/Collectible (2B), Fashion (500M)." styleClass="dialog-help" wrapText="true"/>
-    
-    <Label text="Description" styleClass="form-label"/>
-    <TextArea fx:id="descArea" prefRowCount="4" wrapText="true" promptText="Optional description (max 500 chars)" styleClass="input-field"/>
-    
+    <Label text="Đăng sản phẩm mới" styleClass="dialog-title"/>
+    <Label text="Điền thông tin chung và thông tin riêng theo danh mục. Các trường có dấu * là bắt buộc."
+           styleClass="dialog-help" wrapText="true"/>
+
+    <ScrollPane fitToWidth="true" prefViewportHeight="520" styleClass="dialog-scroll" VBox.vgrow="ALWAYS">
+        <VBox spacing="14">
+            <padding>
+                <Insets top="8" right="4" bottom="8" left="4"/>
+            </padding>
+
+            <!-- Common fields -->
+            <Label text="1. Thông tin chung (tất cả sản phẩm)" styleClass="form-section-title"/>
+            <Label text="Tên sản phẩm *" styleClass="form-label"/>
+            <TextField fx:id="nameField" promptText="Bắt buộc, tối đa 100 ký tự (DB: 255)" styleClass="input-field"/>
+
+            <Label text="Danh mục *" styleClass="form-label"/>
+            <ComboBox fx:id="categoryBox" maxWidth="Infinity" promptText="Chọn danh mục" styleClass="admin-combo"/>
+
+            <Label text="Giá khởi điểm (VND) *" styleClass="form-label"/>
+            <TextField fx:id="priceField" promptText="Số ≥ 0; tối thiểu 50.000, bội số 1.000" styleClass="input-field"/>
+            <Label text="Giới hạn tối đa theo danh mục: Điện tử 5 tỷ, Xe 10 tỷ, Nghệ thuật/Đồ sưu tầm 2 tỷ, Thời trang 500 triệu."
+                   styleClass="dialog-help" wrapText="true"/>
+
+            <Label text="Mô tả *" styleClass="form-label"/>
+            <TextArea fx:id="descArea" prefRowCount="3" wrapText="true"
+                      promptText="Bắt buộc, tối đa 500 ký tự trên giao diện (DB: 2000)" styleClass="input-field"/>
+
+            <!-- Category-specific -->
+            <Label text="2. Thông tin theo danh mục" styleClass="form-section-title"/>
+            <Label fx:id="categoryHintLabel" styleClass="dialog-help" wrapText="true"/>
+
+            <!-- Art -->
+            <VBox fx:id="artPanel" spacing="8" styleClass="category-panel">
+                <Label text="🎨 Nghệ thuật (Art)" styleClass="form-section-subtitle"/>
+                <Label text="Chất liệu (Medium) *" styleClass="form-label"/>
+                <ComboBox fx:id="artMediumBox" maxWidth="Infinity" promptText="Chọn chất liệu" styleClass="admin-combo"/>
+                <Label text="Tác giả (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="artArtistField" promptText="Tác giả" styleClass="input-field"/>
+                <Label text="Năm sáng tác (tùy chọn — 0 = chưa rõ, từ -3000 đến năm hiện tại)" styleClass="form-label"/>
+                <TextField fx:id="artYearField" promptText="VD: 1890 hoặc 0" styleClass="input-field"/>
+                <Label text="Kích thước (tùy chọn, VD: 30x40 cm)" styleClass="form-label"/>
+                <TextField fx:id="artDimensionsField" promptText="30x40 cm" styleClass="input-field"/>
+            </VBox>
+
+            <!-- Collectible -->
+            <VBox fx:id="collectiblePanel" spacing="8" styleClass="category-panel" visible="false" managed="false">
+                <Label text="🏺 Đồ sưu tầm (Collectible)" styleClass="form-section-subtitle"/>
+                <Label text="Độ hiếm (Rarity) *" styleClass="form-label"/>
+                <ComboBox fx:id="collectibleRarityBox" maxWidth="Infinity" promptText="Chọn độ hiếm" styleClass="admin-combo"/>
+                <Label text="Tình trạng (Condition) *" styleClass="form-label"/>
+                <ComboBox fx:id="collectibleConditionBox" maxWidth="Infinity" promptText="Chọn tình trạng" styleClass="admin-combo"/>
+                <Label text="Năm xuất xứ (tùy chọn, 0 = chưa rõ)" styleClass="form-label"/>
+                <TextField fx:id="collectibleYearField" promptText="0 hoặc năm cụ thể" styleClass="input-field"/>
+                <Label text="Xuất xứ (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="collectibleOriginField" promptText="Quốc gia / vùng" styleClass="input-field"/>
+                <CheckBox fx:id="collectibleCertCheck" text="Có chứng chỉ (tùy chọn)"/>
+            </VBox>
+
+            <!-- Electronics -->
+            <VBox fx:id="electronicsPanel" spacing="8" styleClass="category-panel" visible="false" managed="false">
+                <Label text="💻 Đồ điện tử (Electronics)" styleClass="form-section-subtitle"/>
+                <Label text="Tình trạng (Condition) *" styleClass="form-label"/>
+                <ComboBox fx:id="electronicsConditionBox" maxWidth="Infinity" promptText="Chọn tình trạng" styleClass="admin-combo"/>
+                <Label text="Số tháng bảo hành *" styleClass="form-label"/>
+                <TextField fx:id="electronicsWarrantyField" promptText="≥ 0" styleClass="input-field"/>
+                <Label text="Thương hiệu (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="electronicsBrandField" promptText="Thương hiệu" styleClass="input-field"/>
+                <Label text="Model (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="electronicsModelField" promptText="Tên model" styleClass="input-field"/>
+                <CheckBox fx:id="electronicsFunctionalCheck" text="Hoạt động bình thường (tùy chọn)" selected="true"/>
+            </VBox>
+
+            <!-- Fashion -->
+            <VBox fx:id="fashionPanel" spacing="8" styleClass="category-panel" visible="false" managed="false">
+                <Label text="👗 Thời trang (Fashion)" styleClass="form-section-subtitle"/>
+                <Label text="Kích cỡ (Size) *" styleClass="form-label"/>
+                <ComboBox fx:id="fashionSizeBox" maxWidth="Infinity" promptText="XS, S, M, L, XL..." styleClass="admin-combo"/>
+                <Label text="Tình trạng (Condition) *" styleClass="form-label"/>
+                <ComboBox fx:id="fashionConditionBox" maxWidth="Infinity" promptText="Chọn tình trạng" styleClass="admin-combo"/>
+                <Label text="Đối tượng (Gender) *" styleClass="form-label"/>
+                <ComboBox fx:id="fashionGenderBox" maxWidth="Infinity" styleClass="admin-combo"/>
+                <Label text="Thương hiệu (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="fashionBrandField" promptText="Thương hiệu" styleClass="input-field"/>
+                <Label text="Chất liệu (tùy chọn)" styleClass="form-label"/>
+                <TextField fx:id="fashionMaterialField" promptText="Chất liệu" styleClass="input-field"/>
+                <Label text="Màu sắc (tùy chọn)" styleClass="form-label"/>
+                <TextField fx:id="fashionColorField" promptText="Màu" styleClass="input-field"/>
+                <CheckBox fx:id="fashionAuthenticCheck" text="Hàng chính hãng (tùy chọn)"/>
+            </VBox>
+
+            <!-- Vehicle -->
+            <VBox fx:id="vehiclePanel" spacing="8" styleClass="category-panel" visible="false" managed="false">
+                <Label text="🚗 Phương tiện (Vehicle)" styleClass="form-section-subtitle"/>
+                <Label text="Loại động cơ (Engine) *" styleClass="form-label"/>
+                <ComboBox fx:id="vehicleEngineBox" maxWidth="Infinity" promptText="Xăng, Điện, Dầu..." styleClass="admin-combo"/>
+                <Label text="Hộp số (Transmission) *" styleClass="form-label"/>
+                <ComboBox fx:id="vehicleTransmissionBox" maxWidth="Infinity" styleClass="admin-combo"/>
+                <Label text="Số km đã đi (Odo) *" styleClass="form-label"/>
+                <TextField fx:id="vehicleOdoField" promptText="0 – 1.000.000 km" styleClass="input-field"/>
+                <Label text="Năm sản xuất (tùy chọn, 1886 – năm hiện tại; 0 = chưa rõ)" styleClass="form-label"/>
+                <TextField fx:id="vehicleYearField" promptText="VD: 2020 hoặc 0" styleClass="input-field"/>
+                <Label text="Thương hiệu (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="vehicleBrandField" promptText="Hãng xe" styleClass="input-field"/>
+                <Label text="Model (tùy chọn — để trống: Unknown)" styleClass="form-label"/>
+                <TextField fx:id="vehicleModelField" promptText="Dòng xe" styleClass="input-field"/>
+                <Label text="Màu sắc (tùy chọn)" styleClass="form-label"/>
+                <TextField fx:id="vehicleColorField" promptText="Màu" styleClass="input-field"/>
+                <CheckBox fx:id="vehicleLegalCheck" text="Có giấy tờ pháp lý (tùy chọn)"/>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
     <Label fx:id="errorLabel" styleClass="error-message" visible="false" managed="false" wrapText="true"/>
-    
     <HBox spacing="10" alignment="CENTER_RIGHT" styleClass="dialog-actions">
-        <Button text="Cancel" onAction="#onCancel" styleClass="btn-secondary" minWidth="96"/>
-        <Button text="Save Product" onAction="#onSave" styleClass="btn-primary" minWidth="132"/>
+        <Button text="Hủy" onAction="#onCancel" styleClass="btn-secondary" minWidth="96"/>
+        <Button text="Lưu sản phẩm" onAction="#onSave" styleClass="btn-primary" minWidth="140"/>
     </HBox>
 </VBox>

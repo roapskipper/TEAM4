@@ -4,7 +4,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
-/** Art: Đại diện cho các sản phẩm nghệ thuật */
+/**
+ * Art: Đại diện cho các sản phẩm nghệ thuật
+ * <p>
+ * Validation Rules:
+ * <ul>
+ * <li><b>medium</b>: Required. Cannot be null.</li>
+ * <li><b>artist</b>: Optional. Defaults to "Unknown" if blank. Must be 2-50 characters if provided.</li>
+ * <li><b>creationYear</b>: Optional. 0 means Unknown. Must be between -3000 and current year.</li>
+ * <li><b>dimensions</b>: Optional. Max 50 characters. Must follow valid dimension format (e.g., '30x40 cm').</li>
+ * </ul>
+ */
 public class Art extends Item {
     // enum Medium (cho nó chất)
     public enum Medium {
@@ -36,6 +46,16 @@ public class Art extends Item {
     private int creationYear;     // năm sáng tác
     private Medium medium;        // chất liệu (sơn dầu, màu nước...)
     private String dimensions;    // kích thước
+
+    public static String resolveArtist(String artist) {
+        return normalizeDefaultString(artist, "Unknown");
+    }
+
+    /** Missing or unknown year is represented as {@code 0}. */
+    public static int resolveCreationYear(int creationYear) {
+        return creationYear;
+    }
+
     // Constructor dùng khi tạo Art mới (Seller đăng sản phẩm)
     public Art(String name,
                BigDecimal startingPrice,
@@ -46,11 +66,11 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(name, startingPrice, description, ItemCategory.ART, ownerId);
-        this.artist = (artist == null || artist.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(artist);
-        this.creationYear = creationYear;
+        this.artist = resolveArtist(artist);
+        this.creationYear = resolveCreationYear(creationYear);
+        // Require medium
         this.medium = medium;
+        // Keep dimensions optional
         this.dimensions = normalizeOptional(dimensions);
         validateArtist(this.artist);
         validateDimensions(this.dimensions);
@@ -69,11 +89,11 @@ public class Art extends Item {
                Medium medium,
                String dimensions) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.ART, ownerId);
-        this.artist = (artist == null || artist.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(artist);
-        this.creationYear = creationYear;
+        this.artist = resolveArtist(artist);
+        this.creationYear = resolveCreationYear(creationYear);
+        // Require medium
         this.medium = medium;
+        // Keep dimensions optional
         this.dimensions = normalizeOptional(dimensions);
         validateArtist(this.artist);
         validateDimensions(this.dimensions);
@@ -89,10 +109,10 @@ public class Art extends Item {
         if (artist == null) return; // optional
         String a = artist.trim();
         if (a.length() < 2) {
-            throw new IllegalArgumentException("Artist name must contain at least 2 characters.");
+            throw new IllegalArgumentException("Artist name must be at least 2 characters long.");
         }
         if (a.length() > 50) {
-            throw new IllegalArgumentException("Artist name must not exceed 50 characters.");
+            throw new IllegalArgumentException("Artist name cannot exceed 50 characters.");
         }
     }
     private static void validateCreationYear(int year) {
@@ -109,16 +129,16 @@ public class Art extends Item {
         String d = dims.trim();
         if (d.isEmpty()) return;
         if (d.length() > 50) {
-            throw new IllegalArgumentException("Dimensions are too long (maximum 50 characters).");
+            throw new IllegalArgumentException("Dimensions cannot exceed 50 characters.");
         }
         // Nếu khớp định dạng chuẩn (ví dụ "30x40 cm" hoặc "30 × 40 × 2 cm") thì OK
         if (!DIMENSION_PATTERN.matcher(d).matches()) {
-            throw new IllegalArgumentException("Invalid dimensions.");
+            throw new IllegalArgumentException("Invalid dimensions format. Expected format like '30x40 cm'.");
         }
     }
     private static void validateMedium(Medium medium) {
         if (medium == null)
-            throw new IllegalArgumentException("Medium must not be null");
+            throw new IllegalArgumentException("Art medium is required.");
     }
     @Override
     public String summary() {
@@ -135,8 +155,10 @@ public class Art extends Item {
 
     // Getter/Setter
     public String getArtist() { return artist; }
-    public void setArtist(String artist) { this.artist = normalizeOptional(artist);
-    validateArtist(this.artist);}
+    public void setArtist(String artist) {
+        this.artist = resolveArtist(artist);
+        validateArtist(this.artist);
+    }
     public int getCreationYear() { return creationYear; }
     public void setCreationYear(int creationYear) { this.creationYear = creationYear;
     validateCreationYear(this.creationYear);}

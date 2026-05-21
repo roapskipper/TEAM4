@@ -37,11 +37,46 @@ public class Collectible extends Item {
             return null;
         }
     }
+    private static final int ORIGIN_MAX_LENGTH = 120;
+    private static final int YEAR_MIN = -3000;
+
+    /** Shared validation messages for Collectible entity and ItemService pre-checks. */
+    public static final class ValidationMessages {
+        public static final String RARITY_REQUIRED = "Rarity level is required.";
+        public static final String CONDITION_REQUIRED = "Condition grade is required.";
+        public static final String YEAR_OF_ORIGIN_INVALID =
+                "Year of origin must be between " + YEAR_MIN + " and the current year (use 0 if unknown).";
+        public static final String ORIGIN_TOO_LONG =
+                "Origin must not exceed " + ORIGIN_MAX_LENGTH + " characters.";
+
+        private ValidationMessages() {}
+    }
+
     private int yearOfOrigin;       // năm xuất xứ
     private RarityLevel rarityLevel;     // độ hiếm
     private ConditionGrade conditionGrade; // tình trạng
     private boolean hasCertificate;  // có chứng chỉ không
     private String origin;           // xuất xứ (quốc gia/vùng)
+
+    /**
+     * Validates required Collectible fields (rarity, condition) and optional year rules.
+     */
+    public static void validateCollectibleFields(
+            RarityLevel rarityLevel,
+            ConditionGrade conditionGrade,
+            int yearOfOrigin,
+            String origin) {
+        validateRarityLevel(rarityLevel);
+        validateConditionGrade(conditionGrade);
+        validateYearOfOrigin(yearOfOrigin);
+        if (origin != null) {
+            validateOrigin(origin);
+        }
+    }
+
+    private void validateCollectibleCategory() {
+        validateCollectibleFields(rarityLevel, conditionGrade, yearOfOrigin, origin);
+    }
 
     // Constructor dùng khi tạo Collectible mới (Seller đăng sản phẩm)
     public Collectible(String name,
@@ -58,13 +93,8 @@ public class Collectible extends Item {
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
         this.hasCertificate = hasCertificate;
-        this.origin = (origin == null || origin.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(origin);
-        validateYearOfOrigin(this.yearOfOrigin);
-        validateRarityLevel(this.rarityLevel);
-        validateConditionGrade(this.conditionGrade);
-        validateOrigin(this.origin);
+        this.origin = resolveOrigin(origin);
+        validateCollectibleCategory();
     }
 
     // Constructor dùng khi nạp từ DB
@@ -84,37 +114,43 @@ public class Collectible extends Item {
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
         this.hasCertificate = hasCertificate;
-        this.origin = (origin == null || origin.trim().isEmpty())
-                ? "Unknown"
-                : normalizeOptional(origin);
-        validateYearOfOrigin(this.yearOfOrigin);
-        validateRarityLevel(this.rarityLevel);
-        validateConditionGrade(this.conditionGrade);
-        validateOrigin(this.origin);
+        this.origin = resolveOrigin(origin);
+        validateCollectibleCategory();
     }
 
-    // Validate
+    /**
+     * Optional origin: blank values default to {@code Unknown}.
+     */
+    public static String resolveOrigin(String origin) {
+        if (origin == null || origin.trim().isEmpty()) {
+            return "Unknown";
+        }
+        return normalizeOptional(origin);
+    }
+
     private static void validateYearOfOrigin(int year) {
         if (year == 0) return; // unknown
         int current = LocalDate.now().getYear();
-        final int MIN_YEAR = -3000;
-        if (year < MIN_YEAR || year > current) {
-            throw new IllegalArgumentException("Invalid production year. Valid range: " +
-                    MIN_YEAR + " .. " + current + " (Use '0' if the production year is unknown).");
+        if (year < YEAR_MIN || year > current) {
+            throw new IllegalArgumentException(ValidationMessages.YEAR_OF_ORIGIN_INVALID);
         }
     }
     private static void validateRarityLevel(RarityLevel rarity) {
-        if (rarity == null)
-           throw new IllegalArgumentException("Rarity level must not be blank.");
+        if (rarity == null) {
+            throw new IllegalArgumentException(ValidationMessages.RARITY_REQUIRED);
+        }
     }
     private static void validateConditionGrade(ConditionGrade grade) {
-        if (grade == null)
-            throw new IllegalArgumentException("Condition grade must not be blank.");
+        if (grade == null) {
+            throw new IllegalArgumentException(ValidationMessages.CONDITION_REQUIRED);
+        }
     }
     private static void validateOrigin(String origin) {
         if (origin == null) return;
         String o = origin.trim();
-        if (o.length() > 120) throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
+        if (o.length() > ORIGIN_MAX_LENGTH) {
+            throw new IllegalArgumentException(ValidationMessages.ORIGIN_TOO_LONG);
+        }
     }
     // Summary / toString
     @Override
@@ -151,7 +187,7 @@ public class Collectible extends Item {
     public void setHasCertificate(boolean hasCertificate) { this.hasCertificate = hasCertificate; }
     public String getOrigin() { return origin; }
     public void setOrigin(String origin) {
-        this.origin = normalizeOptional(origin);
+        this.origin = resolveOrigin(origin);
         validateOrigin(this.origin);
     }
 }

@@ -6,6 +6,16 @@ import java.time.LocalDateTime;
 
 /**
  * Vehicle: model cho nhóm hàng phương tiện.
+ * <p>
+ * Backend Validation Notes:
+ * <ul>
+ * <li><b>engineType</b>: Required. Cannot be null.</li>
+ * <li><b>transmission</b>: Required. Defaults to OTHER if blank or missing.</li>
+ * <li><b>odo</b>: Required. Must be between 0 and 1,000,000.</li>
+ * <li><b>manufacturingYear</b>: Optional. Must be between 1886 and current year if provided.</li>
+ * <li><b>brand, model, color</b>: Optional. Defaults to "Unknown" (except color which stays null).</li>
+ * <li><b>hasLegalPapers</b>: Optional boolean flag.</li>
+ * </ul>
  */
 public class Vehicle extends Item {
     // enum cho hộp số
@@ -57,6 +67,10 @@ public class Vehicle extends Item {
     private boolean hasLegalPapers; // có giấy tờ pháp lý
     private Transmission transmission; // hộp số
 
+    public static Transmission resolveTransmission(Transmission transmission) {
+        return transmission == null ? Transmission.OTHER : transmission;
+    }
+
     // Constructor dùng khi tạo mới (Seller đăng sản phẩm)
     public Vehicle(String name,
                    BigDecimal startingPrice,
@@ -71,18 +85,25 @@ public class Vehicle extends Item {
                    boolean hasLegalPapers,
                    Transmission transmission) {
         super(name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        // Optional brand
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Optional model
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Optional manufacturingYear
         this.manufacturingYear = manufacturingYear;
+        // Require odo (validated to 0 .. 1_000_000)
         this.odo = odo;
+        // Require engineType
         this.engineType = engineType;
+        // Optional color
         this.color = normalizeOptional(color);
+        // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
-        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        this.transmission = resolveTransmission(transmission);
         validateBrand(this.brand);
         validateModel(this.model);
         validateManufacturingYear(this.manufacturingYear);
@@ -108,18 +129,25 @@ public class Vehicle extends Item {
                    boolean hasLegalPapers,
                    Transmission transmission) {
         super(id, createdAt, name, startingPrice, description, ItemCategory.VEHICLE, ownerId);
+        // Optional brand
         this.brand = (brand == null || brand.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(brand);
+        // Optional model
         this.model = (model == null || model.trim().isEmpty())
                 ? "Unknown"
                 : normalizeOptional(model);
+        // Optional manufacturingYear
         this.manufacturingYear = manufacturingYear;
+        // Require odo (validated to 0 .. 1_000_000)
         this.odo = odo;
+        // Require engineType
         this.engineType = engineType;
+        // Optional color
         this.color = normalizeOptional(color);
+        // Optional hasLegalPapers
         this.hasLegalPapers = hasLegalPapers;
-        this.transmission = (transmission == null) ? Transmission.OTHER : transmission;
+        this.transmission = resolveTransmission(transmission);
         validateBrand(this.brand);
         validateModel(this.model);
         validateManufacturingYear(this.manufacturingYear);
@@ -147,12 +175,12 @@ public class Vehicle extends Item {
         }
     }
     private static void validateOdo(int odo) {
-        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) must be >= 0.");
-        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer seems invalid (>1,000,000).");
+        if (odo < 0) throw new IllegalArgumentException("Odometer (odo) cannot be negative.");
+        if (odo > 1_000_000) throw new IllegalArgumentException("Odometer value exceeds maximum limit of 1,000,000.");
     }
     private static void validateEngineType(EngineType t) {
         if (t == null)
-            throw new IllegalArgumentException("EngineType must not be null. If the engine type is unknown, choose EngineType.OTHER.");
+            throw new IllegalArgumentException("Vehicle engine type is required.");
     }
     private static void validateColor(String c) {
         if (c == null) return; // optional
@@ -219,7 +247,7 @@ public class Vehicle extends Item {
     public void setHasLegalPapers(boolean hasLegalPapers) { this.hasLegalPapers = hasLegalPapers; }
     public Transmission getTransmission() { return transmission; }
     public void setTransmission(Transmission transmission) {
-        this.transmission = (transmission == null ? Transmission.OTHER : transmission);
+        this.transmission = resolveTransmission(transmission);
         validateTransmission(this.transmission);
     }
 }

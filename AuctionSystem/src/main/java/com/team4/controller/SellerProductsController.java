@@ -4,7 +4,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
+import com.team4.dao.impl.ItemDAOImpl;
+import com.team4.dao.impl.UserDAOImpl;
+import com.team4.factory.ItemRequest;
 import com.team4.model.Item;
+import com.team4.service.ItemService;
+import com.team4.util.BusinessException;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -235,9 +240,12 @@ public class SellerProductsController implements Initializable {
             AddProductDialogController dialogController = loader.getController();
 
             Stage stage = new Stage();
-            stage.setTitle("Add Product");
+            stage.setTitle("Đăng sản phẩm");
             stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.setMinWidth(600);
+            stage.setMinHeight(720);
             stage.showAndWait();
 
             if (dialogController.isConfirmed()) {
@@ -249,28 +257,38 @@ public class SellerProductsController implements Initializable {
     }
 
     private void createProduct(AddProductDialogController dialogController) {
+        final String sellerId = currentSellerId();
+        final ItemRequest request;
+        try {
+            request = dialogController.buildItemRequest(sellerId);
+            request.setOwnerId(sellerId);
+        } catch (IllegalArgumentException ex) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi dữ liệu", ex.getMessage());
+            return;
+        }
+
         Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                new ApiClient().createItem(
-                        currentSellerId(),
-                        dialogController.getName(),
-                        dialogController.getCategory(),
-                        dialogController.getPrice(),
-                        dialogController.getDescription()
-                );
+                ItemService itemService = new ItemService(new ItemDAOImpl(), new UserDAOImpl());
+                itemService.createItem(sellerId, request);
                 return null;
             }
         };
 
         task.setOnSucceeded(e -> {
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully.");
+            showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã đăng sản phẩm thành công.");
             loadDataFromServer();
             loadStats();
         });
 
-        task.setOnFailed(e -> showAlert(Alert.AlertType.ERROR, "Error",
-                "Failed to add product. " + cleanMessage(task.getException())));
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            String msg = ex instanceof BusinessException
+                    ? ex.getMessage()
+                    : cleanMessage(ex);
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể đăng sản phẩm. " + msg);
+        });
 
         new Thread(task).start();
     }

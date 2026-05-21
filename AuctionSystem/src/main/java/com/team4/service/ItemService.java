@@ -5,6 +5,7 @@ import com.team4.dao.UserDAO;
 import com.team4.dto.auction.*;
 import com.team4.dto.item.*;
 import com.team4.factory.*;
+import com.team4.model.Collectible;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -30,7 +31,19 @@ public class ItemService {
     }
 
     /**
-     * Tạo mặt hàng mới: kiểm tra seller có tồn tại và đúng role không, tạo object Item qua Factory, lưu xuống DB
+     * Tạo mặt hàng mới.
+     * <p>
+     * Validation Flow:
+     * 1. Check if the user is a valid Seller.
+     * 2. Common validation via Item.validateCommonFields().
+     * 3. Apply defaults via ItemRequestDefaults.apply().
+     * 4. Category-specific validation occurs in the Model constructors during ItemFactory.createItem().
+     * <p>
+     * Any validation failure (IllegalArgumentException) is caught and wrapped in a consistent BusinessException.
+     * 
+     * @param sellerId ID người bán
+     * @param itemRequest Dữ liệu yêu cầu tạo item
+     * @return Item đã được tạo và lưu vào DB
      */
     public ItemResponseDTO createItem(String sellerId, CreateItemRequestDTO requestDTO) {
         logger.info("Đang tạo mặt hàng mới cho người bán: sellerId={}, itemName={}, category={}",
@@ -67,8 +80,7 @@ public class ItemService {
                 logger.warn("Tạo mặt hàng thất bại: Loại mặt hàng không hợp lệ. category={}", itemRequest.getCategory());
                 throw new BusinessException("Loại mặt hàng không hợp lệ.");
         }
-        // Tạo và lưu
-        Item item = factory.createItem(itemRequest);
+
         if (!itemDAO.insert(item)) {
             logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
             throw new BusinessException("Không thể tạo mặt hàng.");
@@ -79,6 +91,38 @@ public class ItemService {
         }
         logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
         return ItemMapper.toItemResponseDTO(item);
+    }
+
+    private ItemFactory getFactory(Item.ItemCategory category) {
+        if (category == null) {
+            throw new IllegalArgumentException("Invalid item category.");
+        }
+        switch (category) {
+            case ART:
+                return new ArtFactory();
+            case COLLECTIBLE:
+                return new CollectibleFactory();
+            case ELECTRONICS:
+                return new ElectronicsFactory();
+            case FASHION:
+                return new FashionFactory();
+            case VEHICLE:
+                return new VehicleFactory();
+            default:
+                throw new IllegalArgumentException("Invalid item category.");
+        }
+    }
+
+    /**
+     * Rejects invalid common item payloads before factory construction.
+     */
+    private void validateCommonItemRequest(ItemRequest itemRequest) {
+        Item.validateCommonFields(
+                itemRequest.getName(),
+                itemRequest.getStartingPrice(),
+                itemRequest.getDescription(),
+                itemRequest.getCategory(),
+                itemRequest.getOwnerId());
     }
 
     /**

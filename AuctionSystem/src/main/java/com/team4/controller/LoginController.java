@@ -178,7 +178,7 @@ public class LoginController {
                         com.google.gson.JsonObject resObj = com.google.gson.JsonParser.parseString(response).getAsJsonObject();
                         String userId = resObj.getAsJsonObject("data").get("userId").getAsString();
                         socketClient.sendLogin(userId);
-                        
+
                         socketClient.setOnForceLogout(() -> {
                             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                             alert.setTitle("Warning");
@@ -320,6 +320,25 @@ public class LoginController {
             regError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
+    }
+
+    private String getErrorMessage(Exception e) {
+        if (e instanceof java.io.IOException || e.getCause() instanceof java.io.IOException) {
+            return "Server connection error: Cannot connect to server.";
+        }
+        String errorMsg = e.getMessage();
+        if (errorMsg == null || errorMsg.isEmpty()) {
+            return "An unknown error occurred.";
+        }
+        try {
+            com.google.gson.JsonObject errObj = com.google.gson.JsonParser.parseString(errorMsg).getAsJsonObject();
+            if (errObj.has("message")) {
+                return errObj.get("message").getAsString();
+            }
+        } catch (Exception ex) {
+            // Not a JSON
+        }
+        return errorMsg;
     }
 
     private void showError(Label errorLabel, String message) {

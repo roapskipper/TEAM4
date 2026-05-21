@@ -140,6 +140,20 @@ public class ItemFactoryTest {
             assertEquals(Collectible.RarityLevel.ULTRA_RARE, c.getRarityLevel());
             assertTrue(c.isHasCertificate());
         }
+
+        @Test
+        @DisplayName("Thất bại - Thiếu rarityLevel")
+        void testCreateCollectible_MissingRarity() {
+            ItemRequest req = new ItemRequest();
+            req.setName("Tem");
+            req.setStartingPrice(new BigDecimal("500"));
+            req.setOwnerId("o1");
+            req.setDescription("Mô tả");
+            req.setConditionGrade(Collectible.ConditionGrade.GOOD);
+
+            ItemFactory factory = new CollectibleFactory();
+            assertThrows(IllegalArgumentException.class, () -> factory.createItem(req));
+        }
     }
 
     @Nested
