@@ -692,6 +692,43 @@
     -fx-text-fill: #2C2C2C;
 }
 
+.form-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #722F37;
+    -fx-padding: 8 0 4 0;
+}
+
+.form-section-subtitle {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.category-panel {
+    -fx-background-color: rgba(114, 47, 55, 0.04);
+    -fx-background-radius: 8;
+    -fx-border-color: #E8E0E0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+.dialog-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.dialog-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.rules-pane > .title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
+}
+
 .dialog-help {
     -fx-font-size: 11px;
     -fx-text-fill: #555555;
