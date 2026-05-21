@@ -59,7 +59,7 @@ public class ItemDAOImpl implements ItemDAO {
                         , rs.getBoolean("has_legal_papers"), Vehicle.fromNameTran(rs.getString("transmission")));
 
             default:
-                throw new SQLException("Lỗi hệ thống: Category không hợp lệ -> " + category);
+                throw new SQLException("System error: Invalid category -> " + category);
         }
     }
 
@@ -81,10 +81,10 @@ public class ItemDAOImpl implements ItemDAO {
                 if (rs.next()) return mapRowToItem(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm item với id={}", id, e);
+            logger.error("Unable to find item with id={}", id, e);
         } catch (Exception e) {
             // Bắt IllegalArgumentException từ constructor subclass (VD: condition trống)
-            logger.warn("Item id={} có dữ liệu không hợp lệ, bỏ qua: {}", id, e.getMessage());
+            logger.warn("Item id={} has invalid data, skipping: {}", id, e.getMessage());
         }
         return null;
     }
@@ -277,5 +277,8 @@ public class ItemDAOImpl implements ItemDAO {
             logger.error("Cannot execute item list query with param={}", param, e);
         }
         return items;
+    }
+}
+      return items;
     }
 }

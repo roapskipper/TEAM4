@@ -3,7 +3,8 @@ package com.team4.dto.auction;
 import com.team4.model.Item;
 import java.math.BigDecimal;
 
-public class CreateItemRequestDTO {
+public class
+CreateItemRequestDTO {
     private String name;
     private String description;
     private BigDecimal startingPrice;
@@ -23,22 +24,22 @@ public class CreateItemRequestDTO {
 
     protected final void validateItemDTO() {
         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Tên mặt hàng không được để trống.");
+            throw new IllegalArgumentException("Item name must not be blank.");
         }
         if (name.length() > NAME_MAX) {
-            throw new IllegalArgumentException("Tên mặt hàng không được vượt quá " + NAME_MAX + " ký tự.");
+            throw new IllegalArgumentException("Item name must not exceed " + NAME_MAX + " characters.");
         }
         if (startingPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Giá khởi điểm không được âm.");
+            throw new IllegalArgumentException("Starting price cannot be negative.");
         }
         if (category == null) {
-            throw new IllegalArgumentException("Category không được để trống.");
+            throw new IllegalArgumentException("Category must not be null.");
         }
         if (description == null || description.isEmpty()) {
-            throw new IllegalArgumentException("Mô tả không được để trống.");
+            throw new IllegalArgumentException("Description must not be blank.");
         }
         if (description.length() > DESC_MAX) {
-            throw new IllegalArgumentException("Mô tả không được vượt quá " + DESC_MAX + " ký tự.");
+            throw new IllegalArgumentException("Description must not exceed " + DESC_MAX + " characters.");
         }
     }
 

@@ -270,12 +270,11 @@ public class UserDAOImpl implements UserDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1,newBalance);
             stmt.setString(2,id);
-            stmt.executeUpdate();
+            return stmt.executeUpdate() > 0;
         } catch  (SQLException e) {
             logger.error("Unable to update user balance id={} newBalance={}", id, newBalance, e);
             return false;
         }
-        return true;
     }
     // Dùng cho trường hợp cần transaction, connection được truyền vào từ bên ngoài
     @Override

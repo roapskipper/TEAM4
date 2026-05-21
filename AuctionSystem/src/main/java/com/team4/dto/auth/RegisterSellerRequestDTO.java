@@ -27,19 +27,19 @@ public class RegisterSellerRequestDTO {
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     public void validate() {
         if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
-            throw new IllegalArgumentException("Tên đăng nhập phải dài từ 4–30 ký tự và chỉ được chứa chữ cái, số, dấu chấm (.), gạch dưới (_) và gạch ngang (-).");
+            throw new IllegalArgumentException("Username must be 4-30 characters long and can only contain letters, numbers, dots (.), underscores (_), and hyphens (-).");
         }
         if (fullName == null || fullName.isEmpty()) {
-            throw new IllegalArgumentException("Họ tên không được trống");
+            throw new IllegalArgumentException("Full name must not be blank");
         }
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("email không hợp lệ");
+            throw new IllegalArgumentException("Invalid email");
         }
         if (storeName == null || storeName.isEmpty()) {
-            throw new IllegalArgumentException("Tên cửa hàng khong được trống");
+            throw new IllegalArgumentException("Store name must not be blank");
         }
         if (password == null || password.length() < 6) {
-            throw new IllegalArgumentException("Mật khẩu phải gồm 6 kí tự trở lên");
+            throw new IllegalArgumentException("Password must be at least 6 characters long");
         }
 
     }

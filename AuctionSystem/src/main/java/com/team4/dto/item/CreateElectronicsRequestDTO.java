@@ -31,23 +31,23 @@ public class CreateElectronicsRequestDTO extends CreateItemRequestDTO {
         if (brand != null) {
             String b = brand.trim();
             if (b.length() > 50) {
-                throw new IllegalArgumentException("Brand không được vượt quá 50 ký tự.");
+                throw new IllegalArgumentException("Brand must not exceed 50 characters.");
             }
         }
         
         if (model != null) {
             String m = model.trim();
             if (m.length() > 50) {
-                throw new IllegalArgumentException("Model không được vượt quá 50 ký tự.");
+                throw new IllegalArgumentException("Model must not exceed 50 characters.");
             }
         }
         
         if (itemCondition == null) {
-            throw new IllegalArgumentException("Item condition không được để trống.");
+            throw new IllegalArgumentException("Item condition must not be blank.");
         }
         
         if (warrantyMonths < 0) {
-            throw new IllegalArgumentException("Warranty months phải >= 0.");
+            throw new IllegalArgumentException("Warranty months must be >= 0.");
         }
     }
 

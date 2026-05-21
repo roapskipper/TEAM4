@@ -30,16 +30,16 @@ public class CreateCollectibleRequestDTO extends CreateItemRequestDTO {
         int current = LocalDate.now().getYear();
         final int MIN_YEAR = -3000;
         if (yearOfOrigin < MIN_YEAR || yearOfOrigin > current) {
-            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
-                    MIN_YEAR + " .. " + current + " (Nếu không rõ năm sản xuất có thể điền '0').");
+            throw new IllegalArgumentException("Invalid production year. Valid range: " +
+                    MIN_YEAR + " .. " + current + " (Use '0' if unknown).");
         }
         if (rarityLevel == null)
-            throw new IllegalArgumentException("Rarity level không được để trống.");
+            throw new IllegalArgumentException("Rarity level must not be blank.");
         if (conditionGrade == null)
-            throw new IllegalArgumentException("Condition grade không được để trống.");
+            throw new IllegalArgumentException("Condition grade must not be blank.");
         if (origin == null) return;
         String o = origin.trim();
-        if (o.length() > 120) throw new IllegalArgumentException("Origin quá dài (tối đa 120 ký tự).");
+        if (o.length() > 120) throw new IllegalArgumentException("Origin is too long (maximum 120 characters).");
     }
 
     public void validate() {
