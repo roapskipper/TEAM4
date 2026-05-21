@@ -200,6 +200,21 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
+
+    @Override
+    public int closeExpiredAuctions(LocalDateTime currentTime) {
+        String sql = "UPDATE auctions SET status = ? WHERE status = ? AND end_time <= ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, Auction.AuctionStatus.FINISHED.name());
+            stmt.setString(2, Auction.AuctionStatus.RUNNING.name());
+            stmt.setTimestamp(3, Timestamp.valueOf(currentTime));
+            return stmt.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Unable to close expired auctions at {}", currentTime, e);
+            return 0;
+        }
+    }
     @Override
     /**
      * 7. updateCurrentBid() - cập nhật giá đấu

@@ -283,11 +283,10 @@ public class UserDAOImpl implements UserDAO {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBigDecimal(1,newBalance);
             stmt.setString(2,id);
-            stmt.executeUpdate();
+            return stmt.executeUpdate() > 0;
         } catch  (SQLException e) {
             logger.error("Unable to update user balance id={} newBalance={} in transaction", id, newBalance, e);
             return false;
         }
-        return true;
     }
 }

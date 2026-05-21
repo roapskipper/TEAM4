@@ -166,23 +166,9 @@ public class AuctionService {
      */
     public void closeExpiredAuctions() {
         logger.info("Checking for expired auctions to close.");
-        List<Auction> activeAuctions = auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING);
         LocalDateTime now = LocalDateTime.now();
-        int closedCount = 0;
-
-        for (Auction auction : activeAuctions) {
-            if (!auction.getEndTime().isAfter(now)) {
-                auction.close();
-                if (auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED)) {
-                    closedCount++;
-                    logger.info("Auction closed: auctionId={}, endTime={}, closedAt={}",
-                            auction.getId(), auction.getEndTime(), now);
-                } else {
-                    logger.error("Failed to close expired auction in database: auctionId={}", auction.getId());
-                }
-            }
-        }
-        logger.info("Expired auction closure complete. Checked: {}, Closed: {}", activeAuctions.size(), closedCount);
+        int closedCount = auctionDAO.closeExpiredAuctions(now);
+        logger.info("Expired auction closure complete. Closed: {}", closedCount);
     }
 
     /**
