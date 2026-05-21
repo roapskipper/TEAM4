@@ -12,12 +12,15 @@ import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.BidTransactionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
 import com.team4.dao.impl.UserDAOImpl;
+import com.team4.dto.auction.BidTransactionResponseDTO;
+import com.team4.mapper.BidMapper;
 import com.team4.model.Auction;
 import com.team4.model.BidTransaction;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
+import com.team4.server.Server;
 import com.team4.service.AuctionService;
 import com.team4.util.BusinessException;
 
@@ -49,7 +52,7 @@ public class AuctionsHandler implements HttpHandler {
         try {
             String auctionId = readAuctionId(exchange.getRequestURI().getPath());
             if (auctionId != null) {
-                Auction auction = auctionService.getAuctionById(auctionId);
+                Auction auction = auctionService.getRawAuctionById(auctionId);
                 ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse(
                         "SUCCESS",
                         "Lay chi tiet phien dau gia thanh cong!",
@@ -136,13 +139,10 @@ public class AuctionsHandler implements HttpHandler {
         if (includeHistory) {
             JsonArray historyArr = new JsonArray();
             for (BidTransaction bid : history) {
-                JsonObject bidObj = new JsonObject();
-                bidObj.addProperty("id", bid.getId());
-                bidObj.addProperty("auctionId", bid.getAuctionId());
-                bidObj.addProperty("bidderId", bid.getBidderId());
-                bidObj.addProperty("bidAmount", bid.getBidAmount());
-                bidObj.addProperty("bidTime", bid.getBidTime().toString());
-
+                // Dùng BidMapper → BidTransactionResponseDTO để serialize
+                BidTransactionResponseDTO bidDTO = BidMapper.toBidTransactionResponseDTO(bid);
+                JsonObject bidObj = Server.getGson().toJsonTree(bidDTO).getAsJsonObject();
+                // Bổ sung bidderName – trường này không có trong DTO nhưng client cần hiển thị
                 User bidder = userDAO.findById(bid.getBidderId());
                 bidObj.addProperty("bidderName", bidder != null ? displayName(bidder) : "Unknown Bidder");
                 historyArr.add(bidObj);

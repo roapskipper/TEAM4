@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.scene.paint.*?>
@@ -32,9 +33,19 @@
             </padding>
 
             <HBox spacing="14" alignment="CENTER_LEFT">
-                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 12;"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="52" prefHeight="52">
-                    <Label text="AS" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: white;" />
+                    <Group scaleX="1.18" scaleY="1.18">
+                        <Line startX="8" startY="31" endX="32" endY="31" styleClass="brand-logo-axis"/>
+                        <Line startX="9" startY="27" endX="16" endY="21" styleClass="brand-logo-line"/>
+                        <Line startX="16" startY="21" endX="23" endY="24" styleClass="brand-logo-line"/>
+                        <Line startX="23" startY="24" endX="32" endY="12" styleClass="brand-logo-line"/>
+                        <Line startX="32" startY="12" endX="31" endY="18" styleClass="brand-logo-arrow"/>
+                        <Line startX="32" startY="12" endX="26" endY="13" styleClass="brand-logo-arrow"/>
+                        <Circle centerX="9" centerY="27" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="16" centerY="21" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="23" centerY="24" radius="2.2" styleClass="brand-logo-node"/>
+                    </Group>
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
@@ -90,9 +101,19 @@
             </padding>
 
             <HBox id="mobileLogo" spacing="10" alignment="CENTER" managed="false" visible="false">
-                <StackPane style="-fx-background-color: linear-gradient(to bottom right, #722F37, #A52A2A); -fx-background-radius: 14;"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
-                    <Label text="AS" style="-fx-font-size: 12; -fx-font-weight: bold; -fx-text-fill: white;" />
+                    <Group>
+                        <Line startX="8" startY="31" endX="32" endY="31" styleClass="brand-logo-axis"/>
+                        <Line startX="9" startY="27" endX="16" endY="21" styleClass="brand-logo-line"/>
+                        <Line startX="16" startY="21" endX="23" endY="24" styleClass="brand-logo-line"/>
+                        <Line startX="23" startY="24" endX="32" endY="12" styleClass="brand-logo-line"/>
+                        <Line startX="32" startY="12" endX="31" endY="18" styleClass="brand-logo-arrow"/>
+                        <Line startX="32" startY="12" endX="26" endY="13" styleClass="brand-logo-arrow"/>
+                        <Circle centerX="9" centerY="27" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="16" centerY="21" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="23" centerY="24" radius="2.2" styleClass="brand-logo-node"/>
+                    </Group>
                 </StackPane>
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>

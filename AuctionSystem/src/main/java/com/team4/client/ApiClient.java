@@ -315,6 +315,25 @@ public class ApiClient {
         }
     }
 
+    public JsonArray getOwnedItems(String userId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "/owned-items"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+                    return responseObj.getAsJsonArray("data");
+                }
+            }
+            return parsed.isJsonArray() ? parsed.getAsJsonArray() : new JsonArray();
+        }
+        throw apiException(response);
+    }
+
     public JsonObject getSellerStats(String sellerId) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "seller/" + sellerId + "/stats"))

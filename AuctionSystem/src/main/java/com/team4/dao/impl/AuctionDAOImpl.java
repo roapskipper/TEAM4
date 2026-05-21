@@ -200,6 +200,20 @@ public class AuctionDAOImpl implements AuctionDAO {
             return false;
         }
     }
+
+    @Override
+    public boolean updateStatus(Connection conn, String auctionId, Auction.AuctionStatus newStatus) {
+        String sql = "UPDATE auctions SET status = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newStatus.name());
+            stmt.setString(2, auctionId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to update auction status auctionId={} newStatus={} in transaction", auctionId, newStatus, e);
+            return false;
+        }
+    }
+
     @Override
     /**
      * 7. updateCurrentBid() - cập nhật giá đấu

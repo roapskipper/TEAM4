@@ -26,12 +26,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Server {
     private static final int PORT = 18368;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
     private static ConcurrentHashMap<String, ClientHandler> activeUsers = new ConcurrentHashMap<>();
     private static ExecutorService threadPool;
+    private static ScheduledExecutorService auctionScheduler;
 
     private static final AuctionService auctionService = new AuctionService(
             new AuctionDAOImpl(),
@@ -62,12 +65,17 @@ public class Server {
     public static Gson getGson()                     { return gson; }
 
     public static void main(String[] args) {
+        com.team4.util.DatabaseSetup.initDatabase();
         com.team4.db.DatabaseManager.initialize();
         new ApiServer().start();
+        startAuctionScheduler();
 
         threadPool = Executors.newFixedThreadPool(50);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Dang tat server. Giai phong thread pool...");
+            if (auctionScheduler != null && !auctionScheduler.isShutdown()) {
+                auctionScheduler.shutdown();
+            }
             if (threadPool != null && !threadPool.isShutdown()) {
                 threadPool.shutdown();
             }
@@ -91,6 +99,17 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void startAuctionScheduler() {
+        auctionScheduler = Executors.newSingleThreadScheduledExecutor();
+        auctionScheduler.scheduleAtFixedRate(() -> {
+            try {
+                auctionService.closeExpiredAuctions();
+            } catch (Exception e) {
+                System.err.println("Unable to close expired auctions: " + e.getMessage());
+            }
+        }, 5, 10, TimeUnit.SECONDS);
     }
 
     public static void removeClient(ClientHandler handler) {

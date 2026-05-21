@@ -247,6 +247,7 @@ public class BidderAuctionsController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/bidding_room.fxml"));
             Parent page = loader.load();
             BiddingRoomController controller = loader.getController();
+            controller.setMainController(mainController);
             controller.loadAuction(auctionId);
 
             if (mainController != null) {

@@ -9,7 +9,10 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import java.math.BigDecimal;
 import java.net.URL;
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -19,9 +22,12 @@ public class MainController implements Initializable {
     @FXML private StackPane contentArea;
     @FXML private Label pageTitle, pageSubtitle;
     @FXML private Label userNameLabel, userRoleBadge;
+    @FXML private Label balanceValueLabel;
     @FXML private StackPane userAvatarBg;
     @FXML private Button notiBtn;
     @FXML private Label notiBadge;
+
+    private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
 
     private String userRole = "bidder";
     private String currentPage = "";
@@ -34,6 +40,8 @@ public class MainController implements Initializable {
         this.userRole = role;
         setupSidebar();
         updateUserInfo();
+        updateBalanceVisibility();
+        refreshUserBalance();
 
         if (role != null && role.startsWith("admin")) {
             loadPage("admin_dashboard", "Dashboard", "Monitor and manage the entire system");
@@ -58,6 +66,7 @@ public class MainController implements Initializable {
             addNavItem("Profile", "profile", "Update your information");
         } else {
             addNavItem("Auction Room", "bidder_auctions", "Explore active auction sessions");
+            addNavItem("Owned Items", "bidder_owned_items", "Collection");
             addNavItem("Profile", "profile", "Update your information");
         }
 
@@ -127,6 +136,8 @@ public class MainController implements Initializable {
             Object controller = loader.getController();
             if (controller instanceof BidderAuctionsController) {
                 ((BidderAuctionsController) controller).setMainController(this);
+            } else if (controller instanceof BiddingRoomController) {
+                ((BiddingRoomController) controller).setMainController(this);
             }
 
             contentArea.getChildren().clear();
@@ -137,6 +148,59 @@ public class MainController implements Initializable {
             contentArea.getChildren().clear();
             contentArea.getChildren().add(placeholder);
         }
+    }
+
+    public void refreshUserBalance() {
+        com.team4.util.UserSession session = com.team4.util.UserSession.getInstance();
+        if (balanceValueLabel == null || session == null || session.getUserId() == null) {
+            return;
+        }
+        if (isAdminRole()) {
+            updateBalanceVisibility();
+            return;
+        }
+
+        balanceValueLabel.setText("Balance: " + formatMoney(session.getBalance()));
+
+        javafx.concurrent.Task<com.google.gson.JsonObject> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected com.google.gson.JsonObject call() throws Exception {
+                return new com.team4.client.ApiClient().getUserProfile(session.getUserId());
+            }
+        };
+        task.setOnSucceeded(e -> {
+            com.google.gson.JsonObject profile = task.getValue();
+            if (profile != null && profile.has("balance") && !profile.get("balance").isJsonNull()) {
+                BigDecimal balance = profile.get("balance").getAsBigDecimal();
+                session.setBalance(balance);
+                balanceValueLabel.setText("Balance: " + formatMoney(balance));
+            }
+        });
+        task.setOnFailed(e -> balanceValueLabel.setText("Balance: --"));
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void updateBalanceVisibility() {
+        if (balanceValueLabel == null) {
+            return;
+        }
+        boolean showBalance = !isAdminRole();
+        balanceValueLabel.setManaged(showBalance);
+        balanceValueLabel.setVisible(showBalance);
+    }
+
+    private boolean isAdminRole() {
+        return userRole != null && userRole.startsWith("admin");
+    }
+
+    private String formatMoney(BigDecimal value) {
+        if (value == null) {
+            return "0 VND";
+        }
+        return MONEY_FORMAT.format(value) + " VND";
     }
 
     /** Navigate to an already-loaded page (used by child controllers). */

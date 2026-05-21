@@ -2,7 +2,9 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
 <?import javafx.scene.text.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
@@ -20,9 +22,19 @@
               spacing="0">
 
             <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 24 20 16 20;">
-                <StackPane styleClass="brand-icon-bg"
+                <StackPane styleClass="brand-logo-mark"
                            prefWidth="40" prefHeight="40">
-                    <Label text="AS" style="-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    <Group>
+                        <Line startX="8" startY="31" endX="32" endY="31" styleClass="brand-logo-axis"/>
+                        <Line startX="9" startY="27" endX="16" endY="21" styleClass="brand-logo-line"/>
+                        <Line startX="16" startY="21" endX="23" endY="24" styleClass="brand-logo-line"/>
+                        <Line startX="23" startY="24" endX="32" endY="12" styleClass="brand-logo-line"/>
+                        <Line startX="32" startY="12" endX="31" endY="18" styleClass="brand-logo-arrow"/>
+                        <Line startX="32" startY="12" endX="26" endY="13" styleClass="brand-logo-arrow"/>
+                        <Circle centerX="9" centerY="27" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="16" centerY="21" radius="2.2" styleClass="brand-logo-node"/>
+                        <Circle centerX="23" centerY="24" radius="2.2" styleClass="brand-logo-node"/>
+                    </Group>
                 </StackPane>
                 <VBox spacing="2">
                     <Label text="AuctionSpace" styleClass="brand-name"/>
@@ -61,6 +73,11 @@
                         </HBox>
                     </VBox>
                 </HBox>
+
+                <Label fx:id="balanceValueLabel"
+                       text="Balance: --"
+                       maxWidth="Infinity"
+                       styleClass="balance-pill"/>
 
                 <Button fx:id="logoutBtn"
                         text="Logout"

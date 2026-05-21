@@ -17,5 +17,6 @@ public interface AuctionDAO {
 
     boolean insert(Auction auction);
     boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus);
+    boolean updateStatus(Connection conn, String auctionId, Auction.AuctionStatus newStatus);
     boolean updateCurrentBid(Connection conn, String id, BigDecimal currentPrice, String highestBidderId);
 }

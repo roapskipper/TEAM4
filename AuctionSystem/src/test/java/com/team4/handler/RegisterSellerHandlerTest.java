@@ -2,6 +2,7 @@ package com.team4.handler;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import com.team4.dto.auth.RegisterSellerRequestDTO;
 import com.team4.service.AuthenticationService;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -130,8 +131,7 @@ public class RegisterSellerHandlerTest {
         @Test
         @DisplayName("Đủ thông tin → 200 + SUCCESS")
         void register_success_returns200() throws IOException {
-            doNothing().when(authService).registerSeller(
-                    anyString(), anyString(), anyString(), anyString(), anyString());
+            doNothing().when(authService).registerSeller(any(RegisterSellerRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
@@ -148,8 +148,7 @@ public class RegisterSellerHandlerTest {
         @Test
         @DisplayName("Không có storeName → gọi service với chuỗi rỗng")
         void register_withoutStoreName_usesEmptyString() throws IOException {
-            doNothing().when(authService).registerSeller(
-                    anyString(), anyString(), anyString(), anyString(), eq(""));
+            doNothing().when(authService).registerSeller(any(RegisterSellerRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
@@ -157,7 +156,7 @@ public class RegisterSellerHandlerTest {
 
             handler.handle(exchange);
 
-            verify(authService).registerSeller(anyString(), anyString(), eq(""), eq(""), eq(""));
+            verify(authService).registerSeller(any(RegisterSellerRequestDTO.class));
             verify(exchange).sendResponseHeaders(eq(200), anyLong());
         }
     }
@@ -173,8 +172,7 @@ public class RegisterSellerHandlerTest {
         @DisplayName("Username đã tồn tại → 400 + ERROR")
         void register_duplicateUsername_returns400() throws IOException {
             doThrow(new BusinessException("Tên đăng nhập đã tồn tại"))
-                    .when(authService).registerSeller(
-                            anyString(), anyString(), anyString(), anyString(), anyString());
+                    .when(authService).registerSeller(any(RegisterSellerRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
@@ -191,8 +189,7 @@ public class RegisterSellerHandlerTest {
         @DisplayName("Lỗi không mong muốn → 500")
         void register_runtimeException_returns500() throws IOException {
             doThrow(new RuntimeException("DB down"))
-                    .when(authService).registerSeller(
-                            anyString(), anyString(), anyString(), anyString(), anyString());
+                    .when(authService).registerSeller(any(RegisterSellerRequestDTO.class));
 
             when(exchange.getRequestMethod()).thenReturn("POST");
             when(exchange.getRequestBody()).thenReturn(bodyOf(
