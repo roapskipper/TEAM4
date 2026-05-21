@@ -163,6 +163,8 @@ public class BiddingServiceTest {
 
             when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
             when(userDAO.findById(mockConn, bidderB)).thenReturn(userB);
+            when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, bidderB)).thenReturn(null);
+            when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
 
             AutoBidding configA = new AutoBidding(auctionId, bidderA, new BigDecimal("200.00"));
             AutoBidding configB = new AutoBidding(auctionId, bidderB, new BigDecimal("500.00"));
@@ -197,6 +199,8 @@ public class BiddingServiceTest {
 
             when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
             when(userDAO.findById(mockConn, "b1")).thenReturn(bidder);
+            when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, "b1")).thenReturn(null);
+            when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
 
             AutoBidding config = new AutoBidding(auctionId, "b1", new BigDecimal("200"));
             when(autoBiddingDAO.findActiveByAuctionId(mockConn, auctionId)).thenReturn(List.of(config));

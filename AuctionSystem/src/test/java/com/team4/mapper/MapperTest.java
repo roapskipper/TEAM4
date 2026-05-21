@@ -24,7 +24,7 @@ public class MapperTest {
     @DisplayName("AuthMapper - Chuyển đổi User sang LoginResponseDTO")
     void testAuthMapper() {
         // GIVEN: Một đối tượng Bidder thực tế
-        Bidder bidder = new Bidder("u1", LocalDateTime.now(), "user1", "hash", "Full Name", "a@t.com", BigDecimal.ZERO, "Addr", "0912");
+        Bidder bidder = new Bidder("u1", LocalDateTime.now(), "user1", "hash", "Full Name", "a@t.com", BigDecimal.ZERO, "Addr", "0912345678");
         String token = "jwt_token_sample";
 
         // WHEN: Ánh xạ qua AuthMapper
@@ -42,21 +42,21 @@ public class MapperTest {
     @DisplayName("UserMapper - Chuyển đổi User sang UserResponseDTO (Đa hình)")
     void testUserMapper() {
         // CASE 1: Ánh xạ Seller
-        Seller seller = new Seller("s1", LocalDateTime.now(), "sel", "h", "Seller Name", "s@t.com", BigDecimal.TEN, "My Store", 4.5);
+        Seller seller = new Seller("s1", LocalDateTime.now(), "seller1", "h", "Seller Name", "s@t.com", BigDecimal.TEN, "My Store", 4.5);
         UserResponseDTO sellerDto = UserMapper.toUserResponseDTO(seller);
         
         assertNotNull(sellerDto);
         assertEquals("My Store", sellerDto.getStoreName());
         assertEquals(4.5, sellerDto.getRating());
-        assertEquals(BigDecimal.TEN, sellerDto.getBalance());
+        assertEquals(0, BigDecimal.TEN.compareTo(sellerDto.getBalance()));
 
         // CASE 2: Ánh xạ Bidder
-        Bidder bidder = new Bidder("b1", LocalDateTime.now(), "bid", "h", "Bidder Name", "b@t.com", BigDecimal.ZERO, "Hanoi", "0987");
+        Bidder bidder = new Bidder("b1", LocalDateTime.now(), "bidder1", "h", "Bidder Name", "b@t.com", BigDecimal.ZERO, "Hanoi", "0987654321");
         UserResponseDTO bidderDto = UserMapper.toUserResponseDTO(bidder);
         
         assertNotNull(bidderDto);
         assertEquals("Hanoi", bidderDto.getShippingAddress());
-        assertEquals("0987", bidderDto.getPhoneNumber());
+        assertEquals("0987654321", bidderDto.getPhoneNumber());
     }
 
     @Test

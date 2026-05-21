@@ -120,7 +120,7 @@ public class AutoBiddingServiceTest {
         @DisplayName("Cập nhật giới hạn tối đa thành công")
         void testUpdate_Success() {
             String configId = "conf-123";
-            BigDecimal newLimit = new BigDecimal("800.00");
+            BigDecimal newLimit = new BigDecimal("400.00");
             AutoBidding config = new AutoBidding("auc-1", "bid-1", new BigDecimal("500.00"));
             Auction auction = createRunningAuction("auc-1", "sel-1");
 
@@ -132,7 +132,7 @@ public class AutoBiddingServiceTest {
             AutoBidResponseDTO result = autoBiddingService.updateAutoBidding(configId, newLimit);
 
             // THEN
-            assertEquals(newLimit, result.getMaxLimit());
+            assertEquals(0, newLimit.compareTo(result.getMaxLimit()));
             verify(autoBiddingDAO).update(config);
         }
 

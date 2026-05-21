@@ -34,7 +34,7 @@ public class BiddingMapperTest {
         // THEN
         assertNotNull(result);
         assertEquals("bidder1", result.getBidderId());
-        assertEquals(new BigDecimal("500"), result.getBidAmount());
+        assertEquals(0, new BigDecimal("500").compareTo(result.getBidAmount()));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class BiddingMapperTest {
 
         // THEN
         assertNotNull(result);
-        assertEquals(new BigDecimal("1000"), result.getMaxLimit());
+        assertEquals(0, new BigDecimal("1000").compareTo(result.getMaxLimit()));
         assertTrue(result.isActive());
     }
 
@@ -67,14 +67,14 @@ public class BiddingMapperTest {
         assertNotNull(message);
         assertEquals(SocketMapper.CMD_BID_UPDATE, message.getCommand());
         assertEquals("winner1", message.getPayload().getCurrentHighestBidderId());
-        assertEquals(new BigDecimal("150"), message.getPayload().getCurrentPrice());
+        assertEquals(0, new BigDecimal("150").compareTo(message.getPayload().getCurrentPrice()));
     }
 
     @Test
     @DisplayName("SocketMapper - Tạo gói tin Auction End")
     void testSocketMapper_AuctionEnd() {
         // GIVEN
-        Auction auction = new Auction("i1", "s1", new BigDecimal("100"), new BigDecimal("10"), LocalDateTime.now());
+        Auction auction = new Auction("i1", "s1", new BigDecimal("100"), new BigDecimal("10"), LocalDateTime.now().plusDays(1));
         auction.approve();
         auction.applyBid("winner1", new BigDecimal("1000"));
 
@@ -85,6 +85,6 @@ public class BiddingMapperTest {
         assertNotNull(message);
         assertEquals(SocketMapper.CMD_AUCTION_END, message.getCommand());
         assertEquals("winner1", message.getPayload().getWinnerId());
-        assertEquals(new BigDecimal("1000"), message.getPayload().getFinalPrice());
+        assertEquals(0, new BigDecimal("1000").compareTo(message.getPayload().getFinalPrice()));
     }
 }

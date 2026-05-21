@@ -101,7 +101,7 @@ public class AdminServiceTest {
         @DisplayName("Moderator không có quyền hủy phiên")
         void testCancelByModerator_Fail() {
             String adminId = "mod-1";
-            Admin moderator = new Admin(adminId, LocalDateTime.now(), "mod", "h", "M", "m@t.com", BigDecimal.ZERO, Admin.AccessLevel.MODERATOR, "C");
+            Admin moderator = new Admin(adminId, LocalDateTime.now(), "moderator", "h", "M", "m@t.com", BigDecimal.ZERO, Admin.AccessLevel.MODERATOR, "Code@123");
             when(userService.getRawUserById(adminId)).thenReturn(moderator);
 
             // WHEN & THEN: Lỗi thiếu quyền Super Admin

@@ -92,7 +92,7 @@ public class AuctionServiceTest {
         @Test
         @DisplayName("Thất bại khi Item không tồn tại")
         void testCreateAuction_ItemNotFound() {
-            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO("none", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now());
+            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO("none", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusDays(1));
             when(itemDAO.findById("none")).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> auctionService.createAuction(request));
@@ -103,7 +103,7 @@ public class AuctionServiceTest {
         void testCreateAuction_NotOwner() {
             String itemId = "item-1";
             Item item = createRealItem(itemId, "real-owner");
-            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO(itemId, "hacker", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now());
+            CreateAuctionRequestDTO request = new CreateAuctionRequestDTO(itemId, "hacker", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusDays(1));
 
             when(itemDAO.findById(itemId)).thenReturn(item);
 
