@@ -206,23 +206,7 @@ public final class DatabaseSetup {
              Statement stmt = conn.createStatement()) {
 
             try {
-                stmt.execute("ALTER TABLE users ADD COLUMN account_status ENUM('ACTIVE', 'SUSPENDED', 'BANNED') NOT NULL DEFAULT 'ACTIVE' AFTER balance");
-            } catch (SQLException e) {
-                if (!isIgnorableSchemaError(e)) {
-                    throw e;
-                }
-            }
-
-            try {
-                stmt.execute("ALTER TABLE users ADD COLUMN previous_role_before_admin ENUM('SELLER', 'BIDDER') NULL AFTER account_status");
-            } catch (SQLException e) {
-                if (!isIgnorableSchemaError(e)) {
-                    throw e;
-                }
-            }
-
-            try {
-                stmt.execute("CREATE INDEX idx_users_account_status ON users(account_status)");
+                stmt.execute("ALTER TABLE users ADD COLUMN previous_role_before_admin ENUM('SELLER', 'BIDDER') NULL AFTER balance");
             } catch (SQLException e) {
                 if (!isIgnorableSchemaError(e)) {
                     throw e;

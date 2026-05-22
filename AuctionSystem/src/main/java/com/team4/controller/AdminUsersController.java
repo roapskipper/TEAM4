@@ -39,7 +39,7 @@ public class AdminUsersController implements Initializable {
     @FXML private ComboBox<String> roleFilter;
     @FXML private Label resultCount;
     @FXML private TableView<UserRow> usersTable;
-    @FXML private TableColumn<UserRow, String> colUsername, colFullName, colRole, colEmail, colJoinDate, colStatus;
+    @FXML private TableColumn<UserRow, String> colUsername, colFullName, colRole, colEmail, colJoinDate;
     @FXML private TableColumn<UserRow, Void> colAction;
 
     private ObservableList<UserRow> allUsers = FXCollections.observableArrayList();
@@ -57,47 +57,16 @@ public class AdminUsersController implements Initializable {
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colJoinDate.setCellValueFactory(new PropertyValueFactory<>("joinDate"));
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        colStatus.setCellFactory(param -> new TableCell<UserRow, String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    String status = item.toUpperCase();
-                    Label statusLabel = new Label(status);
-                    statusLabel.setStyle("-fx-font-weight: bold;");
-
-                    if ("ACTIVE".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #10b981;");
-                    else if ("SUSPENDED".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #f59e0b;");
-                    else if ("BANNED".equals(status)) statusLabel.setStyle(statusLabel.getStyle() + " -fx-text-fill: #ef4444;");
-
-                    setGraphic(statusLabel);
-                    setText(null);
-                }
-            }
-        });
 
         colAction.setCellFactory(param -> new TableCell<UserRow, Void>() {
             private final Button grantBtn = new Button("Grant Admin");
             private final Button revokeBtn = new Button("Remove Admin");
-            private final Button suspendBtn = new Button("Suspend");
-            private final Button banBtn = new Button("Ban");
-            private final Button unsuspendBtn = new Button("Unsuspend");
-            private final Button unbanBtn = new Button("Unban");
             private final HBox actionBox = new HBox(6);
 
             {
                 actionBox.setAlignment(Pos.CENTER_LEFT);
                 styleActionButton(grantBtn, "admin-action-grant");
                 styleActionButton(revokeBtn, "admin-action-revoke");
-                styleActionButton(suspendBtn, "admin-action-suspend");
-                styleActionButton(banBtn, "admin-action-ban");
-                styleActionButton(unsuspendBtn, "admin-action-restore");
-                styleActionButton(unbanBtn, "admin-action-restore");
             }
 
             @Override
@@ -107,7 +76,6 @@ public class AdminUsersController implements Initializable {
                     setGraphic(null);
                 } else {
                     UserRow user = getTableRow().getItem();
-                    String status = user.getStatus() != null ? user.getStatus().toUpperCase() : "ACTIVE";
                     actionBox.getChildren().clear();
 
                     boolean self = currentUserId().equals(user.getUserId());
@@ -123,21 +91,6 @@ public class AdminUsersController implements Initializable {
                         } else if (canGrantAdmin() && !adminRole) {
                             grantBtn.setOnAction(e -> handleGrantAdmin(user));
                             actionBox.getChildren().add(grantBtn);
-                        }
-
-                        if ("BANNED".equals(status)) {
-                            unbanBtn.setOnAction(e -> handleUnban(user));
-                            actionBox.getChildren().add(unbanBtn);
-                        } else if ("SUSPENDED".equals(status)) {
-                            unsuspendBtn.setOnAction(e -> handleUnsuspend(user));
-                            actionBox.getChildren().add(unsuspendBtn);
-                            banBtn.setOnAction(e -> handleBan(user));
-                            actionBox.getChildren().add(banBtn);
-                        } else {
-                            suspendBtn.setOnAction(e -> handleSuspend(user));
-                            actionBox.getChildren().add(suspendBtn);
-                            banBtn.setOnAction(e -> handleBan(user));
-                            actionBox.getChildren().add(banBtn);
                         }
                     }
 
@@ -175,10 +128,9 @@ public class AdminUsersController implements Initializable {
                 String role = obj.has("role") ? obj.get("role").getAsString() : "BIDDER";
                 String email = obj.has("email") ? obj.get("email").getAsString() : "";
                 String joinDate = obj.has("createdAt") ? obj.get("createdAt").getAsString() : "";
-                String status = obj.has("status") ? obj.get("status").getAsString() : "ACTIVE";
                 int accessLevelCode = obj.has("accessLevelCode") ? obj.get("accessLevelCode").getAsInt() : 0;
                 
-                allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, status, accessLevelCode));
+                allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, accessLevelCode));
             }
             
             if (allUsers.isEmpty()) {
@@ -228,61 +180,7 @@ public class AdminUsersController implements Initializable {
         resultCount.setText(filtered.size() + " users");
     }
 
-    private void handleSuspend(UserRow user) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Suspend User");
-        dialog.setHeaderText("Suspend User: " + user.getUsername());
-        dialog.setContentText("Reason (optional):");
-        
-        dialog.showAndWait().ifPresent(reason -> {
-            disableButtonsAndCallApi(() -> {
-                ApiClient apiClient = new ApiClient();
-                return apiClient.suspendUser(user.getUserId(), currentUserId(), reason);
-            }, "User suspended successfully!");
-        });
-    }
 
-    private void handleBan(UserRow user) {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Ban User");
-        dialog.setHeaderText("Ban User: " + user.getUsername());
-        dialog.setContentText("Reason (mandatory):");
-        
-        dialog.showAndWait().ifPresent(reason -> {
-            if (reason.trim().isEmpty()) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Ban reason is mandatory.");
-                return;
-            }
-            disableButtonsAndCallApi(() -> {
-                ApiClient apiClient = new ApiClient();
-                return apiClient.banUser(user.getUserId(), currentUserId(), reason);
-            }, "User banned successfully!");
-        });
-    }
-
-    private void handleUnban(UserRow user) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Unban " + user.getUsername() + "?", ButtonType.YES, ButtonType.NO);
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.YES) {
-                disableButtonsAndCallApi(() -> {
-                    ApiClient apiClient = new ApiClient();
-                    return apiClient.unbanUser(user.getUserId(), currentUserId());
-                }, "User unbanned successfully!");
-            }
-        });
-    }
-
-    private void handleUnsuspend(UserRow user) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to unsuspend " + user.getUsername() + "?", ButtonType.YES, ButtonType.NO);
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.YES) {
-                disableButtonsAndCallApi(() -> {
-                    ApiClient apiClient = new ApiClient();
-                    return apiClient.unsuspendUser(user.getUserId(), currentUserId());
-                }, "User unsuspended successfully!");
-            }
-        });
-    }
 
     private void handleRevokeAdmin(UserRow user) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
@@ -368,16 +266,15 @@ public class AdminUsersController implements Initializable {
     }
 
     public static class UserRow {
-        private String userId, username, fullName, role, email, joinDate, status;
+        private String userId, username, fullName, role, email, joinDate;
         private int accessLevelCode;
-        public UserRow(String userId, String username, String fullName, String role, String email, String joinDate, String status, int accessLevelCode) {
+        public UserRow(String userId, String username, String fullName, String role, String email, String joinDate, int accessLevelCode) {
             this.userId = userId;
             this.username = username;
             this.fullName = fullName;
             this.role = role;
             this.email = email;
             this.joinDate = joinDate;
-            this.status = status;
             this.accessLevelCode = accessLevelCode;
         }
         public String getUserId() { return userId; }
@@ -386,7 +283,6 @@ public class AdminUsersController implements Initializable {
         public String getRole() { return role; }
         public String getEmail() { return email; }
         public String getJoinDate() { return joinDate; }
-        public String getStatus() { return status; }
         public int getAccessLevelCode() { return accessLevelCode; }
     }
 }

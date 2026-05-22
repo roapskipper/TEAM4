@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     role ENUM('ADMIN', 'SELLER', 'BIDDER') NOT NULL,
     balance DECIMAL(19,2) NOT NULL DEFAULT 0.00,
-    account_status ENUM('ACTIVE', 'SUSPENDED', 'BANNED') NOT NULL DEFAULT 'ACTIVE',
     previous_role_before_admin ENUM('SELLER', 'BIDDER') NULL,
 
     -- Admin
@@ -41,7 +40,6 @@ CREATE TABLE IF NOT EXISTS users (
     );
 -- lọc người dùng theo vai trò
 CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_account_status ON users(account_status);
 
 -- =========================================================
 -- ITEMS
