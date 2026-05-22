@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import com.sun.net.httpserver.HttpServer;
+import io.jsonwebtoken.Claims;
+import com.team4.util.BusinessException;
 
 public class ApiServer {
     private static final int API_PORT = 8080;
@@ -67,5 +69,23 @@ public class ApiServer {
             }
         }
         return null;
+    }
+
+    public static String getRequesterId(HttpExchange exchange, String fallback) {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7).trim();
+            if (!token.isEmpty()) {
+                try {
+                    Claims claims = Server.getJwtService().getClaimsFromToken(token);
+                    if (claims != null && claims.get("userId") != null) {
+                        return claims.get("userId", String.class);
+                    }
+                } catch (Exception e) {
+                    throw new BusinessException("Invalid or expired session token: " + e.getMessage());
+                }
+            }
+        }
+        return fallback;
     }
 }

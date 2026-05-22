@@ -23,7 +23,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Kiểm thử nghiệp vụ UserService.
- * Đảm bảo thông tin người dùng được bảo mật qua DTO và các nghiệp vụ cập nhật hồ sơ hoạt động đúng.
+ * Đảm bảo thông tin người dùng được bảo mật qua DTO và các nghiệp vụ cập nhật
+ * hồ sơ hoạt động đúng.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Unit Tests for UserService")
@@ -37,7 +38,8 @@ public class UserServiceTest {
 
     // Helper tạo Bidder thật
     private Bidder createRealBidder(String id, String email) {
-        return new Bidder(id, LocalDateTime.now(), "user_" + id, "hashed_pass", "Test User " + id, email, BigDecimal.ZERO, "Hanoi", "0912345678");
+        return new Bidder(id, LocalDateTime.now(), "user_" + id, "hashed_pass", "Test User " + id, email,
+                BigDecimal.ZERO, "Hanoi", "0912345678");
     }
 
     @Nested
@@ -100,9 +102,8 @@ public class UserServiceTest {
         void testUpdateProfile_UserNotFound() {
             when(userDAO.findById("unknown")).thenReturn(null);
 
-            BusinessException ex = assertThrows(BusinessException.class, () ->
-                    userService.updateProfile("unknown", "Name", "e@t.com", "0987654321")
-            );
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.updateProfile("unknown", "Name", "e@t.com", "0987654321"));
             assertEquals("User does not exist", ex.getMessage());
         }
     }

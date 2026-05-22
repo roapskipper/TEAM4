@@ -47,25 +47,26 @@ public class UserService {
      * Cập nhật thông tin cá nhân.
      */
     public UserResponseDTO updateProfile(String userId, String fullName, String email, String phone) {
-        logger.info("Updating user profile: userId={}, fullName={}, email={}, phone={}", userId, fullName, email, phone);
+        logger.info("Updating user profile: userId={}, fullName={}, email={}, phone={}", userId, fullName, email,
+                phone);
         User user = userDAO.findById(userId);
         if (user == null) {
             logger.warn("Profile update failed: user does not exist. userId={}", userId);
             throw new BusinessException("User does not exist");
         }
-        
+
         // Cập nhật thông tin cá nhân
         user.updateProfile(fullName, email);
         if (user instanceof com.team4.model.Bidder bidder) {
             bidder.setPhoneNumber(phone);
         }
-        
+
         // Lưu thay đổi vào DB
         if (!userDAO.update(user)) {
             logger.error("System error: unable to update user in database. userId={}", userId);
             throw new BusinessException("Failed to update profile due to system error.");
         }
-        
+
         logger.info("User profile updated successfully: userId={}", userId);
         return UserMapper.toUserResponseDTO(user);
     }
@@ -78,27 +79,5 @@ public class UserService {
         return userDAO.findAll().stream()
                 .map(UserMapper::toUserResponseDTO)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Thay đổi mật khẩu người dùng.
-     */
-    public void changePassword(String userId, String oldPassword, String newPassword) {
-        logger.info("Changing password for user: userId={}", userId);
-        User user = getRawUserById(userId);
-        
-        if (!user.verifyPassword(oldPassword)) {
-            logger.warn("Password change failed: incorrect old password. userId={}", userId);
-            throw new BusinessException("Old password is incorrect");
-        }
-        
-        String newHash = com.team4.util.PasswordHasher.hashPassword(newPassword);
-        user.changePasswordHash(newHash);
-        
-        if (!userDAO.update(user)) {
-            logger.error("Failed to update password in database: userId={}", userId);
-            throw new BusinessException("System error: unable to update password");
-        }
-        logger.info("Password updated successfully: userId={}", userId);
     }
 }

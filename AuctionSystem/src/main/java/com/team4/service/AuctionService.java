@@ -11,6 +11,9 @@ import com.team4.util.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.team4.db.DatabaseManager;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -190,22 +193,51 @@ public class AuctionService {
      */
     public AuctionResponseDTO markPaid(String auctionId) {
         logger.info("Marking auction as paid: auctionId={}", auctionId);
-        Auction auction = getRawAuctionById(auctionId);
+        
+        try (Connection conn = DatabaseManager.getConnection()) {
+            DatabaseManager.beginTransaction(conn);
+            try {
+                Auction auction = auctionDAO.findById(conn, auctionId);
+                if (auction == null) {
+                    logger.warn("Auction not found in transaction: auctionId={}", auctionId);
+                    throw new BusinessException("Auction session does not exist");
+                }
 
-        if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
-            logger.warn("Mark paid failed: invalid status. auctionId={}, currentStatus={}",
-                    auctionId, auction.getStatus());
-            throw new BusinessException("Only finished auctions can be marked as paid");
+                if (auction.getStatus() != Auction.AuctionStatus.FINISHED) {
+                    logger.warn("Mark paid failed: invalid status. auctionId={}, currentStatus={}",
+                            auctionId, auction.getStatus());
+                    throw new BusinessException("Only finished auctions can be marked as paid");
+                }
+
+                auction.markPaid();
+                if (!auctionDAO.updateStatus(conn, auctionId, Auction.AuctionStatus.PAID)) {
+                    logger.error("Failed to update auction status to PAID in database transaction: auctionId={}", auctionId);
+                    throw new BusinessException("Failed to mark auction as paid due to system error.");
+                }
+
+                String winnerId = auction.getCurrentHighestBidderId();
+                if (winnerId != null && !winnerId.isBlank()) {
+                    if (!itemDAO.updateOwner(conn, auction.getItemId(), winnerId)) {
+                        logger.error("Failed to update item owner to winner: itemId={}, winnerId={}",
+                                auction.getItemId(), winnerId);
+                        throw new BusinessException("Failed to transfer item ownership to the winner.");
+                    }
+                    logger.info("Item ownership successfully transferred to winner: itemId={}, winnerId={}",
+                            auction.getItemId(), winnerId);
+                }
+
+                DatabaseManager.commitTransaction(conn);
+                logger.info("Auction marked as paid successfully: auctionId={}", auctionId);
+                return AuctionMapper.toAuctionResponseDTO(auction);
+            } catch (Exception e) {
+                DatabaseManager.rollbackTransaction(conn);
+                logger.error("Transaction failed (rolled back) during markPaid: {}", e.getMessage());
+                throw (e instanceof BusinessException) ? (BusinessException) e : new BusinessException("Failed to mark auction as paid: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            logger.error("Database connection error during markPaid: {}", e.getMessage());
+            throw new BusinessException("System error during payment process.");
         }
-
-        auction.markPaid();
-        if (!auctionDAO.updateStatus(auctionId, Auction.AuctionStatus.PAID)) {
-            logger.error("Failed to update auction status to PAID in database: auctionId={}", auctionId);
-            throw new BusinessException("Failed to mark auction as paid due to system error.");
-        }
-
-        logger.info("Auction marked as paid successfully: auctionId={}", auctionId);
-        return AuctionMapper.toAuctionResponseDTO(auction);
     }
 
     /**

@@ -15,6 +15,10 @@ import com.team4.dao.impl.UserDAOImpl;
 import com.team4.handler.ClientHandler;
 import com.team4.service.AuctionService;
 import com.team4.service.UserService;
+import com.team4.service.BiddingService;
+import com.team4.dao.impl.AutoBiddingDAOImpl;
+import com.team4.dao.impl.BidTransactionDAOImpl;
+
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -41,6 +45,25 @@ public class Server {
             new ItemDAOImpl()
     );
     private static final UserService userService = new UserService(new UserDAOImpl());
+    private static final com.team4.service.AdminService adminService = new com.team4.service.AdminService(
+            userService,
+            auctionService,
+            new AuctionDAOImpl(),
+            new UserDAOImpl(),
+            new ItemDAOImpl()
+    );
+    private static final com.team4.service.JwtService jwtService = new com.team4.service.JwtService();
+    private static final com.team4.service.AuthenticationService authenticationService = new com.team4.service.AuthenticationService(
+            new UserDAOImpl(),
+            jwtService
+    );
+    private static BiddingService biddingService = new BiddingService(
+            new AuctionDAOImpl(),
+            new BidTransactionDAOImpl(),
+            new UserDAOImpl(),
+            new AutoBiddingDAOImpl()
+    );
+
 
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
@@ -62,6 +85,11 @@ public class Server {
 
     public static AuctionService getAuctionService() { return auctionService; }
     public static UserService getUserService()       { return userService; }
+    public static com.team4.service.AdminService getAdminService() { return adminService; }
+    public static com.team4.service.JwtService getJwtService() { return jwtService; }
+    public static com.team4.service.AuthenticationService getAuthenticationService() { return authenticationService; }
+    public static BiddingService getBiddingService() { return biddingService; }
+    public static void setBiddingService(BiddingService service) { biddingService = service; }
     public static Gson getGson()                     { return gson; }
 
     public static void main(String[] args) {

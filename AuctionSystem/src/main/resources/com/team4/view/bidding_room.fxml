@@ -129,10 +129,10 @@
                     <HBox spacing="8" alignment="CENTER_LEFT">
                         <ToggleButton fx:id="autoBidToggle" text="Auto Bid" onAction="#onAutoBidToggle" styleClass="auto-bid-toggle"/>
                     </HBox>
-                    <VBox fx:id="autoBidPanel" spacing="6" managed="false" visible="false">
-                        <TextField fx:id="autoBidMax" promptText="Max price (VND)" styleClass="input-field"/>
-                        <TextField fx:id="autoBidIncrement" promptText="Increment (VND)" styleClass="input-field"/>
-                        <Label text="System will automatically bid on your behalf" styleClass="muted-text-sm" wrapText="true"/>
+                    <VBox fx:id="autoBidPanel" spacing="8" managed="false" visible="false">
+                        <TextField fx:id="autoBidMax" promptText="Giá tối đa (VND)" styleClass="input-field"/>
+                        <Label text="Hệ thống sẽ tự động đặt giá thay bạn theo bước giá phiên." styleClass="muted-text-sm" wrapText="true"/>
+                        <Button fx:id="applyAutoBidBtn" text="Bật Auto Bid" onAction="#onApplyAutoBid" styleClass="btn-primary"/>
                     </VBox>
                 </VBox>
             </VBox>

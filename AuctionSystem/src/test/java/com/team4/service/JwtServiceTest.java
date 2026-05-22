@@ -29,7 +29,8 @@ public class JwtServiceTest {
     @DisplayName("Tạo và giải mã Token thành công")
     void testJwtFlow_Success() {
         // GIVEN: Một người dùng hợp lệ
-        User user = new Bidder("u123", LocalDateTime.now(), "tester", "hash", "Tester", "test@t.com", BigDecimal.ZERO, "A", "0912345678");
+        User user = new Bidder("u123", LocalDateTime.now(), "tester", "hash", "Tester", "test@t.com", BigDecimal.ZERO,
+                "A", "0912345678");
 
         // WHEN: Tạo token
         String token = jwtService.generateToken(user);

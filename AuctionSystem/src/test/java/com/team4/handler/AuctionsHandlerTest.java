@@ -4,6 +4,8 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.team4.model.Auction;
 import com.team4.service.AuctionService;
+import com.team4.service.BiddingService;
+import com.team4.server.Server;
 import com.team4.util.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +43,8 @@ public class AuctionsHandlerTest {
 
     @Mock private com.team4.dao.ItemDAO itemDAO;
     @Mock private com.team4.dao.UserDAO userDAO;
-    @Mock private com.team4.dao.BidTransactionDAO bidTransactionDAO;
+    @Mock private BiddingService biddingService;
+    private BiddingService originalBiddingService;
 
     private AuctionsHandler handler;
     private ByteArrayOutputStream responseBody;
@@ -63,15 +66,24 @@ public class AuctionsHandlerTest {
         userDaoField.setAccessible(true);
         userDaoField.set(handler, userDAO);
 
-        Field bidDaoField = AuctionsHandler.class.getDeclaredField("bidTransactionDAO");
-        bidDaoField.setAccessible(true);
-        bidDaoField.set(handler, bidTransactionDAO);
+        AuctionService mockAuctionService = new AuctionService(auctionDAO, itemDAO);
+        Field auctionServiceField = AuctionsHandler.class.getDeclaredField("auctionService");
+        auctionServiceField.setAccessible(true);
+        auctionServiceField.set(handler, mockAuctionService);
+
+        originalBiddingService = Server.getBiddingService();
+        Server.setBiddingService(biddingService);
 
         responseBody = new ByteArrayOutputStream();
         Headers headers = new Headers();
         lenient().when(exchange.getResponseHeaders()).thenReturn(headers);
         lenient().when(exchange.getResponseBody()).thenReturn(responseBody);
         lenient().doNothing().when(exchange).sendResponseHeaders(anyInt(), anyLong());
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        Server.setBiddingService(originalBiddingService);
     }
 
     // Helper tạo Auction thật
@@ -114,6 +126,7 @@ public class AuctionsHandlerTest {
     @DisplayName("POST → 405")
     void post_returns405() throws IOException {
         when(exchange.getRequestMethod()).thenReturn("POST");
+        when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
 
         handler.handle(exchange);
 
@@ -135,7 +148,7 @@ public class AuctionsHandlerTest {
             when(auctionDAO.findAll()).thenReturn(auctions);
             when(exchange.getRequestMethod()).thenReturn("GET");
             when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions"));
-            when(bidTransactionDAO.findByAuctionId(anyString())).thenReturn(Collections.emptyList());
+            when(biddingService.getBidHistoryByAuction(anyString())).thenReturn(Collections.emptyList());
 
             handler.handle(exchange);
 
@@ -194,6 +207,68 @@ public class AuctionsHandlerTest {
             handler.handle(exchange);
 
             verify(exchange).sendResponseHeaders(eq(500), anyLong());
+            String resp = responseBody.toString(StandardCharsets.UTF_8);
+            assertTrue(resp.contains("ERROR"));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET – lấy lượt đặt giá cao nhất /api/auctions/{auctionId}/highest-bid")
+    class GetHighestBidTests {
+
+        @Test
+        @DisplayName("Có lượt đấu giá → 200 + SUCCESS")
+        void getHighestBid_hasBid_returns200() throws IOException {
+            String auctionId = "auction-123";
+            Auction auction = realAuction(auctionId, Auction.AuctionStatus.RUNNING);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+
+            com.team4.dto.auction.BidTransactionResponseDTO dto = new com.team4.dto.auction.BidTransactionResponseDTO("bid-1", auctionId, "bidder-abc", new BigDecimal("150.00"), "2026-05-22T23:00:00");
+            when(biddingService.getHighestBid(auctionId)).thenReturn(dto);
+
+            when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions/" + auctionId + "/highest-bid"));
+
+            handler.handle(exchange);
+
+            verify(exchange).sendResponseHeaders(eq(200), anyLong());
+            String resp = responseBody.toString(StandardCharsets.UTF_8);
+            assertTrue(resp.contains("SUCCESS"));
+            assertTrue(resp.contains("bidder-abc"));
+            assertTrue(resp.contains("150.00"));
+        }
+
+        @Test
+        @DisplayName("Không có lượt đấu giá nào → 200 + SUCCESS + null data")
+        void getHighestBid_noBids_returns200() throws IOException {
+            String auctionId = "auction-empty";
+            Auction auction = realAuction(auctionId, Auction.AuctionStatus.RUNNING);
+            when(auctionDAO.findById(auctionId)).thenReturn(auction);
+            when(biddingService.getHighestBid(auctionId)).thenReturn(null);
+
+            when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions/" + auctionId + "/highest-bid"));
+
+            handler.handle(exchange);
+
+            verify(exchange).sendResponseHeaders(eq(200), anyLong());
+            String resp = responseBody.toString(StandardCharsets.UTF_8);
+            assertTrue(resp.contains("SUCCESS"));
+            assertFalse(resp.contains("bidder-abc"));
+        }
+
+        @Test
+        @DisplayName("Phiên không tồn tại → 400 + ERROR")
+        void getHighestBid_auctionNotFound_returns400() throws IOException {
+            String auctionId = "auction-invalid";
+            when(auctionDAO.findById(auctionId)).thenReturn(null);
+
+            when(exchange.getRequestMethod()).thenReturn("GET");
+            when(exchange.getRequestURI()).thenReturn(URI.create("/api/auctions/" + auctionId + "/highest-bid"));
+
+            handler.handle(exchange);
+
+            verify(exchange).sendResponseHeaders(eq(400), anyLong());
             String resp = responseBody.toString(StandardCharsets.UTF_8);
             assertTrue(resp.contains("ERROR"));
         }
