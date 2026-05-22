@@ -279,6 +279,3 @@ public class ItemDAOImpl implements ItemDAO {
         return items;
     }
 }
-      return items;
-    }
-}
