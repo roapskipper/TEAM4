@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
 import com.team4.factory.ItemRequest;
 import com.team4.model.Item;
+import com.team4.util.UserSession;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -70,6 +71,10 @@ public class SellerProductsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        if (!isSellerSession()) {
+            disableSellerOnlyView();
+            return;
+        }
         setupCategoryFilter();
         setupTable();
         setupFiltering();
@@ -241,6 +246,10 @@ public class SellerProductsController implements Initializable {
 
     @FXML
     private void onAddProduct() {
+        if (!isSellerSession()) {
+            showAlert(Alert.AlertType.ERROR, "Access Denied", "Only sellers can register products.");
+            return;
+        }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/add_product_dialog.fxml"));
             Parent root = loader.load();
@@ -410,11 +419,30 @@ public class SellerProductsController implements Initializable {
     }
 
     private String currentSellerId() {
-        if (com.team4.util.UserSession.getInstance() != null
-                && com.team4.util.UserSession.getInstance().getUserId() != null) {
-            return com.team4.util.UserSession.getInstance().getUserId();
+        UserSession session = UserSession.getInstance();
+        if (session != null && session.getUserId() != null) {
+            return session.getUserId();
         }
-        return "currentSellerId";
+        return "";
+    }
+
+    private boolean isSellerSession() {
+        UserSession session = UserSession.getInstance();
+        return session != null && "seller".equalsIgnoreCase(session.getRole())
+                && session.getUserId() != null && !session.getUserId().isBlank();
+    }
+
+    private void disableSellerOnlyView() {
+        if (addProductBtn != null) {
+            addProductBtn.setDisable(true);
+        }
+        if (productsTable != null) {
+            productsTable.setPlaceholder(new Label("Only sellers can manage products."));
+        }
+        if (totalProducts != null) totalProducts.setText("N/A");
+        if (activeAuctions != null) activeAuctions.setText("N/A");
+        if (pendingProducts != null) pendingProducts.setText("N/A");
+        if (soldProducts != null) soldProducts.setText("N/A");
     }
 
     private String formatPrice(BigDecimal amount) {

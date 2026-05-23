@@ -657,7 +657,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () ->
                     itemService.updateItem(hackerId, itemId, "Hack", "Hack")
             );
-            assertEquals("Lỗi về quyền sở hữu.", ex.getMessage());
+            assertEquals("Seller does not own this item.", ex.getMessage());
         }
     }
 

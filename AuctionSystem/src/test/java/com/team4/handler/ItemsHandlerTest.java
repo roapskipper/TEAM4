@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -53,6 +54,7 @@ public class ItemsHandlerTest {
         Headers headers = new Headers();
         lenient().when(exchange.getResponseHeaders()).thenReturn(headers);
         lenient().when(exchange.getResponseBody()).thenReturn(responseBody);
+        lenient().when(exchange.getRequestURI()).thenReturn(URI.create("/api/items"));
         lenient().doNothing().when(exchange).sendResponseHeaders(anyInt(), anyLong());
     }
 
@@ -76,9 +78,9 @@ public class ItemsHandlerTest {
     // Phương thức không hợp lệ
     // =========================================================================
     @Test
-    @DisplayName("POST → 405")
-    void post_returns405() throws IOException {
-        when(exchange.getRequestMethod()).thenReturn("POST");
+    @DisplayName("PATCH -> 405")
+    void unsupportedMethod_returns405() throws IOException {
+        when(exchange.getRequestMethod()).thenReturn("PATCH");
 
         handler.handle(exchange);
 
