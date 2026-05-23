@@ -1,21 +1,19 @@
 package com.team4.handler;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.AuctionDAO;
-import com.team4.dao.BidTransactionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.dao.impl.AuctionDAOImpl;
-import com.team4.dao.impl.BidTransactionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
 import com.team4.dao.impl.UserDAOImpl;
 import com.team4.dto.auction.BidTransactionResponseDTO;
-import com.team4.mapper.BidMapper;
 import com.team4.model.Auction;
-import com.team4.model.BidTransaction;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -35,8 +33,8 @@ public class AuctionsHandler implements HttpHandler {
     private final AuctionDAO auctionDAO = new AuctionDAOImpl();
     private final ItemDAO itemDAO = new ItemDAOImpl();
     private final UserDAO userDAO = new UserDAOImpl();
-    private final BidTransactionDAO bidTransactionDAO = new BidTransactionDAOImpl();
     private final AuctionService auctionService = new AuctionService(auctionDAO, itemDAO);
+    private final AutoBidHandler autoBidHandler = new AutoBidHandler();
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -44,13 +42,32 @@ public class AuctionsHandler implements HttpHandler {
             ApiServer.sendResponse(exchange, 204, "");
             return;
         }
+
+        String path = exchange.getRequestURI().getPath();
+
+        if (path.endsWith("/autobid")) {
+            autoBidHandler.handle(exchange);
+            return;
+        }
+
         if (!"GET".equals(exchange.getRequestMethod())) {
             exchange.sendResponseHeaders(405, -1);
             return;
         }
 
         try {
-            String auctionId = readAuctionId(exchange.getRequestURI().getPath());
+            String[] parts = path.split("/");
+            if (parts.length >= 5 && "highest-bid".equals(parts[4])) {
+                String auctionId = URLDecoder.decode(parts[3], StandardCharsets.UTF_8);
+                // Validate auction existence
+                auctionService.getRawAuctionById(auctionId);
+                BidTransactionResponseDTO highestBid = Server.getBiddingService().getHighestBid(auctionId);
+                JsonElement data = highestBid != null ? Server.getGson().toJsonTree(highestBid) : JsonNull.INSTANCE;
+                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lay luot dat gia cao nhat thanh cong!", data));
+                return;
+            }
+
+            String auctionId = readAuctionId(path);
             if (auctionId != null) {
                 Auction auction = auctionService.getRawAuctionById(auctionId);
                 ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse(
@@ -73,6 +90,8 @@ public class AuctionsHandler implements HttpHandler {
             ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         }
     }
+
+    // -----------------------------------------------------------------------
 
     private String readAuctionId(String path) {
         if (path == null || path.length() <= BASE_PATH.length()) {
@@ -133,17 +152,15 @@ public class AuctionsHandler implements HttpHandler {
                 : userDAO.findById(auction.getCurrentHighestBidderId());
         obj.addProperty("currentHighestBidderName", leader != null ? displayName(leader) : "");
 
-        List<BidTransaction> history = bidTransactionDAO.findByAuctionId(auction.getId());
+        List<BidTransactionResponseDTO> history = Server.getBiddingService().getBidHistoryByAuction(auction.getId());
         obj.addProperty("bidCount", history.size());
 
         if (includeHistory) {
             JsonArray historyArr = new JsonArray();
-            for (BidTransaction bid : history) {
-                // Dùng BidMapper → BidTransactionResponseDTO để serialize
-                BidTransactionResponseDTO bidDTO = BidMapper.toBidTransactionResponseDTO(bid);
+            for (BidTransactionResponseDTO bidDTO : history) {
                 JsonObject bidObj = Server.getGson().toJsonTree(bidDTO).getAsJsonObject();
                 // Bổ sung bidderName – trường này không có trong DTO nhưng client cần hiển thị
-                User bidder = userDAO.findById(bid.getBidderId());
+                User bidder = userDAO.findById(bidDTO.getBidderId());
                 bidObj.addProperty("bidderName", bidder != null ? displayName(bidder) : "Unknown Bidder");
                 historyArr.add(bidObj);
             }

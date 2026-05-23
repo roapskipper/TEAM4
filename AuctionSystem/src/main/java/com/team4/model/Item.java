@@ -44,6 +44,7 @@ public abstract class Item extends Entity {
     private BigDecimal startingPrice;
     private ItemCategory category;
     private String ownerId;
+    private String status = "PENDING";
 
     // Constructor dùng cho đối tượng mới
     protected Item(String name, BigDecimal startingPrice, String description, ItemCategory category, String ownerId) {
@@ -138,6 +139,8 @@ public abstract class Item extends Entity {
         this.ownerId = normalizeOwnerId(ownerId);
         validateBaseItem();
     }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
     // Phương để mô tả, không gắn UI Console
     // Item này là gì về mặt nghiệp vụ
     public abstract String summary();

@@ -29,17 +29,16 @@ public class AuthenticationService {
     public void registerBidder(RegisterBidderRequestDTO requestDTO) {
         logger.info("Registering new bidder: username={}, email={}", requestDTO.getUsername(), requestDTO.getEmail());
         validateNewUser(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPassword());
-        
+
         String hashedPassword = PasswordHasher.hashPassword(requestDTO.getPassword());
         Bidder bidder = new Bidder(
-                requestDTO.getUsername(), 
-                hashedPassword, 
-                requestDTO.getFullName(), 
-                requestDTO.getEmail(), 
-                requestDTO.getShippingAddress(), 
-                requestDTO.getPhoneNumber()
-        );
-        
+                requestDTO.getUsername(),
+                hashedPassword,
+                requestDTO.getFullName(),
+                requestDTO.getEmail(),
+                requestDTO.getShippingAddress(),
+                requestDTO.getPhoneNumber());
+
         if (!userDAO.insert(bidder)) {
             logger.error("Failed to save bidder to database: {}", requestDTO.getUsername());
             throw new BusinessException("Could not complete registration. Please try again.");
@@ -51,16 +50,15 @@ public class AuthenticationService {
     public void registerSeller(RegisterSellerRequestDTO requestDTO) {
         logger.info("Registering new seller: username={}, email={}", requestDTO.getUsername(), requestDTO.getEmail());
         validateNewUser(requestDTO.getUsername(), requestDTO.getEmail(), requestDTO.getPassword());
-        
+
         String hashedPassword = PasswordHasher.hashPassword(requestDTO.getPassword());
         Seller seller = new Seller(
-                requestDTO.getUsername(), 
-                hashedPassword, 
-                requestDTO.getFullName(), 
-                requestDTO.getEmail(), 
-                requestDTO.getStoreName()
-        );
-        
+                requestDTO.getUsername(),
+                hashedPassword,
+                requestDTO.getFullName(),
+                requestDTO.getEmail(),
+                requestDTO.getStoreName());
+
         if (!userDAO.insert(seller)) {
             logger.error("Failed to save seller to database: {}", requestDTO.getUsername());
             throw new BusinessException("Could not complete registration. Please try again.");
@@ -72,12 +70,12 @@ public class AuthenticationService {
     public LoginResponseDTO loginBidder(LoginRequestDTO requestDTO) {
         logger.info("Bidder login attempt: username={}", requestDTO.getUsername());
         User user = authenticateBase(requestDTO.getUsername(), requestDTO.getPassword());
-        
+
         if (user.getRole() != User.Role.BIDDER) {
             logger.warn("Login rejected: User {} is not a BIDDER (Role: {})", user.getUsername(), user.getRole());
             throw new BusinessException("This account is not registered as a Bidder.");
         }
-        
+
         String token = jwtService.generateToken(user);
         return AuthMapper.toLoginResponseDTO(user, token);
     }
@@ -86,12 +84,12 @@ public class AuthenticationService {
     public LoginResponseDTO loginSeller(LoginRequestDTO requestDTO) {
         logger.info("Seller login attempt: username={}", requestDTO.getUsername());
         User user = authenticateBase(requestDTO.getUsername(), requestDTO.getPassword());
-        
+
         if (user.getRole() != User.Role.SELLER) {
             logger.warn("Login rejected: User {} is not a SELLER (Role: {})", user.getUsername(), user.getRole());
             throw new BusinessException("This account is not registered as a Seller.");
         }
-        
+
         String token = jwtService.generateToken(user);
         return AuthMapper.toLoginResponseDTO(user, token);
     }
@@ -105,7 +103,7 @@ public class AuthenticationService {
             logger.warn("Admin login failed: Invalid credentials for username={}", requestDTO.getUsername());
             throw new BusinessException("Invalid username or password.");
         }
-        
+
         if (!(user instanceof Admin admin)) {
             logger.warn("Login rejected: User {} does not have ADMIN privileges", user.getUsername());
             throw new BusinessException("Access denied. Admin privileges required.");
@@ -116,7 +114,7 @@ public class AuthenticationService {
             logger.warn("Admin login failed: Incorrect admin code for username={}", requestDTO.getUsername());
             throw new BusinessException("Invalid admin security code.");
         }
-        
+
         String token = jwtService.generateToken(user);
         return AuthMapper.toLoginResponseDTO(user, token);
     }
@@ -130,7 +128,7 @@ public class AuthenticationService {
         if (newRawPassword == null || newRawPassword.length() < 6) {
             throw new BusinessException("New password must be at least 6 characters long.");
         }
-        
+
         user.changePasswordHash(PasswordHasher.hashPassword(newRawPassword));
         userDAO.update(user);
         logger.info("Password changed successfully for userId={}", userId);

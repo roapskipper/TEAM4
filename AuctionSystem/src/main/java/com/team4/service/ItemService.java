@@ -1,11 +1,13 @@
 package com.team4.service;
 
+import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
-import com.team4.dto.auction.*;
+import com.team4.dto.auction.CreateFashionRequestDTO;
+import com.team4.dto.auction.CreateItemRequestDTO;
 import com.team4.dto.item.*;
 import com.team4.factory.*;
-import com.team4.model.Collectible;
+import com.team4.model.Auction;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -24,10 +26,17 @@ public class ItemService {
     private static final Logger logger = LoggerFactory.getLogger(ItemService.class);
     private final ItemDAO itemDAO;
     private final UserDAO userDAO;
+    private final AuctionDAO auctionDAO;
 
+    @Deprecated
     public ItemService(ItemDAO itemDAO, UserDAO userDAO) {
+        this(itemDAO, userDAO, null);
+    }
+
+    public ItemService(ItemDAO itemDAO, UserDAO userDAO, AuctionDAO auctionDAO) {
         this.itemDAO = itemDAO;
         this.userDAO = userDAO;
+        this.auctionDAO = auctionDAO;
     }
 
     /**
@@ -55,27 +64,90 @@ public class ItemService {
             throw new BusinessException("Seller does not exist.");
         }
 
+        java.sql.Connection conn = null;
+        boolean isTx = false;
         try {
             // Map DTO to Factory Request
             ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
+            validateCommonItemRequest(itemRequest);
+            ItemRequestDefaults.apply(itemRequest);
 
             // Chọn Factory
             ItemFactory factory = getFactory(itemRequest.getCategory());
-
             Item item = factory.createItem(itemRequest);
 
-            if (!itemDAO.insert(item)) {
-                logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
-                throw new BusinessException("Không thể tạo mặt hàng.");
+            // Validate price at backend
+            validatePrice(item.getCategory(), item.getStartingPrice());
+
+            try {
+                conn = com.team4.db.DatabaseManager.getConnection();
+                com.team4.db.DatabaseManager.beginTransaction(conn);
+                isTx = true;
+            } catch (IllegalStateException | java.sql.SQLException e) {
+                logger.info("Proceeding without transaction (fallback): {}", e.getMessage());
             }
+
+            if (isTx) {
+                if (!itemDAO.insert(conn, item)) {
+                    logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                    throw new BusinessException("Unable to create item.");
+                }
+            } else {
+                if (!itemDAO.insert(item)) {
+                    logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                    throw new BusinessException("Unable to create item.");
+                }
+            }
+
             if (!item.getOwnerId().equals(sellerId)) {
                 logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+                throw new BusinessException("Seller does not own this item.");
             }
+
+            if (auctionDAO != null) {
+                java.math.BigDecimal startingPrice = item.getStartingPrice();
+                java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
+                java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
+                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
+                
+                if (isTx) {
+                    if (!auctionDAO.insert(conn, auction)) {
+                        logger.error("Lỗi hệ thống: Không thể tự động tạo cuộc đấu giá cho mặt hàng. itemId={}", item.getId());
+                        throw new BusinessException("Unable to auto-create auction for this item.");
+                    }
+                } else {
+                    if (!auctionDAO.insert(auction)) {
+                        logger.error("Lỗi hệ thống: Không thể tự động tạo cuộc đấu giá cho mặt hàng. itemId={}", item.getId());
+                        throw new BusinessException("Unable to auto-create auction for this item.");
+                    }
+                }
+                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("RUNNING");
+            } else if (isTx) {
+                throw new BusinessException("AuctionDAO is required to create items in production.");
+            }
+
+            if (isTx) {
+                com.team4.db.DatabaseManager.commitTransaction(conn);
+            }
+
             logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
             return ItemMapper.toItemResponseDTO(item);
         } catch (IllegalArgumentException e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
             throw new BusinessException(e.getMessage());
+        } catch (BusinessException e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+            throw e;
+        } catch (Exception e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+            logger.error("System error during item creation", e);
+            throw new BusinessException("System error: " + e.getMessage());
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -89,27 +161,89 @@ public class ItemService {
             throw new BusinessException("Seller does not exist.");
         }
 
+        java.sql.Connection conn = null;
+        boolean isTx = false;
         try {
             // Common validation
             validateCommonItemRequest(itemRequest);
+            ItemRequestDefaults.apply(itemRequest);
 
             // Chọn Factory
             ItemFactory factory = getFactory(itemRequest.getCategory());
-
             Item item = factory.createItem(itemRequest);
 
-            if (!itemDAO.insert(item)) {
-                logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
-                throw new BusinessException("Không thể tạo mặt hàng.");
+            // Validate price at backend
+            validatePrice(item.getCategory(), item.getStartingPrice());
+
+            try {
+                conn = com.team4.db.DatabaseManager.getConnection();
+                com.team4.db.DatabaseManager.beginTransaction(conn);
+                isTx = true;
+            } catch (IllegalStateException | java.sql.SQLException e) {
+                logger.info("Proceeding without transaction (fallback): {}", e.getMessage());
             }
+
+            if (isTx) {
+                if (!itemDAO.insert(conn, item)) {
+                    logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                    throw new BusinessException("Unable to create item.");
+                }
+            } else {
+                if (!itemDAO.insert(item)) {
+                    logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
+                    throw new BusinessException("Unable to create item.");
+                }
+            }
+
             if (!item.getOwnerId().equals(sellerId)) {
                 logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+                throw new BusinessException("Seller does not own this item.");
             }
+
+            if (auctionDAO != null) {
+                java.math.BigDecimal startingPrice = item.getStartingPrice();
+                java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
+                java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
+                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
+                
+                if (isTx) {
+                    if (!auctionDAO.insert(conn, auction)) {
+                        logger.error("Lỗi hệ thống: Không thể tự động tạo cuộc đấu giá cho mặt hàng. itemId={}", item.getId());
+                        throw new BusinessException("Unable to auto-create auction for this item.");
+                    }
+                } else {
+                    if (!auctionDAO.insert(auction)) {
+                        logger.error("Lỗi hệ thống: Không thể tự động tạo cuộc đấu giá cho mặt hàng. itemId={}", item.getId());
+                        throw new BusinessException("Unable to auto-create auction for this item.");
+                    }
+                }
+                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("RUNNING");
+            } else if (isTx) {
+                throw new BusinessException("AuctionDAO is required to create items in production.");
+            }
+
+            if (isTx) {
+                com.team4.db.DatabaseManager.commitTransaction(conn);
+            }
+
             logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
             return item;
         } catch (IllegalArgumentException e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
             throw new BusinessException(e.getMessage());
+        } catch (BusinessException e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+            throw e;
+        } catch (Exception e) {
+            if (isTx) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+            logger.error("System error during item creation", e);
+            throw new BusinessException("System error: " + e.getMessage());
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (Exception ignored) {}
+            }
         }
     }
 
@@ -153,11 +287,11 @@ public class ItemService {
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
             logger.warn("Cập nhật thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
             logger.warn("Cập nhật thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Lỗi về quyền sở hữu.");
+            throw new BusinessException("Seller does not own this item.");
         }
 
         existingItem.setName(newName);
@@ -167,6 +301,7 @@ public class ItemService {
             logger.info("Đã cập nhật thành công mặt hàng: itemId={}", itemId);
         } else {
             logger.error("Lỗi hệ thống: Không thể cập nhật mặt hàng vào database. itemId={}", itemId);
+            throw new BusinessException("Unable to update item.");
         }
         return ItemMapper.toItemResponseDTO(existingItem);
     }
@@ -179,11 +314,16 @@ public class ItemService {
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
             logger.warn("Xóa thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
             logger.warn("Xóa thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Lỗi về quyền sở hữu.");
+            throw new BusinessException("Seller does not own this item.");
+        }
+
+        if (auctionDAO != null && auctionDAO.findByItemId(itemId) != null) {
+            logger.warn("Delete failed: item already has an auction. itemId={}", itemId);
+            throw new BusinessException("Cannot delete an item that already has an auction.");
         }
 
         boolean deleted = itemDAO.delete(itemId);
@@ -191,6 +331,7 @@ public class ItemService {
             logger.info("Đã xóa thành công mặt hàng: itemId={}", itemId);
         } else {
             logger.error("Lỗi hệ thống: Không thể xóa mặt hàng trong database. itemId={}", itemId);
+            throw new BusinessException("Unable to delete item.");
         }
     }
 
@@ -221,7 +362,7 @@ public class ItemService {
     public ItemResponseDTO getItemById(String itemId) {
         Item item = itemDAO.findById(itemId);
         if (item == null) {
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         return ItemMapper
                 .toItemResponseDTO(item);
@@ -324,6 +465,22 @@ public class ItemService {
         if (price.compareTo(maxPrice) > 0) {
             java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(java.util.Locale.US);
             throw new BusinessException("Maximum starting price for " + category + " is " + formatter.format(maxPrice.longValue()) + " VND.");
+        }
+    }
+
+    private java.math.BigDecimal calculateDefaultBidIncrement(java.math.BigDecimal startingPrice) {
+        if (startingPrice.compareTo(new java.math.BigDecimal("100000")) < 0) {
+            return new java.math.BigDecimal("5000");
+        } else if (startingPrice.compareTo(new java.math.BigDecimal("1000000")) < 0) {
+            return new java.math.BigDecimal("50000");
+        } else if (startingPrice.compareTo(new java.math.BigDecimal("10000000")) < 0) {
+            return new java.math.BigDecimal("100000");
+        } else if (startingPrice.compareTo(new java.math.BigDecimal("50000000")) < 0) {
+            return new java.math.BigDecimal("500000");
+        } else if (startingPrice.compareTo(new java.math.BigDecimal("100000000")) < 0) {
+            return new java.math.BigDecimal("1000000");
+        } else {
+            return new java.math.BigDecimal("2000000");
         }
     }
 }

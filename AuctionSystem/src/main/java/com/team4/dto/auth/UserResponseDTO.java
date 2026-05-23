@@ -15,6 +15,7 @@ public class UserResponseDTO {
     private User.Role role;
     private BigDecimal balance;
     private String createdAt;
+    private Integer accessLevelCode;
 
     // Các trường bổ sung cho từng vai trò cụ thể
     private String storeName;       // Dành cho Seller
@@ -42,6 +43,8 @@ public class UserResponseDTO {
     public User.Role getRole() { return role; }
     public BigDecimal getBalance() { return balance; }
     public String getCreatedAt() { return createdAt; }
+    public Integer getAccessLevelCode() { return accessLevelCode; }
+    public void setAccessLevelCode(Integer accessLevelCode) { this.accessLevelCode = accessLevelCode; }
 
     public String getStoreName() { return storeName; }
     public void setStoreName(String storeName) { this.storeName = storeName; }

@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
 import com.team4.dto.auth.UserResponseDTO;
+import com.team4.dto.auction.BidTransactionResponseDTO;
 import com.team4.model.Auction;
 import com.team4.model.Item;
 import com.team4.model.User;
@@ -50,6 +51,8 @@ public class UserHandler implements HttpHandler {
                 handleGetProfile(exchange, userId);
             } else if ("GET".equals(method) && "owned-items".equals(action)) {
                 handleGetOwnedItems(exchange, userId);
+            } else if ("GET".equals(method) && "bid-history".equals(action)) {
+                handleGetBidHistory(exchange, userId);
             } else if ("PUT".equals(method) && "profile".equals(action)) {
                 handleUpdateProfile(exchange, userId);
             } else if ("PUT".equals(method) && "password".equals(action)) {
@@ -67,14 +70,14 @@ public class UserHandler implements HttpHandler {
 
     private void handleGetProfile(HttpExchange exchange, String userId) throws IOException {
         // getUserById() trả về UserResponseDTO, throws BusinessException nếu không tìm thấy
-        com.team4.dto.auth.UserResponseDTO dto = Server.getUserService().getUserById(userId);
+        UserResponseDTO dto = Server.getUserService().getUserById(userId);
         JsonElement data = Server.getGson().toJsonTree(dto);
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Profile loaded successfully", data));
     }
 
     private void handleGetOwnedItems(HttpExchange exchange, String userId) throws IOException {
         // getUserById() trả về DTO, throws BusinessException nếu không tìm thấy
-        com.team4.dto.auth.UserResponseDTO userDto = Server.getUserService().getUserById(userId);
+        UserResponseDTO userDto = Server.getUserService().getUserById(userId);
         if (userDto.getRole() != User.Role.BIDDER) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Only bidders have won items", null));
             return;
@@ -126,7 +129,7 @@ public class UserHandler implements HttpHandler {
             return;
         }
 
-        com.team4.dto.auth.UserResponseDTO updated = Server.getUserService().updateProfile(userId, fullName, email, phone);
+        UserResponseDTO updated = Server.getUserService().updateProfile(userId, fullName, email, phone);
         JsonObject data = new JsonObject();
         data.addProperty("fullName", updated.getFullName());
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Updated successfully", data));
@@ -145,7 +148,15 @@ public class UserHandler implements HttpHandler {
             return;
         }
 
-        Server.getUserService().changePassword(userId, oldPassword, newPassword);
+        Server.getAuthenticationService().changePassword(userId, oldPassword, newPassword);
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Password changed successfully", null));
+    }
+
+    private void handleGetBidHistory(HttpExchange exchange, String userId) throws IOException {
+        // Validate user existence first
+        Server.getUserService().getUserById(userId);
+        List<BidTransactionResponseDTO> history = Server.getBiddingService().getBidHistoryByBidder(userId);
+        JsonElement data = Server.getGson().toJsonTree(history);
+        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Bid history loaded successfully", data));
     }
 }

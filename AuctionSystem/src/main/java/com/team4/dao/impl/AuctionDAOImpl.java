@@ -153,10 +153,19 @@ public class AuctionDAOImpl implements AuctionDAO {
      * Ví dụ: seller đăng sản phẩm → tạo phiên mới status=PENDING
      */
     public boolean insert(Auction auction) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            return insert(conn, auction);
+        } catch (SQLException e) {
+            logger.error("Unable to connect to create auction id={}", auction.getId(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean insert(Connection conn, Auction auction) {
         String sql = "INSERT INTO auctions (id, created_at, item_id, seller_id, current_highest_bidder_id, " +
                 "starting_price, bid_increment, current_price, start_time, end_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, auction.getId());
             stmt.setObject(2, auction.getCreatedAt());
@@ -248,20 +257,6 @@ public class AuctionDAOImpl implements AuctionDAO {
         }
     }
 
-    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
-        String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setBigDecimal(1,currentPrice);
-            stmt.setString(2,highestBidderId);
-            stmt.setString(3,id);
-
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            logger.error("Unable to update current bid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
-            return false;
-        }
-    }
 
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();

@@ -1,5 +1,6 @@
 package com.team4.service;
 
+import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.dto.item.*;
@@ -77,7 +78,7 @@ public class ItemServiceTest {
         req.setCategory(Item.ItemCategory.COLLECTIBLE);
         req.setName(name);
         req.setDescription("Mô tả " + name);
-        req.setStartingPrice(new BigDecimal("500.00"));
+        req.setStartingPrice(new BigDecimal("50000.00"));
         req.setOwnerId(ownerId);
         req.setRarityLevel(Collectible.RarityLevel.RARE);
         req.setConditionGrade(Collectible.ConditionGrade.GOOD);
@@ -91,7 +92,7 @@ public class ItemServiceTest {
         req.setCategory(Item.ItemCategory.ELECTRONICS);
         req.setName(name);
         req.setDescription("Mô tả " + name);
-        req.setStartingPrice(new BigDecimal("1000.00"));
+        req.setStartingPrice(new BigDecimal("100000.00"));
         req.setOwnerId(ownerId);
         req.setItemCondition(Electronics.ConditionGrade.GOOD);
         req.setWarrantyMonths(12);
@@ -103,7 +104,7 @@ public class ItemServiceTest {
         req.setCategory(Item.ItemCategory.FASHION);
         req.setName(name);
         req.setDescription("Mô tả " + name);
-        req.setStartingPrice(new BigDecimal("200.00"));
+        req.setStartingPrice(new BigDecimal("200000.00"));
         req.setOwnerId(ownerId);
         req.setSize(Fashion.Size.M);
         req.setCondition(Fashion.ConditionGrade.GOOD);
@@ -199,6 +200,28 @@ public class ItemServiceTest {
             when(itemDAO.insert(any(Item.class))).thenReturn(true);
             Item result = itemService.createItem(sellerId, req);
             assertNotNull(result);
+        }
+
+        @Test
+        @DisplayName("Tạo mặt hàng thành công và tự động tạo phiên đấu giá tương ứng")
+        void testCreateItem_AutoCreatesAuction() {
+            String sellerId = "seller-123";
+            Seller seller = createRealSeller(sellerId);
+            CreateArtRequestDTO request = createArtRequest("Masterpiece");
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+
+            when(mockUserDAO.findById(sellerId)).thenReturn(seller);
+            when(mockItemDAO.insert(any(Item.class))).thenReturn(true);
+            when(mockAuctionDAO.insert(any(Auction.class))).thenReturn(true);
+
+            ItemResponseDTO result = customItemService.createItem(sellerId, request);
+
+            assertNotNull(result);
+            verify(mockAuctionDAO).insert(any(Auction.class));
         }
     }
 
@@ -313,19 +336,14 @@ public class ItemServiceTest {
         }
 
         @Test
-        @DisplayName("Thành công - Giá khởi điểm bằng 0")
-        void testCreateItem_ZeroStartingPriceAllowed() {
+        @DisplayName("Thất bại khi giá khởi điểm dưới 50k VND")
+        void testCreateItem_StartingPriceBelowMinimumThrows() {
             String sellerId = "seller-123";
             stubValidSeller(sellerId);
-            ItemRequest req = createArtRequest(sellerId, "Miễn phí");
-            req.setStartingPrice(BigDecimal.ZERO);
-            when(itemDAO.insert(any(Item.class))).thenReturn(true);
+            ItemRequest req = createArtRequest(sellerId, "Rẻ quá");
+            req.setStartingPrice(new BigDecimal("49000"));
 
-            Item result = itemService.createItem(sellerId, req);
-
-            assertNotNull(result);
-            assertEquals(0, result.getStartingPrice().compareTo(BigDecimal.ZERO));
-            verify(itemDAO).insert(any(Item.class));
+            assertThrows(BusinessException.class, () -> itemService.createItem(sellerId, req));
         }
     }
 
@@ -657,7 +675,7 @@ public class ItemServiceTest {
             BusinessException ex = assertThrows(BusinessException.class, () ->
                     itemService.updateItem(hackerId, itemId, "Hack", "Hack")
             );
-            assertEquals("Lỗi về quyền sở hữu.", ex.getMessage());
+            assertEquals("Seller does not own this item.", ex.getMessage());
         }
     }
 

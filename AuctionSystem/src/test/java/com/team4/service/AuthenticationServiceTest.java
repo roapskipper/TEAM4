@@ -24,7 +24,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Kiểm thử nghiệp vụ AuthenticationService.
- * Đảm bảo các luồng Đăng ký, Đăng nhập và Đổi mật khẩu hoạt động đúng với cấu trúc DTO/Mapper mới.
+ * Đảm bảo các luồng Đăng ký, Đăng nhập và Đổi mật khẩu hoạt động đúng với cấu
+ * trúc DTO/Mapper mới.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Unit Tests for AuthenticationService")
@@ -48,8 +49,7 @@ public class AuthenticationServiceTest {
         void testRegisterBidder_Success() {
             // GIVEN: Yêu cầu đăng ký hợp lệ và username chưa tồn tại
             RegisterBidderRequestDTO request = new RegisterBidderRequestDTO(
-                    "new_bidder", "New User", "Password123", "bidder@test.com", "Address", "0912345678"
-            );
+                    "new_bidder", "New User", "Password123", "bidder@test.com", "Address", "0912345678");
             when(userDAO.findByUsername(request.getUsername())).thenReturn(null);
             when(userDAO.findByEmail(request.getEmail())).thenReturn(null);
             when(userDAO.insert(any(Bidder.class))).thenReturn(true);
@@ -66,8 +66,7 @@ public class AuthenticationServiceTest {
         void testRegisterSeller_Success() {
             // GIVEN
             RegisterSellerRequestDTO request = new RegisterSellerRequestDTO(
-                    "new_seller", "Password123", "New Seller", "seller@test.com", "My Shop"
-            );
+                    "new_seller", "Password123", "New Seller", "seller@test.com", "My Shop");
             when(userDAO.findByUsername(request.getUsername())).thenReturn(null);
             when(userDAO.findByEmail(request.getEmail())).thenReturn(null);
             when(userDAO.insert(any(Seller.class))).thenReturn(true);
@@ -83,7 +82,8 @@ public class AuthenticationServiceTest {
         @DisplayName("Đăng ký thất bại khi trùng tên đăng nhập")
         void testRegister_DuplicateUsername() {
             // GIVEN: Username đã tồn tại trong DB
-            RegisterBidderRequestDTO request = new RegisterBidderRequestDTO("existing", "Name", "Pass123", "e@t.com", "A", "0912345678");
+            RegisterBidderRequestDTO request = new RegisterBidderRequestDTO("existing", "Name", "Pass123", "e@t.com",
+                    "A", "0912345678");
             when(userDAO.findByUsername("existing")).thenReturn(mock(User.class));
 
             // WHEN & THEN: Kiểm tra ném lỗi Duplicate
@@ -123,7 +123,8 @@ public class AuthenticationServiceTest {
         void testLoginBidder_WrongPassword() {
             // GIVEN: User tồn tại nhưng nhập sai pass
             String username = "user";
-            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("correct"), "A", "a@t.com", "A", "0912345678");
+            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("correct"), "A", "a@t.com", "A",
+                    "0912345678");
 
             LoginRequestDTO request = new LoginRequestDTO(username, "wrong", null);
             when(userDAO.findByUsername(username)).thenReturn(bidder);
@@ -138,12 +139,14 @@ public class AuthenticationServiceTest {
         void testLoginSeller_WithBidderAccount() {
             // GIVEN: Tài khoản là Bidder
             String username = "not_a_seller";
-            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("pass"), "A", "a@t.com", "A", "0912345678");
+            Bidder bidder = new Bidder(username, PasswordHasher.hashPassword("pass"), "A", "a@t.com", "A",
+                    "0912345678");
 
             LoginRequestDTO request = new LoginRequestDTO(username, "pass", null);
             when(userDAO.findByUsername(username)).thenReturn(bidder);
 
-            // WHEN & THEN: Phải ném lỗi sai vai trò (This account is not registered as a Seller.)
+            // WHEN & THEN: Phải ném lỗi sai vai trò (This account is not registered as a
+            // Seller.)
             BusinessException ex = assertThrows(BusinessException.class, () -> authService.loginSeller(request));
             assertTrue(ex.getMessage().contains("is not registered as a Seller"));
         }
@@ -203,7 +206,8 @@ public class AuthenticationServiceTest {
             String userId = "u-1";
             String oldPass = "Old@123456";
             String newPass = "New@123456";
-            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N", "e@t.com", BigDecimal.ZERO, "A", "0912345678");
+            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N",
+                    "e@t.com", BigDecimal.ZERO, "A", "0912345678");
 
             when(userDAO.findById(userId)).thenReturn(user);
             when(userDAO.update(any())).thenReturn(true);
@@ -221,11 +225,13 @@ public class AuthenticationServiceTest {
         void testChangePassword_TooShort() {
             String userId = "u-1";
             String oldPass = "OldPass";
-            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N", "e@t.com", BigDecimal.ZERO, "A", "0912345678");
+            User user = new Bidder(userId, LocalDateTime.now(), "user", PasswordHasher.hashPassword(oldPass), "N",
+                    "e@t.com", BigDecimal.ZERO, "A", "0912345678");
             when(userDAO.findById(userId)).thenReturn(user);
 
             // WHEN & THEN: Lỗi độ dài pass mới (phải >= 6)
-            BusinessException ex = assertThrows(BusinessException.class, () -> authService.changePassword(userId, oldPass, "12345"));
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> authService.changePassword(userId, oldPass, "12345"));
             assertEquals("New password must be at least 6 characters long.", ex.getMessage());
         }
     }

@@ -4,12 +4,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
-import com.team4.dao.impl.ItemDAOImpl;
-import com.team4.dao.impl.UserDAOImpl;
 import com.team4.factory.ItemRequest;
 import com.team4.model.Item;
-import com.team4.service.ItemService;
-import com.team4.util.BusinessException;
+import com.team4.util.UserSession;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -23,12 +20,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -72,6 +71,10 @@ public class SellerProductsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        if (!isSellerSession()) {
+            disableSellerOnlyView();
+            return;
+        }
         setupCategoryFilter();
         setupTable();
         setupFiltering();
@@ -184,6 +187,8 @@ public class SellerProductsController implements Initializable {
     private void setupActionColumn() {
         colAction.setCellFactory(param -> new TableCell<Item, Void>() {
             private final Button editBtn = new Button("Edit");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox actions = new HBox(6, editBtn, deleteBtn);
 
             {
                 editBtn.getStyleClass().add("table-action-btn");
@@ -192,12 +197,19 @@ public class SellerProductsController implements Initializable {
                     Item selected = getTableView().getItems().get(getIndex());
                     onEditProduct(selected);
                 });
+
+                deleteBtn.getStyleClass().add("table-action-btn");
+                deleteBtn.setFocusTraversable(false);
+                deleteBtn.setOnAction(event -> {
+                    Item selected = getTableView().getItems().get(getIndex());
+                    onDeleteProduct(selected);
+                });
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : editBtn);
+                setGraphic(empty ? null : actions);
                 setText(null);
             }
         });
@@ -234,13 +246,17 @@ public class SellerProductsController implements Initializable {
 
     @FXML
     private void onAddProduct() {
+        if (!isSellerSession()) {
+            showAlert(Alert.AlertType.ERROR, "Access Denied", "Only sellers can register products.");
+            return;
+        }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/team4/view/add_product_dialog.fxml"));
             Parent root = loader.load();
             AddProductDialogController dialogController = loader.getController();
 
             Stage stage = new Stage();
-            stage.setTitle("Đăng sản phẩm");
+            stage.setTitle("Add Product");
             stage.initModality(Modality.APPLICATION_MODAL);
             Scene scene = new Scene(root);
             stage.setScene(scene);
@@ -263,31 +279,27 @@ public class SellerProductsController implements Initializable {
             request = dialogController.buildItemRequest(sellerId);
             request.setOwnerId(sellerId);
         } catch (IllegalArgumentException ex) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi dữ liệu", ex.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Invalid Data", ex.getMessage());
             return;
         }
 
         Task<Void> task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                ItemService itemService = new ItemService(new ItemDAOImpl(), new UserDAOImpl());
-                itemService.createItem(sellerId, request);
+                new ApiClient().createItem(sellerId, request);
                 return null;
             }
         };
 
         task.setOnSucceeded(e -> {
-            showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã đăng sản phẩm thành công.");
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Product created successfully.");
             loadDataFromServer();
             loadStats();
         });
 
         task.setOnFailed(e -> {
-            Throwable ex = task.getException();
-            String msg = ex instanceof BusinessException
-                    ? ex.getMessage()
-                    : cleanMessage(ex);
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể đăng sản phẩm. " + msg);
+            showAlert(Alert.AlertType.ERROR, "Error",
+                    "Could not create product. " + cleanMessage(task.getException()));
         });
 
         new Thread(task).start();
@@ -326,6 +338,7 @@ public class SellerProductsController implements Initializable {
             @Override
             protected Void call() throws Exception {
                 new ApiClient().updateItem(
+                        currentSellerId(),
                         item.getId(),
                         dialogController.getName(),
                         dialogController.getCategory(),
@@ -344,6 +357,38 @@ public class SellerProductsController implements Initializable {
 
         task.setOnFailed(e -> showAlert(Alert.AlertType.ERROR, "Error",
                 "Failed to update product. " + cleanMessage(task.getException())));
+
+        new Thread(task).start();
+    }
+
+    private void onDeleteProduct(Item item) {
+        Alert confirmation = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                "Delete \"" + nullSafe(item.getName()) + "\"?",
+                ButtonType.OK,
+                ButtonType.CANCEL);
+        confirmation.setTitle("Delete Product");
+        confirmation.setHeaderText(null);
+        if (confirmation.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+            return;
+        }
+
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                new ApiClient().deleteItem(currentSellerId(), item.getId());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Product deleted successfully.");
+            loadDataFromServer();
+            loadStats();
+        });
+
+        task.setOnFailed(e -> showAlert(Alert.AlertType.ERROR, "Error",
+                "Could not delete product. " + cleanMessage(task.getException())));
 
         new Thread(task).start();
     }
@@ -374,11 +419,30 @@ public class SellerProductsController implements Initializable {
     }
 
     private String currentSellerId() {
-        if (com.team4.util.UserSession.getInstance() != null
-                && com.team4.util.UserSession.getInstance().getUserId() != null) {
-            return com.team4.util.UserSession.getInstance().getUserId();
+        UserSession session = UserSession.getInstance();
+        if (session != null && session.getUserId() != null) {
+            return session.getUserId();
         }
-        return "currentSellerId";
+        return "";
+    }
+
+    private boolean isSellerSession() {
+        UserSession session = UserSession.getInstance();
+        return session != null && "seller".equalsIgnoreCase(session.getRole())
+                && session.getUserId() != null && !session.getUserId().isBlank();
+    }
+
+    private void disableSellerOnlyView() {
+        if (addProductBtn != null) {
+            addProductBtn.setDisable(true);
+        }
+        if (productsTable != null) {
+            productsTable.setPlaceholder(new Label("Only sellers can manage products."));
+        }
+        if (totalProducts != null) totalProducts.setText("N/A");
+        if (activeAuctions != null) activeAuctions.setText("N/A");
+        if (pendingProducts != null) pendingProducts.setText("N/A");
+        if (soldProducts != null) soldProducts.setText("N/A");
     }
 
     private String formatPrice(BigDecimal amount) {

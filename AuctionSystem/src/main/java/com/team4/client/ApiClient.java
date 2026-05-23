@@ -26,6 +26,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
 import io.github.cdimascio.dotenv.Dotenv;
+import com.team4.factory.ItemRequest;
 import com.team4.model.Item;
 import com.team4.model.Art;
 import com.team4.model.Collectible;
@@ -96,6 +97,20 @@ public class ApiClient {
 
     private static String plainNumber(double value) {
         return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    private static void appendParam(StringBuilder body, String key, Object value) {
+        if (value == null) {
+            return;
+        }
+        if (body.length() > 0) {
+            body.append('&');
+        }
+        body.append(key).append('=').append(enc(String.valueOf(value)));
+    }
+
+    private static String enumName(Enum<?> value) {
+        return value == null ? null : value.name();
     }
 
     public static String extractErrorMessage(String rawMessage) {
@@ -315,6 +330,50 @@ public class ApiClient {
         }
     }
 
+    public JsonObject getWalletBalance(String userId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "/wallet/balance"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        }
+        throw apiException(response);
+    }
+
+    public String depositWallet(String userId, BigDecimal amount) throws Exception {
+        return walletAction(userId, "deposit", amount);
+    }
+
+    public String withdrawWallet(String userId, BigDecimal amount) throws Exception {
+        return walletAction(userId, "withdraw", amount);
+    }
+
+    private String walletAction(String userId, String action, BigDecimal amount) throws Exception {
+        String body = "amount=" + enc(amount == null ? "" : amount.toPlainString());
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/"
+                        + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8)
+                        + "/wallet/" + action))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        }
+        throw apiException(response);
+    }
+
     public JsonArray getOwnedItems(String userId) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "/owned-items"))
@@ -348,15 +407,22 @@ public class ApiClient {
     }
 
     public String createItem(String sellerId, String name, String category, double startingPrice, String description) throws Exception {
-        String body = "sellerId=" + enc(sellerId)
-                + "&name=" + enc(name)
-                + "&category=" + enc(category)
-                + "&startingPrice=" + enc(plainNumber(startingPrice))
-                + "&description=" + enc(description);
+        ItemRequest itemRequest = new ItemRequest();
+        itemRequest.setOwnerId(sellerId);
+        itemRequest.setName(name);
+        itemRequest.setCategory(Item.ItemCategory.valueOf(category.toUpperCase()));
+        itemRequest.setStartingPrice(BigDecimal.valueOf(startingPrice));
+        itemRequest.setDescription(description);
+        return createItem(sellerId, itemRequest);
+    }
+
+    public String createItem(String sellerId, ItemRequest itemRequest) throws Exception {
+        StringBuilder body = new StringBuilder();
+        appendItemRequestFields(body, sellerId, itemRequest);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "items"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString(), StandardCharsets.UTF_8))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200 || response.statusCode() == 201) {
@@ -366,13 +432,72 @@ public class ApiClient {
         }
     }
 
-    public String updateItem(String itemId, String name, String category, double startingPrice, String description) throws Exception {
-        String body = "name=" + enc(name)
-                + "&category=" + enc(category)
-                + "&startingPrice=" + enc(plainNumber(startingPrice))
-                + "&description=" + enc(description);
+    private void appendItemRequestFields(StringBuilder body, String sellerId, ItemRequest request) {
+        appendParam(body, "sellerId", sellerId);
+        appendParam(body, "name", request.getName());
+        appendParam(body, "category", enumName(request.getCategory()));
+        appendParam(body, "startingPrice", request.getStartingPrice());
+        appendParam(body, "description", request.getDescription());
+
+        if (request.getCategory() == null) {
+            return;
+        }
+
+        switch (request.getCategory()) {
+            case ART:
+                appendParam(body, "artist", request.getArtist());
+                appendParam(body, "creationYear", request.getCreationYear());
+                appendParam(body, "medium", enumName(request.getMedium()));
+                appendParam(body, "dimensions", request.getDimensions());
+                break;
+            case COLLECTIBLE:
+                appendParam(body, "yearOfOrigin", request.getYearOfOrigin());
+                appendParam(body, "rarityLevel", enumName(request.getRarityLevel()));
+                appendParam(body, "conditionGrade", enumName(request.getConditionGrade()));
+                appendParam(body, "hasCertificate", request.isHasCertificate());
+                appendParam(body, "origin", request.getOrigin());
+                break;
+            case ELECTRONICS:
+                appendParam(body, "brand", request.getBrand());
+                appendParam(body, "model", request.getModel());
+                appendParam(body, "itemCondition", enumName(request.getItemCondition()));
+                appendParam(body, "warrantyMonths", request.getWarrantyMonths());
+                appendParam(body, "fullyFunctional", request.isFullyFunctional());
+                break;
+            case FASHION:
+                appendParam(body, "brand", request.getBrand());
+                appendParam(body, "size", enumName(request.getSize()));
+                appendParam(body, "material", request.getMaterial());
+                appendParam(body, "color", request.getColor());
+                appendParam(body, "gender", enumName(request.getGender()));
+                appendParam(body, "condition", enumName(request.getCondition()));
+                appendParam(body, "authentic", request.isAuthentic());
+                break;
+            case VEHICLE:
+                appendParam(body, "brand", request.getBrand());
+                appendParam(body, "model", request.getModel());
+                appendParam(body, "manufacturingYear", request.getManufacturingYear());
+                appendParam(body, "odo", request.getOdo());
+                appendParam(body, "engineType", enumName(request.getEngineType()));
+                appendParam(body, "color", request.getColor());
+                appendParam(body, "hasLegalPapers", request.isHasLegalPapers());
+                appendParam(body, "transmission", enumName(request.getTransmission()));
+                break;
+            default:
+                break;
+        }
+    }
+
+    public String updateItem(String sellerId, String itemId, String name, String category, double startingPrice, String description) throws Exception {
+        StringBuilder bodyBuilder = new StringBuilder();
+        appendParam(bodyBuilder, "sellerId", sellerId);
+        appendParam(bodyBuilder, "name", name);
+        appendParam(bodyBuilder, "category", category);
+        appendParam(bodyBuilder, "startingPrice", plainNumber(startingPrice));
+        appendParam(bodyBuilder, "description", description);
+        String body = bodyBuilder.toString();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "items/" + itemId))
+                .uri(URI.create(API_URL + "items/" + java.net.URLEncoder.encode(itemId, StandardCharsets.UTF_8)))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
@@ -384,9 +509,36 @@ public class ApiClient {
         }
     }
 
-    public JsonArray getAuctions(String filter) throws Exception {
+    public String updateItem(String itemId, String name, String category, double startingPrice, String description) throws Exception {
+        return updateItem("", itemId, name, category, startingPrice, description);
+    }
+
+    public String deleteItem(String sellerId, String itemId) throws Exception {
+        String encodedItemId = java.net.URLEncoder.encode(itemId, StandardCharsets.UTF_8);
+        String encodedSellerId = java.net.URLEncoder.encode(sellerId == null ? "" : sellerId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/auctions?filter=" + java.net.URLEncoder.encode(filter, StandardCharsets.UTF_8)))
+                .uri(URI.create(API_URL + "items/" + encodedItemId + "?sellerId=" + encodedSellerId))
+                .DELETE()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw apiException(response);
+        }
+    }
+
+    public JsonArray getAuctions(String filter) throws Exception {
+        return getAuctions(filter, "");
+    }
+
+    public JsonArray getAuctions(String filter, String requesterId) throws Exception {
+        String query = "filter=" + java.net.URLEncoder.encode(filter, StandardCharsets.UTF_8);
+        if (requesterId != null && !requesterId.isBlank()) {
+            query += "&requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8);
+        }
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "admin/auctions?" + query))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -450,10 +602,15 @@ public class ApiClient {
     }
 
     public String approveAuction(String auctionId) throws Exception {
+        return approveAuction(auctionId, "");
+    }
+
+    public String approveAuction(String auctionId, String requesterId) throws Exception {
+        String body = "requesterId=" + java.net.URLEncoder.encode(requesterId != null ? requesterId : "", StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "admin/auctions/" + auctionId + "/approve"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200) {
@@ -464,7 +621,14 @@ public class ApiClient {
     }
 
     public String rejectAuction(String auctionId, String reason) throws Exception {
-        String body = "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8);
+        return rejectAuction(auctionId, "", reason);
+    }
+
+    public String rejectAuction(String auctionId, String requesterId, String reason) throws Exception {
+        String body = "requesterId=" + java.net.URLEncoder.encode(requesterId != null ? requesterId : "", StandardCharsets.UTF_8);
+        if (reason != null && !reason.isBlank()) {
+            body += "&reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8);
+        }
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL + "admin/auctions/" + auctionId + "/reject"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
@@ -572,8 +736,15 @@ public class ApiClient {
     }
 
     public JsonObject getDashboardStats() throws Exception {
+        return getDashboardStats("");
+    }
+
+    public JsonObject getDashboardStats(String requesterId) throws Exception {
+        String query = requesterId == null || requesterId.isBlank()
+                ? ""
+                : "?requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/dashboard/stats"))
+                .uri(URI.create(API_URL + "admin/dashboard/stats" + query))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -590,5 +761,108 @@ public class ApiClient {
         } else {
             throw apiException(response);
         }
+    }
+
+    public JsonArray getBidHistoryByBidder(String bidderId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "user/" + java.net.URLEncoder.encode(bidderId, StandardCharsets.UTF_8) + "/bid-history"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+                    return responseObj.getAsJsonArray("data");
+                }
+            }
+            return parsed.isJsonArray() ? parsed.getAsJsonArray() : new JsonArray();
+        }
+        throw apiException(response);
+    }
+
+    public JsonObject getHighestBid(String auctionId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "auctions/" + java.net.URLEncoder.encode(auctionId, StandardCharsets.UTF_8) + "/highest-bid"))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        }
+        throw apiException(response);
+    }
+
+    public JsonObject enableAutoBid(String auctionId, String bidderId, double maxAmount) throws Exception {
+        String body = "bidderId=" + enc(bidderId)
+                + "&maxAmount=" + enc(plainNumber(maxAmount));
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "auctions/" + enc(auctionId) + "/autobid"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        }
+        throw apiException(response);
+    }
+
+    /**
+     * Tắt auto-bid cho một phiên đấu giá.
+     * DELETE /api/auctions/{auctionId}/autobid
+     */
+    public void disableAutoBid(String auctionId, String bidderId) throws Exception {
+        String body = "bidderId=" + enc(bidderId);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "auctions/" + enc(auctionId) + "/autobid"))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .method("DELETE", HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() != 200) {
+            throw apiException(response);
+        }
+    }
+
+    /**
+     * Lấy trạng thái auto-bid hiện tại.
+     * GET /api/auctions/{auctionId}/autobid?bidderId=...
+     */
+    public JsonObject getAutoBidStatus(String auctionId, String bidderId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL + "auctions/" + enc(auctionId) + "/autobid?bidderId=" + enc(bidderId)))
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (response.statusCode() == 200) {
+            JsonElement parsed = JsonParser.parseString(response.body());
+            if (parsed.isJsonObject()) {
+                JsonObject responseObj = parsed.getAsJsonObject();
+                if (responseObj.has("data") && responseObj.get("data").isJsonObject()) {
+                    return responseObj.getAsJsonObject("data");
+                }
+                return responseObj;
+            }
+            return new JsonObject();
+        }
+        throw apiException(response);
     }
 }

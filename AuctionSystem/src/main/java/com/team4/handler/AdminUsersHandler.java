@@ -9,6 +9,7 @@ import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.server.Server;
+import com.team4.util.BusinessException;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -29,26 +30,56 @@ public class AdminUsersHandler implements HttpHandler {
 
         try {
             String path = exchange.getRequestURI().getPath();
+            String queryParams = exchange.getRequestURI().getRawQuery();
+            String requesterId = ApiServer.getRequesterId(exchange, queryParam(queryParams, "requesterId"));
+
             if ("GET".equals(method) && (BASE_PATH.equals(path) || (BASE_PATH + "/").equals(path))) {
-                handleListUsers(exchange, null);
+                handleListUsers(exchange, requesterId, null);
                 return;
             }
             if ("GET".equals(method) && (BASE_PATH + "/search").equals(path)) {
-                handleListUsers(exchange, queryParam(exchange.getRequestURI().getRawQuery(), "q"));
+                handleListUsers(exchange, requesterId, queryParam(queryParams, "q"));
                 return;
+            }
+            if ("PUT".equals(method)) {
+                String[] parts = path.split("/");
+                if (parts.length >= 6 && "users".equals(parts[3])) {
+                    String targetUserId = parts[4];
+                    String action = parts[5];
+                    
+                    // Read body
+                    java.io.InputStream is = exchange.getRequestBody();
+                    String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    is.close();
+                    
+                    String reqId = ApiServer.getRequesterId(exchange, ApiServer.parseParam(body, "requesterId"));
+                    
+                    if ("grant-admin".equals(action)) {
+                        String adminCode = ApiServer.parseParam(body, "adminCode");
+                        Server.getAdminService().grantAdmin(reqId, targetUserId, adminCode);
+                        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Admin role granted successfully", null));
+                        return;
+                    } else if ("revoke-admin".equals(action)) {
+                        Server.getAdminService().revokeAdmin(reqId, targetUserId);
+                        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Admin role revoked successfully", null));
+                        return;
+                    }
+                }
             }
 
             exchange.sendResponseHeaders(405, -1);
+        } catch (BusinessException e) {
+            ApiServer.sendResponse(exchange, 400,
+                    ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();
             ApiServer.sendResponse(exchange, 500,
-                    ApiServer.buildResponse("ERROR", "Unable to load users", null));
+                    ApiServer.buildResponse("ERROR", "Operation failed: " + e.getMessage(), null));
         }
     }
 
-    private void handleListUsers(HttpExchange exchange, String query) throws IOException {
-        // getAllUsers() giờ trả về List<UserResponseDTO>
-        List<UserResponseDTO> users = Server.getUserService().getAllUsers();
+    private void handleListUsers(HttpExchange exchange, String requesterId, String query) throws IOException {
+        List<UserResponseDTO> users = Server.getAdminService().viewSystemUsers(requesterId);
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
 
         JsonArray data = new JsonArray();

@@ -80,42 +80,6 @@
                 </VBox>
             </HBox>
         </VBox>
-
-        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
-                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="N" />
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="newRegistrationsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="New Registrations" />
-                </VBox>
-            </HBox>
-        </VBox>
-
-        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
-                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="P" />
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="reportsCountLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="Reports" />
-                </VBox>
-            </HBox>
-        </VBox>
-
-        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-danger">
-                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="F" />
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="fraudCasesLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="Suspected Fraud" />
-                </VBox>
-            </HBox>
-        </VBox>
     </HBox>
 
     <HBox spacing="16" VBox.vgrow="ALWAYS">
@@ -132,10 +96,9 @@
             <VBox spacing="8">
                 <HBox spacing="10">
                     <Button text="Pending Auctions" onAction="#onViewPendingAuctions" styleClass="admin-button-primary" prefWidth="200"/>
-                    <Button text="Review Reports" onAction="#onReviewReports" styleClass="admin-button-secondary" prefWidth="200"/>
+                    <Button text="Manage Users" onAction="#onManageUsers" styleClass="admin-button-secondary" prefWidth="200"/>
                 </HBox>
                 <HBox spacing="10">
-                    <Button text="Manage Users" onAction="#onManageUsers" styleClass="admin-button-secondary" prefWidth="200"/>
                     <Button text="System Settings" onAction="#onSystemSettings" styleClass="admin-button-secondary" prefWidth="200"/>
                 </HBox>
             </VBox>

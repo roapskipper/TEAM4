@@ -36,13 +36,13 @@
         <TextField fx:id="searchField" prefWidth="300" promptText="Search products..." styleClass="admin-input" />
         <ComboBox fx:id="categoryFilter" prefWidth="190" promptText="All Categories" styleClass="admin-combo" />
         <Region HBox.hgrow="ALWAYS" />
-        <Button fx:id="addProductBtn" minWidth="140" onAction="#onAddProduct" styleClass="btn-primary" text="Đăng sản phẩm" />
+        <Button fx:id="addProductBtn" minWidth="140" onAction="#onAddProduct" styleClass="btn-primary" text="Add Product" />
     </HBox>
 
-    <TitledPane expanded="true" text="Quy tắc đăng sản phẩm (đồng bộ với hệ thống)" styleClass="rules-pane">
+    <TitledPane expanded="true" text="Product Listing Rules" styleClass="rules-pane">
         <content>
             <Label wrapText="true" styleClass="dialog-help"
-                   text="Chung (bắt buộc): Tên (≤100 ký tự), Danh mục, Giá khởi điểm (≥0, min 50.000 VND), Mô tả (≤500 ký tự).&#10;&#10;Theo danh mục:&#10;• Nghệ thuật — Chất liệu*; Tác giả/Năm/Kích thước tùy chọn (Unknown/0).&#10;• Đồ sưu tầm — Độ hiếm*, Tình trạng*; Năm/Xuất xứ/Chứng chỉ tùy chọn.&#10;• Điện tử — Tình trạng*, Bảo hành (tháng)*; Thương hiệu/Model tùy chọn (Unknown).&#10;• Thời trang — Kích cỡ*, Tình trạng*, Đối tượng* (mặc định UNISEX); Thương hiệu/Chất liệu/Màu tùy chọn.&#10;• Phương tiện — Động cơ*, Hộp số* (mặc định OTHER), Số km* (0–1.000.000); Năm SX/Thương hiệu/Model tùy chọn.&#10;&#10;Nhấn «Đăng sản phẩm» để mở form đầy đủ các trường trên."/>
+                   text="Required fields: name, category, starting price, and description. Category-specific fields are shown in the product form. Optional unknown values can be left blank when the form allows it." />
         </content>
     </TitledPane>
 
