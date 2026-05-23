@@ -20,6 +20,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 
+import com.team4.util.UserSession;
+
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.text.NumberFormat;
@@ -29,7 +31,7 @@ import java.util.function.Consumer;
 public class AdminDashboardController implements Initializable {
 
     @FXML private Label totalUsersLabel, totalAuctionsLabel, activeAuctionsLabel, totalRevenueLabel;
-    @FXML private Label totalTransactionsLabel, newRegistrationsLabel, reportsCountLabel, fraudCasesLabel;
+    @FXML private Label totalTransactionsLabel;
     @FXML private BarChart<String, Number> regChart;
     @FXML private VBox alertsContainer;
     @FXML private Button refreshButton;
@@ -63,22 +65,7 @@ public class AdminDashboardController implements Initializable {
         });
     }
 
-    @FXML
-    private void onReviewReports() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Recent Reports");
-        alert.setHeaderText("Latest 5 Fraud/Complaint Reports");
-        
-        StringBuilder sb = new StringBuilder();
-        sb.append("1. Suspected shill bidding on Item #1042\n");
-        sb.append("2. Non-responsive seller (User: art_collector)\n");
-        sb.append("3. Counterfeit item report on Auction #89\n");
-        sb.append("4. Suspicious bidding pattern on Auction #117\n");
-        sb.append("5. Payment not received for Auction #12\n");
-        
-        alert.setContentText(sb.toString());
-        alert.show();
-    }
+
 
     @FXML
     private void onManageUsers() {
@@ -118,7 +105,7 @@ public class AdminDashboardController implements Initializable {
             @Override
             protected JsonObject call() throws Exception {
                 ApiClient apiClient = new ApiClient();
-                return apiClient.getDashboardStats();
+                return apiClient.getDashboardStats(currentUserId());
             }
         };
 
@@ -145,9 +132,6 @@ public class AdminDashboardController implements Initializable {
         activeAuctionsLabel.setText("...");
         totalRevenueLabel.setText("...");
         totalTransactionsLabel.setText("...");
-        newRegistrationsLabel.setText("...");
-        reportsCountLabel.setText("...");
-        fraudCasesLabel.setText("...");
     }
 
     private void setDefaultState() {
@@ -156,9 +140,6 @@ public class AdminDashboardController implements Initializable {
         activeAuctionsLabel.setText("0");
         totalRevenueLabel.setText("0 VND");
         totalTransactionsLabel.setText("0");
-        newRegistrationsLabel.setText("0");
-        reportsCountLabel.setText("0");
-        fraudCasesLabel.setText("0");
     }
 
     private void updateStats(JsonObject data) {
@@ -169,18 +150,12 @@ public class AdminDashboardController implements Initializable {
         long activeAuctions = data.has("activeAuctions") ? data.get("activeAuctions").getAsLong() : 0;
         double totalRevenue = data.has("totalRevenue") ? data.get("totalRevenue").getAsDouble() : 0.0;
         long totalTransactions = data.has("totalTransactions") ? data.get("totalTransactions").getAsLong() : 0;
-        long newRegistrations = data.has("newRegistrations") ? data.get("newRegistrations").getAsLong() : 0;
-        long reportsCount = data.has("reportsCount") ? data.get("reportsCount").getAsLong() : 0;
-        long fraudCases = data.has("fraudCases") ? data.get("fraudCases").getAsLong() : 0;
 
         totalUsersLabel.setText(numberFormat.format(totalUsers));
         totalAuctionsLabel.setText(numberFormat.format(totalAuctions));
         activeAuctionsLabel.setText(numberFormat.format(activeAuctions));
         totalRevenueLabel.setText(numberFormat.format(totalRevenue) + " VND");
         totalTransactionsLabel.setText(numberFormat.format(totalTransactions));
-        newRegistrationsLabel.setText(numberFormat.format(newRegistrations));
-        reportsCountLabel.setText(numberFormat.format(reportsCount));
-        fraudCasesLabel.setText(numberFormat.format(fraudCases));
     }
 
     private void updateChart(JsonObject data) {
@@ -209,21 +184,16 @@ public class AdminDashboardController implements Initializable {
         alertsContainer.getChildren().clear();
         
         long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 0;
-        long reports = data.has("reportsCount") ? data.get("reportsCount").getAsLong() : 0;
         
         String pendingStyle = pending > 10 ? "alert-red" : (pending > 5 ? "alert-yellow" : "alert-green");
-        String reportsStyle = reports > 10 ? "alert-red" : (reports > 5 ? "alert-yellow" : "alert-green");
         
         HBox pendingAlert = createAlert(pending + " pending auctions", "Awaiting approval", pendingStyle);
         pendingAlert.setOnMouseClicked(e -> onViewPendingAuctions());
         
-        HBox reportsAlert = createAlert(reports + " new reports", "Fraud or complaints this week", reportsStyle);
-        reportsAlert.setOnMouseClicked(e -> onReviewReports());
-        
         HBox sysAlert = createAlert("System Resources Normal", "CPU: 12%, RAM: 45%", "alert-green");
         sysAlert.setOnMouseClicked(e -> onSystemSettings());
         
-        alertsContainer.getChildren().addAll(pendingAlert, reportsAlert, sysAlert);
+        alertsContainer.getChildren().addAll(pendingAlert, sysAlert);
     }
 
     private HBox createAlert(String title, String desc, String styleClass) {
@@ -255,5 +225,10 @@ public class AdminDashboardController implements Initializable {
         alert.setTitle("Error");
         alert.setHeaderText(null);
         alert.show();
+    }
+
+    private String currentUserId() {
+        UserSession session = UserSession.getInstance();
+        return session != null && session.getUserId() != null ? session.getUserId() : "";
     }
 }

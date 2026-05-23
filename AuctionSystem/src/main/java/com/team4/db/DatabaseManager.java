@@ -10,17 +10,19 @@ import java.sql.SQLException;
 import java.util.Properties;
 import io.github.cdimascio.dotenv.Dotenv;
 
-/**Là cửa vào duy nhất để lấy connection và quản lý transaction.
+/**
+ * Là cửa vào duy nhất để lấy connection và quản lý transaction.
  * Có các nhiệm vụ: Mở pool, Cấp connection, Transaction, Đóng pool
- * Sử dụng Singleton Pattern để đảm bảo chỉ có một instance duy nhất của DatabaseManager trong toàn bộ ứng dụng.
+ * Sử dụng Singleton Pattern để đảm bảo chỉ có một instance duy nhất của
+ * DatabaseManager trong toàn bộ ứng dụng.
  * Dùng HikariCP.
- * Điều này giúp tiết kiệm tài nguyên và đảm bảo tính nhất quán khi quản lý kết nối tới MySQL.
+ * Điều này giúp tiết kiệm tài nguyên và đảm bảo tính nhất quán khi quản lý kết
+ * nối tới MySQL.
  */
 public final class DatabaseManager {
 
     private static final String DEFAULT_DATABASE = "auction_system";
-    private static final String DEFAULT_JDBC_QUERY =
-            "useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh";
+    private static final String DEFAULT_JDBC_QUERY = "useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh";
 
     private static HikariDataSource dataSource;
     private static String url;
@@ -36,21 +38,26 @@ public final class DatabaseManager {
         // Thử load từ working directory (AuctionSystem/ khi chạy từ IntelliJ)
         try {
             Dotenv d = Dotenv.configure().ignoreIfMissing().load();
-            if (d.get("DB_URL") != null) return d;
-        } catch (Exception ignored) {}
+            if (d.get("DB_URL") != null)
+                return d;
+        } catch (Exception ignored) {
+        }
         // Fallback: thử từ thư mục cha (TEAM4/ khi run từ root)
         try {
             Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
-            if (d.get("DB_URL") != null) return d;
-        } catch (Exception ignored) {}
+            if (d.get("DB_URL") != null)
+                return d;
+        } catch (Exception ignored) {
+        }
         return Dotenv.configure().ignoreIfMissing().load();
     }
 
     // Không cho tạo instance
-    private DatabaseManager() {}
+    private DatabaseManager() {
+    }
 
     // 1. Khởi tạo - gọi 1 lần khi app start
-        // Tránh race khi khởi tạo
+    // Tránh race khi khởi tạo
     public static synchronized void initialize() {
         if (dataSource == null) {
             loadConfig();
@@ -67,18 +74,19 @@ public final class DatabaseManager {
                 .getResourceAsStream("database.properties")) {
 
             if (is == null)
-                throw new RuntimeException("database.properties not found"); // getResourceAsStream trả null nếu không tìm thấy file
+                throw new RuntimeException("database.properties not found"); // getResourceAsStream trả null nếu không
+                                                                             // tìm thấy file
 
             props.load(is);
             // Lấy các giá trị
-            url               = normalizeJdbcUrl(dotenv.get("DB_URL"), DEFAULT_DATABASE);
-            username          = requireConfig("DB_USERNAME", dotenv.get("DB_USERNAME"));
-            password          = requireConfig("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
+            url = normalizeJdbcUrl(dotenv.get("DB_URL"), DEFAULT_DATABASE);
+            username = requireConfig("DB_USERNAME", dotenv.get("DB_USERNAME"));
+            password = requireConfig("DB_PASSWORD", dotenv.get("DB_PASSWORD"));
 
-            poolSize          = Integer.parseInt(props.getProperty("db.poolSize", "10"));
+            poolSize = Integer.parseInt(props.getProperty("db.poolSize", "10"));
             connectionTimeout = Integer.parseInt(props.getProperty("db.connectionTimeout", "30000"));
-            idleTimeout       = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
-            maxLifetime       = Integer.parseInt(props.getProperty("db.maxLifetime", "1800000"));
+            idleTimeout = Integer.parseInt(props.getProperty("db.idleTimeout", "600000"));
+            maxLifetime = Integer.parseInt(props.getProperty("db.maxLifetime", "1800000"));
 
         } catch (IOException e) {
             throw new RuntimeException("Unable to read database.properties", e);
@@ -148,23 +156,25 @@ public final class DatabaseManager {
         return dataSource.getConnection();
     }
 
-
     // 5. Transaction
     public static void beginTransaction(Connection conn) throws SQLException {
         if (conn == null)
             throw new IllegalArgumentException("Connection must not be null");
         conn.setAutoCommit(false);
     }
+
     public static void commitTransaction(Connection conn) throws SQLException {
         if (conn == null)
             throw new IllegalArgumentException("Connection must not be null");
-        conn.commit(); //lưu toàn bộ thay đổi xuống DB
-        conn.setAutoCommit(true); //trả về trạng thái ban đầu trước khi trả connection về pool
+        conn.commit(); // lưu toàn bộ thay đổi xuống DB
+        conn.setAutoCommit(true); // trả về trạng thái ban đầu trước khi trả connection về pool
     }
+
     public static void rollbackTransaction(Connection conn) {
-        if (conn == null) return;
+        if (conn == null)
+            return;
         try {
-            conn.rollback(); //hủy toàn bộ thay đổi chưa commit
+            conn.rollback(); // hủy toàn bộ thay đổi chưa commit
             conn.setAutoCommit(true);
         } catch (SQLException e) {
             throw new RuntimeException("Rollback failed", e);
@@ -173,7 +183,8 @@ public final class DatabaseManager {
 
     // 6. Kiểm tra kết nối
     public static boolean healthCheck() {
-        if (dataSource == null) return false;
+        if (dataSource == null)
+            return false;
         try (Connection conn = dataSource.getConnection()) {
             return conn.isValid(5); // chờ tối đa 5 giây
         } catch (SQLException e) {
@@ -185,7 +196,7 @@ public final class DatabaseManager {
     public static void shutdown() {
         // chưa đóng thì mới đóng, tránh đóng 2 lần
         if (dataSource != null && !dataSource.isClosed()) {
-            dataSource.close(); //đóng toàn bộ pool, giải phóng connection
+            dataSource.close(); // đóng toàn bộ pool, giải phóng connection
             dataSource = null;
         }
     }

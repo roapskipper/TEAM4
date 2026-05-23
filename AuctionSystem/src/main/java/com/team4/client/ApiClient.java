@@ -736,8 +736,15 @@ public class ApiClient {
     }
 
     public JsonObject getDashboardStats() throws Exception {
+        return getDashboardStats("");
+    }
+
+    public JsonObject getDashboardStats(String requesterId) throws Exception {
+        String query = requesterId == null || requesterId.isBlank()
+                ? ""
+                : "?requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/dashboard/stats"))
+                .uri(URI.create(API_URL + "admin/dashboard/stats" + query))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
