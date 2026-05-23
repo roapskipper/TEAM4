@@ -81,15 +81,15 @@ public class AddProductDialogController implements Initializable {
 
     static {
         CATEGORY_HINTS.put("Art",
-                "Bắt buộc: Chất liệu. Tùy chọn: Tác giả (trống → Unknown), Năm sáng tác (0 = chưa rõ, từ -3000 đến nay), Kích thước.");
+                "Required: Medium. Optional: Artist (blank -> Unknown), creation year (0 = unknown, from -3000 to present), dimensions.");
         CATEGORY_HINTS.put("Collectible",
-                "Bắt buộc: Độ hiếm, Tình trạng. Tùy chọn: Năm xuất xứ (0), Xuất xứ (trống → Unknown), Chứng chỉ.");
+                "Required: Rarity and condition. Optional: year of origin (0), origin (blank -> Unknown), certificate.");
         CATEGORY_HINTS.put("Electronics",
-                "Bắt buộc: Tình trạng, Số tháng bảo hành (≥ 0). Tùy chọn: Thương hiệu/Model (trống → Unknown), Hoạt động bình thường.");
+                "Required: Condition and warranty months (>= 0). Optional: brand/model (blank -> Unknown), fully functional.");
         CATEGORY_HINTS.put("Fashion",
-                "Bắt buộc: Kích cỡ, Tình trạng, Đối tượng (mặc định UNISEX). Tùy chọn: Thương hiệu, Chất liệu, Màu, Chính hãng.");
+                "Required: Size, condition, gender (default UNISEX). Optional: brand, material, color, authenticity.");
         CATEGORY_HINTS.put("Vehicle",
-                "Bắt buộc: Động cơ, Hộp số (mặc định OTHER), Số km (0–1.000.000). Tùy chọn: Năm SX (1886–nay), Thương hiệu/Model (trống → Unknown), Màu, Giấy tờ.");
+                "Required: Engine, transmission (default OTHER), odometer (0-1,000,000). Optional: manufacturing year (1886-present), brand/model (blank -> Unknown), color, legal papers.");
     }
 
     @Override
@@ -136,12 +136,12 @@ public class AddProductDialogController implements Initializable {
     private void showCategoryPanel(String category) {
         if (editMode) {
             hideAllCategoryPanels();
-            categoryHintLabel.setText("Chế độ chỉnh sửa: chỉ cập nhật tên, giá (nếu được phép) và mô tả.");
+            categoryHintLabel.setText("Edit mode: only name, price (if allowed), and description can be updated.");
             return;
         }
         hideAllCategoryPanels();
         if (category == null) {
-            categoryHintLabel.setText("Chọn danh mục để hiển thị các trường bắt buộc và tùy chọn.");
+            categoryHintLabel.setText("Select a category to show required and optional fields.");
             return;
         }
         categoryHintLabel.setText(CATEGORY_HINTS.getOrDefault(category, ""));
@@ -178,7 +178,7 @@ public class AddProductDialogController implements Initializable {
         } catch (IllegalArgumentException ex) {
             showError(ex.getMessage());
         } catch (Exception ex) {
-            showError(ex.getMessage() != null ? ex.getMessage() : "Dữ liệu không hợp lệ.");
+            showError(ex.getMessage() != null ? ex.getMessage() : "Invalid data.");
         }
     }
 
@@ -195,7 +195,7 @@ public class AddProductDialogController implements Initializable {
             throw new IllegalArgumentException(Item.ValidationMessages.NAME_REQUIRED);
         }
         if (name.length() > 100) {
-            throw new IllegalArgumentException("Tên sản phẩm tối đa 100 ký tự trên giao diện.");
+            throw new IllegalArgumentException("Product name cannot exceed 100 UI characters.");
         }
         if (categoryLabel == null || categoryLabel.isEmpty()) {
             throw new IllegalArgumentException(Item.ValidationMessages.CATEGORY_REQUIRED);
@@ -207,13 +207,13 @@ public class AddProductDialogController implements Initializable {
         try {
             price = new BigDecimal(priceStr);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Giá khởi điểm phải là số hợp lệ.");
+            throw new IllegalArgumentException("Starting price must be a valid number.");
         }
         if (description.isEmpty()) {
             throw new IllegalArgumentException(Item.ValidationMessages.DESCRIPTION_REQUIRED);
         }
         if (description.length() > 500) {
-            throw new IllegalArgumentException("Mô tả tối đa 500 ký tự trên giao diện.");
+            throw new IllegalArgumentException("Description cannot exceed 500 UI characters.");
         }
 
         Item.ItemCategory category = Item.ItemCategory.valueOf(categoryLabel.toUpperCase());
@@ -253,11 +253,11 @@ public class AddProductDialogController implements Initializable {
 
     private void fillArt(ItemRequest req) {
         if (artMediumBox.getValue() == null) {
-            throw new IllegalArgumentException("Chất liệu (Medium) là bắt buộc.");
+            throw new IllegalArgumentException("Medium is required.");
         }
         req.setMedium(artMediumBox.getValue());
         req.setArtist(trimToNull(artArtistField.getText()));
-        req.setCreationYear(parseOptionalYear(artYearField.getText(), "Năm sáng tác"));
+        req.setCreationYear(parseOptionalYear(artYearField.getText(), "Creation year"));
         req.setDimensions(trimToNull(artDimensionsField.getText()));
     }
 
@@ -270,17 +270,17 @@ public class AddProductDialogController implements Initializable {
         }
         req.setRarityLevel(collectibleRarityBox.getValue());
         req.setConditionGrade(collectibleConditionBox.getValue());
-        req.setYearOfOrigin(parseOptionalYear(collectibleYearField.getText(), "Năm xuất xứ"));
+        req.setYearOfOrigin(parseOptionalYear(collectibleYearField.getText(), "Year of origin"));
         req.setOrigin(trimToNull(collectibleOriginField.getText()));
         req.setHasCertificate(collectibleCertCheck.isSelected());
     }
 
     private void fillElectronics(ItemRequest req) {
         if (electronicsConditionBox.getValue() == null) {
-            throw new IllegalArgumentException("Tình trạng (Condition) là bắt buộc.");
+            throw new IllegalArgumentException("Condition is required.");
         }
         req.setItemCondition(electronicsConditionBox.getValue());
-        req.setWarrantyMonths(parseRequiredNonNegativeInt(electronicsWarrantyField.getText(), "Số tháng bảo hành"));
+        req.setWarrantyMonths(parseRequiredNonNegativeInt(electronicsWarrantyField.getText(), "Warranty months"));
         req.setBrand(trimToNull(electronicsBrandField.getText()));
         req.setModel(trimToNull(electronicsModelField.getText()));
         req.setFullyFunctional(electronicsFunctionalCheck.isSelected());
@@ -288,10 +288,10 @@ public class AddProductDialogController implements Initializable {
 
     private void fillFashion(ItemRequest req) {
         if (fashionSizeBox.getValue() == null) {
-            throw new IllegalArgumentException("Kích cỡ (Size) là bắt buộc.");
+            throw new IllegalArgumentException("Size is required.");
         }
         if (fashionConditionBox.getValue() == null) {
-            throw new IllegalArgumentException("Tình trạng (Condition) là bắt buộc.");
+            throw new IllegalArgumentException("Condition is required.");
         }
         req.setSize(fashionSizeBox.getValue());
         req.setCondition(fashionConditionBox.getValue());
@@ -304,17 +304,17 @@ public class AddProductDialogController implements Initializable {
 
     private void fillVehicle(ItemRequest req) {
         if (vehicleEngineBox.getValue() == null) {
-            throw new IllegalArgumentException("Loại động cơ (Engine) là bắt buộc.");
+            throw new IllegalArgumentException("Engine type is required.");
         }
         req.setEngineType(vehicleEngineBox.getValue());
         req.setTransmission(vehicleTransmissionBox.getValue() != null
                 ? vehicleTransmissionBox.getValue()
                 : Vehicle.Transmission.OTHER);
-        req.setOdo(parseRequiredNonNegativeInt(vehicleOdoField.getText(), "Số km đã đi (Odo)"));
+        req.setOdo(parseRequiredNonNegativeInt(vehicleOdoField.getText(), "Odometer"));
         if (req.getOdo() > 1_000_000) {
-            throw new IllegalArgumentException("Số km không được vượt quá 1.000.000.");
+            throw new IllegalArgumentException("Odometer cannot exceed 1,000,000.");
         }
-        req.setManufacturingYear(parseOptionalYear(vehicleYearField.getText(), "Năm sản xuất"));
+        req.setManufacturingYear(parseOptionalYear(vehicleYearField.getText(), "Manufacturing year"));
         req.setBrand(trimToNull(vehicleBrandField.getText()));
         req.setModel(trimToNull(vehicleModelField.getText()));
         req.setColor(trimToNull(vehicleColorField.getText()));
@@ -328,22 +328,22 @@ public class AddProductDialogController implements Initializable {
         try {
             return Integer.parseInt(raw.trim());
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(fieldLabel + " phải là số nguyên.");
+            throw new IllegalArgumentException(fieldLabel + " must be an integer.");
         }
     }
 
     private static int parseRequiredNonNegativeInt(String raw, String fieldLabel) {
         if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException(fieldLabel + " là bắt buộc.");
+            throw new IllegalArgumentException(fieldLabel + " is required.");
         }
         try {
             int value = Integer.parseInt(raw.trim());
             if (value < 0) {
-                throw new IllegalArgumentException(fieldLabel + " phải ≥ 0.");
+                throw new IllegalArgumentException(fieldLabel + " must be >= 0.");
             }
             return value;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(fieldLabel + " phải là số nguyên.");
+            throw new IllegalArgumentException(fieldLabel + " must be an integer.");
         }
     }
 

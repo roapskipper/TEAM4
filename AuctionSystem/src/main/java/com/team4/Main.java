@@ -61,7 +61,7 @@ public class Main extends Application {
                 getClass().getResource("/com/team4/view/style.css").toExternalForm()
         );
 
-        primaryStage.setTitle("AuctionSpace - Dang nhap");
+        primaryStage.setTitle("AuctionSpace - Login");
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(1000);
         primaryStage.setMinHeight(850);

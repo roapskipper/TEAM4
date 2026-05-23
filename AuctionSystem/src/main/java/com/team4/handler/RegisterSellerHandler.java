@@ -40,7 +40,7 @@ public class RegisterSellerHandler implements HttpHandler {
         String storeName = ApiServer.parseParam(body, "storeName");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Missing username or password.", null));
             return;
         }
 
@@ -55,7 +55,7 @@ public class RegisterSellerHandler implements HttpHandler {
             RegisterSellerRequestDTO dto = Server.getGson().fromJson(p, RegisterSellerRequestDTO.class);
 
             authService.registerSeller(dto);
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Seller thanh cong!", null));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Seller registration successful.", null));
         } catch (BusinessException | IllegalArgumentException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {

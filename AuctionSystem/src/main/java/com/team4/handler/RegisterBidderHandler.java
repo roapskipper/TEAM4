@@ -41,7 +41,7 @@ public class RegisterBidderHandler implements HttpHandler {
         String phoneNumber    = ApiServer.parseParam(body, "phoneNumber");
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Missing username or password.", null));
             return;
         }
 
@@ -57,7 +57,7 @@ public class RegisterBidderHandler implements HttpHandler {
             RegisterBidderRequestDTO dto = Server.getGson().fromJson(p, RegisterBidderRequestDTO.class);
 
             authService.registerBidder(dto);
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang ky Bidder thanh cong!", null));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Bidder registration successful.", null));
         } catch (BusinessException | IllegalArgumentException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {

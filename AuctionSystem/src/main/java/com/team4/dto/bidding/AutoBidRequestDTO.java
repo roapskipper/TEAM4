@@ -18,10 +18,14 @@ public class AutoBidRequestDTO {
 
     public void validateAutoBidRequestDTO() {
         if (maxAmount == null || maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("maxLimit phải lớn hơn 0");
+            throw new IllegalArgumentException("maxLimit must be greater than 0.");
         }
-        if (this.auctionId.isEmpty()) throw new IllegalArgumentException("auctionId không được rỗng");
-        if (this.bidderId.isEmpty()) throw new IllegalArgumentException("bidderId không được rỗng");
+        if (auctionId == null || auctionId.isEmpty()) {
+            throw new IllegalArgumentException("auctionId is required.");
+        }
+        if (bidderId == null || bidderId.isEmpty()) {
+            throw new IllegalArgumentException("bidderId is required.");
+        }
     }
 
     public String getAuctionId() {

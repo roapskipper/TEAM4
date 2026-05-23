@@ -8,15 +8,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class CreateCollectibleRequestDTO extends CreateItemRequestDTO {
-    private int yearOfOrigin;       // năm xuất xứ
-    private Collectible.RarityLevel rarityLevel;     // độ hiếm
-    private Collectible.ConditionGrade conditionGrade; // tình trạng
-    private boolean hasCertificate;  // có chứng chỉ không
-    private String origin;           // xuất xứ (quốc gia/vùng)
+    private int yearOfOrigin;
+    private Collectible.RarityLevel rarityLevel;
+    private Collectible.ConditionGrade conditionGrade;
+    private boolean hasCertificate;
+    private String origin;
 
     public CreateCollectibleRequestDTO() {}
     public CreateCollectibleRequestDTO(String name, BigDecimal startingPrice, String description, Item.ItemCategory category, int yearOfOrigin, Collectible.RarityLevel rarityLevel, Collectible.ConditionGrade conditionGrade, boolean hasCertificate, String origin) {
-        super(name,startingPrice,description,category);
+        super(name, startingPrice, description, category);
         this.yearOfOrigin = yearOfOrigin;
         this.rarityLevel = rarityLevel;
         this.conditionGrade = conditionGrade;
@@ -26,20 +26,24 @@ public class CreateCollectibleRequestDTO extends CreateItemRequestDTO {
     }
 
     protected final void validateCollectibleDTO() {
-        if (yearOfOrigin == 0) return; // unknown
+        if (yearOfOrigin == 0) return;
         int current = LocalDate.now().getYear();
         final int MIN_YEAR = -3000;
         if (yearOfOrigin < MIN_YEAR || yearOfOrigin > current) {
-            throw new IllegalArgumentException("Năm sản xuất không hợp lệ. Giá trị hợp lệ: " +
-                    MIN_YEAR + " .. " + current + " (Nếu không rõ năm sản xuất có thể điền '0').");
+            throw new IllegalArgumentException("Year of origin is invalid. Valid range: " +
+                    MIN_YEAR + " .. " + current + " (enter '0' if unknown).");
         }
-        if (rarityLevel == null)
-            throw new IllegalArgumentException("Rarity level không được để trống.");
-        if (conditionGrade == null)
-            throw new IllegalArgumentException("Condition grade không được để trống.");
+        if (rarityLevel == null) {
+            throw new IllegalArgumentException("Rarity level is required.");
+        }
+        if (conditionGrade == null) {
+            throw new IllegalArgumentException("Condition grade is required.");
+        }
         if (origin == null) return;
         String o = origin.trim();
-        if (o.length() > 120) throw new IllegalArgumentException("Origin quá dài (tối đa 120 ký tự).");
+        if (o.length() > 120) {
+            throw new IllegalArgumentException("Origin must not exceed 120 characters.");
+        }
     }
 
     public void validate() {
@@ -47,7 +51,7 @@ public class CreateCollectibleRequestDTO extends CreateItemRequestDTO {
         validateItemDTO();
     }
 
-    public  int getYearOfOrigin() {
+    public int getYearOfOrigin() {
         return yearOfOrigin;
     }
     public Collectible.RarityLevel getRarityLevel() {

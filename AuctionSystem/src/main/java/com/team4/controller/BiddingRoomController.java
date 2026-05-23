@@ -338,11 +338,11 @@ public class BiddingRoomController implements Initializable {
     @FXML private void onApplyAutoBid() {
         UserSession session = UserSession.getInstance();
         if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
-            showBidError("Vui lòng đăng nhập để sử dụng tính năng Auto Bid.");
+            showBidError("Please sign in to use Auto Bid.");
             return;
         }
         if (auctionId == null || auctionId.isBlank()) {
-            showBidError("Phiên đấu giá chưa sẵn sàng.");
+            showBidError("The auction is not ready yet.");
             return;
         }
 
@@ -361,12 +361,12 @@ public class BiddingRoomController implements Initializable {
                 applyAutoBidBtn.setDisable(false);
                 autoBidActive = false;
                 autoBidMax.setDisable(false);
-                applyAutoBidBtn.setText("Bật Auto Bid");
-                showBidError("Đã tắt tự động đặt giá.");
+                applyAutoBidBtn.setText("Enable Auto Bid");
+                showBidError("Auto Bid has been disabled.");
             });
             task.setOnFailed(e -> {
                 applyAutoBidBtn.setDisable(false);
-                showBidError("Tắt Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+                showBidError("Failed to disable Auto Bid: " + ApiClient.toDisplayMessage(task.getException()));
             });
             Thread thread = new Thread(task);
             thread.setDaemon(true);
@@ -374,19 +374,19 @@ public class BiddingRoomController implements Initializable {
         } else {
             String maxStr = autoBidMax.getText().trim();
             if (maxStr.isEmpty()) {
-                showBidError("Vui lòng nhập giá tối đa.");
+                showBidError("Please enter a maximum bid.");
                 return;
             }
             double maxAmount;
             try {
                 maxAmount = Double.parseDouble(maxStr);
             } catch (NumberFormatException e) {
-                showBidError("Giá tối đa không hợp lệ.");
+                showBidError("Maximum bid is invalid.");
                 return;
             }
 
             if (maxAmount <= currentBid) {
-                showBidError("Giá tối đa phải lớn hơn giá hiện tại: " + formatPrice(currentBid));
+                showBidError("Maximum bid must be greater than the current price: " + formatPrice(currentBid));
                 return;
             }
 
@@ -401,12 +401,12 @@ public class BiddingRoomController implements Initializable {
                 applyAutoBidBtn.setDisable(false);
                 autoBidActive = true;
                 autoBidMax.setDisable(true);
-                applyAutoBidBtn.setText("Tắt Auto Bid");
-                showBidError("Đã bật tự động đặt giá.");
+                applyAutoBidBtn.setText("Disable Auto Bid");
+                showBidError("Auto Bid has been enabled.");
             });
             task.setOnFailed(e -> {
                 applyAutoBidBtn.setDisable(false);
-                showBidError("Bật Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+                showBidError("Failed to enable Auto Bid: " + ApiClient.toDisplayMessage(task.getException()));
             });
             Thread thread = new Thread(task);
             thread.setDaemon(true);
@@ -433,7 +433,7 @@ public class BiddingRoomController implements Initializable {
                 autoBidActive = true;
                 double maxAmount = status.get("maxAmount").getAsDouble();
                 autoBidMax.setText(String.format(Locale.US, "%.0f", maxAmount));
-                applyAutoBidBtn.setText("Tắt Auto Bid");
+                applyAutoBidBtn.setText("Disable Auto Bid");
                 autoBidMax.setDisable(true);
 
                 autoBidToggle.setSelected(true);
@@ -444,14 +444,14 @@ public class BiddingRoomController implements Initializable {
                 if (!autoBidToggle.isSelected()) {
                     autoBidMax.clear();
                 }
-                applyAutoBidBtn.setText("Bật Auto Bid");
+                applyAutoBidBtn.setText("Enable Auto Bid");
                 autoBidMax.setDisable(false);
             }
         });
 
         task.setOnFailed(e -> {
             autoBidActive = false;
-            applyAutoBidBtn.setText("Bật Auto Bid");
+            applyAutoBidBtn.setText("Enable Auto Bid");
             autoBidMax.setDisable(false);
         });
 

@@ -63,11 +63,11 @@ public class ClientHandler implements Runnable, BidObserver {
                         handleRequest(netMsg);
                     }
                 } catch (JsonSyntaxException e) {
-                    System.out.println("Loi parse JSON tu client: " + e.getMessage());
+                    System.out.println("JSON parse error from client: " + e.getMessage());
                 }
             }
         } catch (IOException e) {
-            System.out.println("Loi ket noi tu client: " + e.getMessage());
+            System.out.println("Client connection error: " + e.getMessage());
         } finally {
             Server.removeClient(this);
             try {
@@ -108,7 +108,7 @@ public class ClientHandler implements Runnable, BidObserver {
             this.userId = data.get("userId").getAsString();
             Server.registerUser(this.userId, this);
         } catch (JsonSyntaxException | IllegalStateException e) {
-            System.out.println("Loi parse JSON trong handleLogin: " + e.getMessage());
+            System.out.println("JSON parse error in handleLogin: " + e.getMessage());
         }
     }
 
@@ -125,7 +125,7 @@ public class ClientHandler implements Runnable, BidObserver {
                 Auction auction = Server.getAuctionService().getRawAuctionById(auctionId);
 
                 if (auction.getStatus() != Auction.AuctionStatus.RUNNING) {
-                    sendMessage(buildResponse("ERROR", "Phien dau gia khong con hoat dong", "BID_FAILED", null));
+                    sendMessage(buildResponse("ERROR", "The auction is no longer active.", "BID_FAILED", null));
                     return;
                 }
 
@@ -149,7 +149,7 @@ public class ClientHandler implements Runnable, BidObserver {
                 sendMessage(buildResponse("ERROR", e.getMessage(), "BID_FAILED", null));
             }
         } catch (JsonSyntaxException | IllegalStateException e) {
-            sendMessage(buildResponse("ERROR", "Sai dinh dang JSON", null, null));
+            sendMessage(buildResponse("ERROR", "Invalid JSON format.", null, null));
         }
     }
 
@@ -157,7 +157,7 @@ public class ClientHandler implements Runnable, BidObserver {
         try {
             // getAuctionsByStatus() giờ trả về List<AuctionResponseDTO>
             java.util.List<AuctionResponseDTO> auctions = Server.getAuctionService().getAuctionsByStatus(Auction.AuctionStatus.RUNNING);
-            sendMessage(buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong", "AUCTIONS_LIST",
+            sendMessage(buildResponse("SUCCESS", "Auction list loaded successfully.", "AUCTIONS_LIST",
                     Server.getGson().toJsonTree(auctions)));
         } catch (BusinessException e) {
             sendMessage(buildResponse("ERROR", e.getMessage(), null, null));

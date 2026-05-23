@@ -10,9 +10,9 @@ public class CreateFashionRequestDTO extends CreateItemRequestDTO {
     private Fashion.Size size;
     private String material;
     private String color;
-    private Fashion.Gender gender;           // giới tính/đối tượng
-    private Fashion.ConditionGrade condition; // tình trạng
-    private boolean authentic;       // is_authentic
+    private Fashion.Gender gender;
+    private Fashion.ConditionGrade condition;
+    private boolean authentic;
 
     public CreateFashionRequestDTO() {}
 
@@ -34,34 +34,34 @@ public class CreateFashionRequestDTO extends CreateItemRequestDTO {
         if (brand != null) {
             String b = brand.trim();
             if (b.length() > 120) {
-                throw new IllegalArgumentException("Brand không được vượt quá 120 ký tự.");
+                throw new IllegalArgumentException("Brand must not exceed 120 characters.");
             }
         }
-        
+
         if (size == null) {
-            throw new IllegalArgumentException("Size không được để trống.");
+            throw new IllegalArgumentException("Size is required.");
         }
-        
+
         if (material != null) {
             String m = material.trim();
             if (m.length() > 120) {
-                throw new IllegalArgumentException("Material không được vượt quá 120 ký tự.");
+                throw new IllegalArgumentException("Material must not exceed 120 characters.");
             }
         }
-        
+
         if (color != null) {
             String c = color.trim();
             if (c.length() > 50) {
-                throw new IllegalArgumentException("Color không được vượt quá 50 ký tự.");
+                throw new IllegalArgumentException("Color must not exceed 50 characters.");
             }
         }
-        
+
         if (gender == null) {
-            throw new IllegalArgumentException("Gender không được để trống.");
+            throw new IllegalArgumentException("Gender is required.");
         }
-        
+
         if (condition == null) {
-            throw new IllegalArgumentException("Condition grade không được để trống.");
+            throw new IllegalArgumentException("Condition grade is required.");
         }
     }
 

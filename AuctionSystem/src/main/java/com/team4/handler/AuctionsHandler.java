@@ -63,7 +63,7 @@ public class AuctionsHandler implements HttpHandler {
                 auctionService.getRawAuctionById(auctionId);
                 BidTransactionResponseDTO highestBid = Server.getBiddingService().getHighestBid(auctionId);
                 JsonElement data = highestBid != null ? Server.getGson().toJsonTree(highestBid) : JsonNull.INSTANCE;
-                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Lay luot dat gia cao nhat thanh cong!", data));
+                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Highest bid loaded successfully.", data));
                 return;
             }
 
@@ -72,7 +72,7 @@ public class AuctionsHandler implements HttpHandler {
                 Auction auction = auctionService.getRawAuctionById(auctionId);
                 ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse(
                         "SUCCESS",
-                        "Lay chi tiet phien dau gia thanh cong!",
+                        "Auction details loaded successfully.",
                         buildAuctionJson(auction, true)));
                 return;
             }
@@ -83,7 +83,7 @@ public class AuctionsHandler implements HttpHandler {
                 dataArr.add(buildAuctionJson(auction, false));
             }
             ApiServer.sendResponse(exchange, 200,
-                    ApiServer.buildResponse("SUCCESS", "Lay danh sach phien dau gia thanh cong!", dataArr));
+                    ApiServer.buildResponse("SUCCESS", "Auction list loaded successfully.", dataArr));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {

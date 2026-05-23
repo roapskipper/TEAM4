@@ -41,7 +41,7 @@ public class LoginHandler implements HttpHandler {
 
         if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
             ApiServer.sendResponse(exchange, 400,
-                    ApiServer.buildResponse("ERROR", "Thieu username hoac password", null));
+                    ApiServer.buildResponse("ERROR", "Missing username or password.", null));
             return;
         }
 
@@ -72,7 +72,7 @@ public class LoginHandler implements HttpHandler {
             }
 
             JsonElement data = Server.getGson().toJsonTree(loginResponse);
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Dang nhap thanh cong!", data));
+            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Login successful.", data));
         } catch (BusinessException e) {
             ApiServer.sendResponse(exchange, 401, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         }

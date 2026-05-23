@@ -7,16 +7,16 @@ import com.team4.model.Item;
 import java.math.BigDecimal;
 
 public class CreateElectronicsRequestDTO extends CreateItemRequestDTO {
-    private String brand;                           // thương hiệu
-    private String model;                           // tên model
-    private Electronics.ConditionGrade itemCondition; // tình trạng
-    private int warrantyMonths;                     // bảo hành (tháng)
-    private boolean fullyFunctional;                // hoạt động đầy đủ
+    private String brand;
+    private String model;
+    private Electronics.ConditionGrade itemCondition;
+    private int warrantyMonths;
+    private boolean fullyFunctional;
 
     public CreateElectronicsRequestDTO() {}
 
     public CreateElectronicsRequestDTO(String name, BigDecimal startingPrice, String description, Item.ItemCategory category,
-                                       String brand, String model, Electronics.ConditionGrade itemCondition, 
+                                       String brand, String model, Electronics.ConditionGrade itemCondition,
                                        int warrantyMonths, boolean fullyFunctional) {
         super(name, startingPrice, description, category);
         this.brand = brand;
@@ -31,23 +31,23 @@ public class CreateElectronicsRequestDTO extends CreateItemRequestDTO {
         if (brand != null) {
             String b = brand.trim();
             if (b.length() > 50) {
-                throw new IllegalArgumentException("Brand không được vượt quá 50 ký tự.");
+                throw new IllegalArgumentException("Brand must not exceed 50 characters.");
             }
         }
-        
+
         if (model != null) {
             String m = model.trim();
             if (m.length() > 50) {
-                throw new IllegalArgumentException("Model không được vượt quá 50 ký tự.");
+                throw new IllegalArgumentException("Model must not exceed 50 characters.");
             }
         }
-        
+
         if (itemCondition == null) {
-            throw new IllegalArgumentException("Item condition không được để trống.");
+            throw new IllegalArgumentException("Item condition is required.");
         }
-        
+
         if (warrantyMonths < 0) {
-            throw new IllegalArgumentException("Warranty months phải >= 0.");
+            throw new IllegalArgumentException("Warranty months must be >= 0.");
         }
     }
 

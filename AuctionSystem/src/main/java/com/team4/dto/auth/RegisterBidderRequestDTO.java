@@ -22,7 +22,6 @@ public class RegisterBidderRequestDTO {
         validate();
     }
 
-    // Validate
     private static final Pattern PHONE_PATTERN = Pattern.compile(
             "^\\+?[0-9]\\d{6,14}$"
     );
@@ -30,24 +29,25 @@ public class RegisterBidderRequestDTO {
             Pattern.compile("^[a-zA-Z0-9._-]{4,30}$");
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
     public void validate() {
         if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
-            throw new IllegalArgumentException("Tên đăng nhập phải dài từ 4–30 ký tự và chỉ được chứa chữ cái, số, dấu chấm (.), gạch dưới (_) và gạch ngang (-).");
+            throw new IllegalArgumentException("Username must be 4-30 characters and may contain only letters, numbers, dots (.), underscores (_), and hyphens (-).");
         }
         if (fullName == null || fullName.isEmpty()) {
-            throw new IllegalArgumentException("Họ tên không được trống");
+            throw new IllegalArgumentException("Full name is required.");
         }
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("email không hợp lệ");
+            throw new IllegalArgumentException("Email is invalid.");
         }
         if (phoneNumber == null || !PHONE_PATTERN.matcher(phoneNumber).matches()) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
+            throw new IllegalArgumentException("Phone number is invalid.");
         }
         if (shippingAddress == null || shippingAddress.isEmpty()) {
-            throw new IllegalArgumentException("Địa chỉ không được trống");
+            throw new IllegalArgumentException("Address is required.");
         }
         if (password == null || password.length() < 6) {
-            throw new IllegalArgumentException("Mật khẩu phải gồm 6 kí tự trở lên");
+            throw new IllegalArgumentException("Password must be at least 6 characters.");
         }
     }
 
