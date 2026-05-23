@@ -77,6 +77,16 @@
                        maxWidth="Infinity"
                        styleClass="balance-pill"/>
 
+                <Button fx:id="depositBtn"
+                        text="Deposit"
+                        maxWidth="Infinity"
+                        onAction="#onDeposit"
+                        styleClass="deposit-btn">
+                    <tooltip>
+                        <Tooltip text="Add funds"/>
+                    </tooltip>
+                </Button>
+
                 <Button fx:id="logoutBtn"
                         text="Logout"
                         maxWidth="Infinity"
@@ -108,12 +118,12 @@
 
                 <StackPane>
                     <Button fx:id="notiBtn"
-                            text="Alerts"
+                            text="Notifications"
                             onAction="#onNotificationClick"
-                            styleClass="icon-btn"/>
+                            styleClass="notification-btn"/>
                     <Label fx:id="notiBadge" text="3"
                            styleClass="noti-badge"
-                           translateX="12" translateY="-12"
+                           translateX="48" translateY="-12"
                            visible="false"/>
                 </StackPane>
             </HBox>

@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.team4.dao.impl.AuctionDAOImpl;
 import com.team4.dao.impl.ItemDAOImpl;
+import com.team4.dao.impl.UserDAOImpl;
 import com.team4.dto.auth.UserResponseDTO;
 import com.team4.dto.auction.BidTransactionResponseDTO;
 import com.team4.model.Auction;
@@ -14,10 +15,12 @@ import com.team4.model.Item;
 import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.server.Server;
+import com.team4.service.WalletService;
 import com.team4.util.BusinessException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.Map;
 public class UserHandler implements HttpHandler {
     private final ItemDAOImpl itemDAO = new ItemDAOImpl();
     private final AuctionDAOImpl auctionDAO = new AuctionDAOImpl();
+    private final WalletService walletService = new WalletService(new UserDAOImpl());
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -57,6 +61,12 @@ public class UserHandler implements HttpHandler {
                 handleUpdateProfile(exchange, userId);
             } else if ("PUT".equals(method) && "password".equals(action)) {
                 handleChangePassword(exchange, userId);
+            } else if ("GET".equals(method) && "wallet".equals(action) && parts.length >= 6
+                    && "balance".equals(parts[5])) {
+                handleWalletBalance(exchange, userId);
+            } else if ("POST".equals(method) && "wallet".equals(action) && parts.length >= 6
+                    && "deposit".equals(parts[5])) {
+                handleWalletDeposit(exchange, userId);
             } else {
                 exchange.sendResponseHeaders(405, -1);
             }
@@ -158,5 +168,46 @@ public class UserHandler implements HttpHandler {
         List<BidTransactionResponseDTO> history = Server.getBiddingService().getBidHistoryByBidder(userId);
         JsonElement data = Server.getGson().toJsonTree(history);
         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Bid history loaded successfully", data));
+    }
+
+    private void handleWalletBalance(HttpExchange exchange, String userId) throws IOException {
+        UserResponseDTO user = Server.getUserService().getUserById(userId);
+        JsonObject data = new JsonObject();
+        data.addProperty("balance", walletService.getBalance(user.getId()));
+        ApiServer.sendResponse(exchange, 200,
+                ApiServer.buildResponse("SUCCESS", "Wallet balance loaded successfully", data));
+    }
+
+    private void handleWalletDeposit(HttpExchange exchange, String userId) throws IOException {
+        UserResponseDTO user = Server.getUserService().getUserById(userId);
+        if (user.getRole() != User.Role.BIDDER) {
+            throw new BusinessException("Only bidders can add funds.");
+        }
+        UserResponseDTO updated = walletService.deposit(userId, readAmount(exchange));
+        ApiServer.sendResponse(exchange, 200,
+                ApiServer.buildResponse("SUCCESS", "Deposit completed successfully",
+                        Server.getGson().toJsonTree(updated)));
+    }
+
+    private BigDecimal readAmount(HttpExchange exchange) throws IOException {
+        InputStream is = exchange.getRequestBody();
+        String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        is.close();
+        String rawAmount = ApiServer.parseParam(body, "amount");
+        if (rawAmount == null || rawAmount.isBlank()) {
+            throw new BusinessException("Amount is required.");
+        }
+        try {
+            BigDecimal amount = new BigDecimal(rawAmount.trim());
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessException("Amount must be greater than 0.");
+            }
+            if (amount.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0) {
+                throw new BusinessException("Amount must be a multiple of 1,000 VND.");
+            }
+            return amount;
+        } catch (NumberFormatException e) {
+            throw new BusinessException("Enter a valid amount.");
+        }
     }
 }
