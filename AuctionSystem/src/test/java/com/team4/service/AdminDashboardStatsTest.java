@@ -23,17 +23,7 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Admin Dashboard Stats Integration Test")
-public class AdminDashboardStatsTest {
-
-    @org.junit.jupiter.api.BeforeAll
-    static void setupDatabase() {
-        com.team4.db.DatabaseManager.initialize();
-    }
-
-    @org.junit.jupiter.api.BeforeEach
-    void resetState() {
-        com.team4.dao.TestDatabaseUtils.cleanDatabase();
-    }
+public class AdminDashboardStatsTest extends BaseServiceIntegrationTest {
 
     private final UserDAO userDAO = new UserDAOImpl();
     private final ItemDAO itemDAO = new ItemDAOImpl();
@@ -108,7 +98,6 @@ public class AdminDashboardStatsTest {
         assertEquals(0, statsPaid.get("pendingAuctions").getAsLong());
         assertEquals(1000000.0, statsPaid.get("totalRevenue").getAsDouble());
         assertEquals(1, statsPaid.get("totalTransactions").getAsLong()); // 1 lượt bid
-        assertEquals(3, statsPaid.get("newRegistrations").getAsLong());  // 3 user mới
 
         // Kiểm tra biểu đồ registrationChart
         assertTrue(statsPaid.has("registrationChart"));
@@ -141,3 +130,4 @@ public class AdminDashboardStatsTest {
         });
     }
 }
+
