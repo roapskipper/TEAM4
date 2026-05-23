@@ -38,7 +38,7 @@ public class SystemFlowIntegrationTest extends BaseServiceIntegrationTest {
     private final AuctionService auctionService = new AuctionService(auctionDAO, itemDAO);
     private final BiddingService biddingService = new BiddingService(auctionDAO, bidDAO, userDAO, autoDAO);
     private final WalletService walletService = new WalletService(userDAO);
-    private final AdminService adminService = new AdminService(userService, auctionService, auctionDAO);
+    private final AdminService adminService = new AdminService(userService, auctionService, auctionDAO, userDAO, itemDAO);
 
     @Test
     @DisplayName("Kịch bản thành công hoàn chỉnh: Từ người dùng mới đến khi mua hàng thành công")

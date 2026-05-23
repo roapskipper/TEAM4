@@ -6,7 +6,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import com.team4.util.UserSession;
+import com.team4.client.ApiClient;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -17,7 +21,8 @@ public class AdminAuctionsController implements Initializable {
     @FXML private Button filterAll, filterPending, filterLive, filterViolated;
     @FXML private Label resultCount;
     @FXML private TableView<AuctionRow> auctionsTable;
-    @FXML private TableColumn<AuctionRow, String> colItem, colSeller, colStartPrice, colStatus, colReports, colAction;
+    @FXML private TableColumn<AuctionRow, String> colItem, colSeller, colStartPrice, colStatus, colReports;
+    @FXML private TableColumn<AuctionRow, Void> colAction;
 
     private ObservableList<AuctionRow> allAuctions = FXCollections.observableArrayList();
     private String currentFilter = "all";
@@ -34,45 +39,47 @@ public class AdminAuctionsController implements Initializable {
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colReports.setCellValueFactory(new PropertyValueFactory<>("reports"));
-        
-        setupActionColumn();
-    }
 
-    private void setupActionColumn() {
-        colAction.setCellFactory(param -> new TableCell<>() {
+        colAction.setCellFactory(param -> new TableCell<AuctionRow, Void>() {
             private final Button approveBtn = new Button("Approve");
             private final Button rejectBtn = new Button("Reject");
-            private final HBox actions = new HBox(6, approveBtn, rejectBtn);
+            private final HBox actionBox = new HBox(6);
 
             {
-                approveBtn.getStyleClass().add("table-action-btn");
-                approveBtn.setOnAction(event -> {
-                    AuctionRow row = getTableView().getItems().get(getIndex());
-                    onApprove(row.id);
-                });
-
-                rejectBtn.getStyleClass().add("table-action-btn");
-                rejectBtn.setOnAction(event -> {
-                    AuctionRow row = getTableView().getItems().get(getIndex());
-                    onReject(row.id);
-                });
+                actionBox.setAlignment(Pos.CENTER_LEFT);
+                styleActionButton(approveBtn, "admin-action-grant");
+                styleActionButton(rejectBtn, "admin-action-revoke");
             }
 
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
                     setGraphic(null);
-                    return;
-                }
-                AuctionRow row = getTableView().getItems().get(getIndex());
-                if ("PENDING".equalsIgnoreCase(row.statusRaw)) {
-                    setGraphic(actions);
                 } else {
-                    setGraphic(null);
+                    AuctionRow row = getTableRow().getItem();
+                    actionBox.getChildren().clear();
+
+                    if ("PENDING".equalsIgnoreCase(row.getStatusRaw()) || "PENDING_APPROVAL".equalsIgnoreCase(row.getStatusRaw())) {
+                        approveBtn.setOnAction(e -> handleApprove(row));
+                        rejectBtn.setOnAction(e -> handleReject(row));
+                        actionBox.getChildren().addAll(approveBtn, rejectBtn);
+                    } else {
+                        Label noAction = new Label("No actions");
+                        noAction.getStyleClass().add("muted-text-sm");
+                        actionBox.getChildren().add(noAction);
+                    }
+
+                    setGraphic(actionBox);
+                    setText(null);
                 }
             }
         });
+    }
+
+    private void styleActionButton(Button button, String styleClass) {
+        button.getStyleClass().setAll("admin-action-btn", styleClass);
+        button.setMinWidth(Region.USE_PREF_SIZE);
     }
 
     private void loadDataFromServer() {
@@ -80,8 +87,8 @@ public class AdminAuctionsController implements Initializable {
         javafx.concurrent.Task<com.google.gson.JsonArray> task = new javafx.concurrent.Task<>() {
             @Override
             protected com.google.gson.JsonArray call() throws Exception {
-                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
-                return apiClient.getAuctions(currentFilter);
+                ApiClient apiClient = new ApiClient();
+                return apiClient.getAuctions(currentFilter, currentUserId());
             }
         };
 
@@ -105,7 +112,7 @@ public class AdminAuctionsController implements Initializable {
                 String status = obj.has("status") ? obj.get("status").getAsString() : "PENDING_APPROVAL";
                 String reportCount = obj.has("reportCount") ? obj.get("reportCount").getAsString() : "0";
                 
-                allAuctions.add(new AuctionRow(id, name, seller, startPrice, status, reportCount, "Action"));
+                allAuctions.add(new AuctionRow(id, name, seller, startPrice, status, reportCount));
             }
             
             if (allAuctions.isEmpty()) {
@@ -160,84 +167,94 @@ public class AdminAuctionsController implements Initializable {
         resultCount.setText(filtered.size() + " auctions");
     }
 
-    private void onApprove(String id) {
-        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                new com.team4.client.ApiClient().approveAuction(id);
-                return null;
+    private void handleApprove(AuctionRow row) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Approve auction for " + row.getItemInfo() + "?",
+                ButtonType.YES,
+                ButtonType.NO);
+        confirm.setTitle("Approve Auction");
+        confirm.setHeaderText(null);
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.YES) {
+                disableTableAndCallApi(() -> {
+                    ApiClient apiClient = new ApiClient();
+                    return apiClient.approveAuction(row.id, currentUserId());
+                }, "Auction approved successfully!");
             }
-        };
-
-        task.setOnSucceeded(e -> {
-            loadDataFromServer();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Auction approved successfully!");
-            alert.show();
         });
-
-        task.setOnFailed(e -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to approve: " + com.team4.client.ApiClient.toDisplayMessage(task.getException()));
-            alert.show();
-        });
-
-        new Thread(task).start();
     }
 
-    private void onReject(String id) {
-        TextInputDialog dialog = new TextInputDialog("Violation");
+    private void handleReject(AuctionRow row) {
+        TextInputDialog dialog = new TextInputDialog("Invalid item description");
         dialog.setTitle("Reject Auction");
-        dialog.setHeaderText("Enter rejection reason:");
-        dialog.setContentText("Reason:");
-        java.util.Optional<String> result = dialog.showAndWait();
-        if (result.isEmpty()) return;
+        dialog.setHeaderText("Reject auction for " + row.getItemInfo());
+        dialog.setContentText("Reason for rejection:");
+        dialog.showAndWait().ifPresent(reason -> {
+            if (reason.trim().isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Reason cannot be empty.");
+                return;
+            }
+            disableTableAndCallApi(() -> {
+                ApiClient apiClient = new ApiClient();
+                return apiClient.rejectAuction(row.id, currentUserId(), reason.trim());
+            }, "Auction rejected successfully!");
+        });
+    }
 
-        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
+    private void disableTableAndCallApi(java.util.concurrent.Callable<String> apiCall, String successMsg) {
+        auctionsTable.setDisable(true);
+        javafx.concurrent.Task<String> task = new javafx.concurrent.Task<>() {
             @Override
-            protected Void call() throws Exception {
-                new com.team4.client.ApiClient().rejectAuction(id, result.get());
-                return null;
+            protected String call() throws Exception {
+                return apiCall.call();
             }
         };
 
         task.setOnSucceeded(e -> {
+            auctionsTable.setDisable(false);
+            showAlert(Alert.AlertType.INFORMATION, "Success", successMsg);
             loadDataFromServer();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Auction rejected successfully!");
-            alert.show();
         });
 
         task.setOnFailed(e -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to reject: " + com.team4.client.ApiClient.toDisplayMessage(task.getException()));
-            alert.show();
+            auctionsTable.setDisable(false);
+            showAlert(Alert.AlertType.ERROR, "Error", "Action failed: " + task.getException().getMessage());
         });
 
         new Thread(task).start();
     }
 
-    @FXML private void onDelete(String id) {
-        allAuctions.removeIf(a -> a.id.equals(id));
-        applyFilter();
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type, message);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.show();
+    }
+
+    private String currentUserId() {
+        UserSession session = UserSession.getInstance();
+        return session != null && session.getUserId() != null ? session.getUserId() : "";
     }
 
     public static class AuctionRow {
-        String id, itemName, seller, startPrice, statusRaw, reports, action;
-        public AuctionRow(String id, String n, String s, String p, String st, String r, String a) {
-            this.id=id; itemName=n; seller=s; startPrice=p; statusRaw=st; reports=r; action=a;
+        String id, itemName, seller, startPrice, statusRaw, reports;
+        public AuctionRow(String id, String n, String s, String p, String st, String r) {
+            this.id=id; itemName=n; seller=s; startPrice=p; statusRaw=st; reports=r;
         }
         public String getItemInfo() { return itemName; }
         public String getSeller() { return seller; }
         public String getStartPrice() { return startPrice; }
         public String getStatus() {
             return switch(statusRaw.toUpperCase()) {
-                case "PENDING", "PENDING_APPROVAL" -> "Pending";
-                case "RUNNING", "LIVE" -> "Live";
-                case "FINISHED", "ENDED" -> "Ended";
-                case "PAID" -> "Paid";
-                case "CANCELLED", "REJECTED" -> "Rejected";
+                case "PENDING_APPROVAL" -> "Pending";
+                case "APPROVED" -> "Approved";
+                case "LIVE" -> "Live";
+                case "REJECTED" -> "Rejected";
+                case "ENDED" -> "Ended";
                 default -> statusRaw;
             };
         }
         public String getReports() { return reports; }
-        public String getAction() { return action; }
         public String getStatusRaw() { return statusRaw; }
     }
 }

@@ -44,7 +44,10 @@ public class BiddingRoomController implements Initializable {
     @FXML private Button quick100k, quick200k, quick500k, quick1m, placeBidBtn;
     @FXML private ToggleButton autoBidToggle;
     @FXML private VBox autoBidPanel;
-    @FXML private TextField autoBidMax, autoBidIncrement;
+    @FXML private TextField autoBidMax;
+    @FXML private Button applyAutoBidBtn;
+
+    private boolean autoBidActive = false;
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
     private static final DateTimeFormatter HISTORY_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
@@ -152,6 +155,7 @@ public class BiddingRoomController implements Initializable {
         startCountdown();
         refreshWalletBalance();
         ensureSocketListener();
+        fetchAutoBidStatus();
     }
 
     private void startCountdown() {
@@ -326,6 +330,134 @@ public class BiddingRoomController implements Initializable {
         boolean active = autoBidToggle.isSelected();
         autoBidPanel.setManaged(active);
         autoBidPanel.setVisible(active);
+        if (active) {
+            fetchAutoBidStatus();
+        }
+    }
+
+    @FXML private void onApplyAutoBid() {
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+            showBidError("Vui lòng đăng nhập để sử dụng tính năng Auto Bid.");
+            return;
+        }
+        if (auctionId == null || auctionId.isBlank()) {
+            showBidError("Phiên đấu giá chưa sẵn sàng.");
+            return;
+        }
+
+        hideBidError();
+
+        if (autoBidActive) {
+            applyAutoBidBtn.setDisable(true);
+            Task<Void> task = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    new ApiClient().disableAutoBid(auctionId, session.getUserId());
+                    return null;
+                }
+            };
+            task.setOnSucceeded(e -> {
+                applyAutoBidBtn.setDisable(false);
+                autoBidActive = false;
+                autoBidMax.setDisable(false);
+                applyAutoBidBtn.setText("Bật Auto Bid");
+                showBidError("Đã tắt tự động đặt giá.");
+            });
+            task.setOnFailed(e -> {
+                applyAutoBidBtn.setDisable(false);
+                showBidError("Tắt Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+            });
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
+        } else {
+            String maxStr = autoBidMax.getText().trim();
+            if (maxStr.isEmpty()) {
+                showBidError("Vui lòng nhập giá tối đa.");
+                return;
+            }
+            double maxAmount;
+            try {
+                maxAmount = Double.parseDouble(maxStr);
+            } catch (NumberFormatException e) {
+                showBidError("Giá tối đa không hợp lệ.");
+                return;
+            }
+
+            if (maxAmount <= currentBid) {
+                showBidError("Giá tối đa phải lớn hơn giá hiện tại: " + formatPrice(currentBid));
+                return;
+            }
+
+            applyAutoBidBtn.setDisable(true);
+            Task<JsonObject> task = new Task<JsonObject>() {
+                @Override
+                protected JsonObject call() throws Exception {
+                    return new ApiClient().enableAutoBid(auctionId, session.getUserId(), maxAmount);
+                }
+            };
+            task.setOnSucceeded(e -> {
+                applyAutoBidBtn.setDisable(false);
+                autoBidActive = true;
+                autoBidMax.setDisable(true);
+                applyAutoBidBtn.setText("Tắt Auto Bid");
+                showBidError("Đã bật tự động đặt giá.");
+            });
+            task.setOnFailed(e -> {
+                applyAutoBidBtn.setDisable(false);
+                showBidError("Bật Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+            });
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
+        }
+    }
+
+    private void fetchAutoBidStatus() {
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || auctionId == null) {
+            return;
+        }
+
+        Task<JsonObject> task = new Task<JsonObject>() {
+            @Override
+            protected JsonObject call() throws Exception {
+                return new ApiClient().getAutoBidStatus(auctionId, session.getUserId());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            JsonObject status = task.getValue();
+            if (status != null && status.has("active") && status.get("active").getAsBoolean()) {
+                autoBidActive = true;
+                double maxAmount = status.get("maxAmount").getAsDouble();
+                autoBidMax.setText(String.format(Locale.US, "%.0f", maxAmount));
+                applyAutoBidBtn.setText("Tắt Auto Bid");
+                autoBidMax.setDisable(true);
+
+                autoBidToggle.setSelected(true);
+                autoBidPanel.setManaged(true);
+                autoBidPanel.setVisible(true);
+            } else {
+                autoBidActive = false;
+                if (!autoBidToggle.isSelected()) {
+                    autoBidMax.clear();
+                }
+                applyAutoBidBtn.setText("Bật Auto Bid");
+                autoBidMax.setDisable(false);
+            }
+        });
+
+        task.setOnFailed(e -> {
+            autoBidActive = false;
+            applyAutoBidBtn.setText("Bật Auto Bid");
+            autoBidMax.setDisable(false);
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void renderBidHistory(JsonArray history) {

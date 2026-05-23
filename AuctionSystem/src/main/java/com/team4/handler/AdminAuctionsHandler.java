@@ -4,25 +4,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.team4.dao.AuctionDAO;
-import com.team4.dao.ItemDAO;
-import com.team4.dao.UserDAO;
-import com.team4.dao.impl.AuctionDAOImpl;
-import com.team4.dao.impl.ItemDAOImpl;
-import com.team4.dao.impl.UserDAOImpl;
-import com.team4.model.Auction;
-import com.team4.model.Item;
-import com.team4.model.User;
+import com.team4.dto.auction.AdminAuctionResponseDTO;
 import com.team4.server.ApiServer;
+import com.team4.server.Server;
+import com.team4.util.BusinessException;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AdminAuctionsHandler implements HttpHandler {
-    private final AuctionDAO auctionDAO = new AuctionDAOImpl();
-    private final ItemDAO itemDAO = new ItemDAOImpl();
-    private final UserDAO userDAO = new UserDAOImpl();
+    private static final String BASE_PATH = "/api/admin/auctions";
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -31,104 +24,81 @@ public class AdminAuctionsHandler implements HttpHandler {
             ApiServer.sendResponse(exchange, 204, "");
             return;
         }
-        if (!"GET".equals(method) && !"PUT".equals(method)) {
-            exchange.sendResponseHeaders(405, -1);
-            return;
-        }
 
         try {
             String path = exchange.getRequestURI().getPath();
-            String[] parts = path.split("/");
-            
+            String queryParams = exchange.getRequestURI().getRawQuery();
+            String requesterId = ApiServer.getRequesterId(exchange, queryParam(queryParams, "requesterId"));
+
+            if ("GET".equals(method)) {
+                String filter = queryParam(queryParams, "filter");
+                if (filter.isEmpty()) {
+                    filter = "all";
+                }
+                
+                List<AdminAuctionResponseDTO> auctions = Server.getAdminService().viewAuctions(requesterId, filter);
+                JsonArray dataArr = new JsonArray();
+                if (auctions != null) {
+                    for (AdminAuctionResponseDTO auction : auctions) {
+                        JsonObject obj = new JsonObject();
+                        obj.addProperty("id", auction.getId());
+                        obj.addProperty("itemName", auction.getItemName());
+                        obj.addProperty("sellerName", auction.getSellerName());
+                        obj.addProperty("startPrice", auction.getStartPrice());
+                        obj.addProperty("status", auction.getStatus());
+                        obj.addProperty("reportCount", auction.getReportCount());
+                        dataArr.add(obj);
+                    }
+                }
+                ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Admin auction list loaded successfully!", dataArr));
+                return;
+            }
+
             if ("PUT".equals(method)) {
-                if (parts.length >= 6) {
+                String[] parts = path.split("/");
+                if (parts.length >= 6 && "auctions".equals(parts[3])) {
                     String auctionId = parts[4];
                     String action = parts[5];
-                    
-                    com.team4.service.AuctionService service = new com.team4.service.AuctionService(
-                            new com.team4.dao.impl.AuctionDAOImpl(),
-                            new com.team4.dao.impl.ItemDAOImpl()
-                    );
-                    
-                    if ("approve".equalsIgnoreCase(action)) {
-                        service.approveAuction(auctionId);
+
+                    // Read body
+                    java.io.InputStream is = exchange.getRequestBody();
+                    String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                    is.close();
+
+                    String reqId = ApiServer.getRequesterId(exchange, ApiServer.parseParam(body, "requesterId"));
+
+                    if ("approve".equals(action)) {
+                        Server.getAdminService().approveAuction(reqId, auctionId);
                         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Auction approved successfully", null));
                         return;
-                    } else if ("reject".equalsIgnoreCase(action)) {
-                        service.rejectAuction(auctionId);
+                    } else if ("reject".equals(action)) {
+                        Server.getAdminService().rejectAuction(reqId, auctionId);
                         ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Auction rejected successfully", null));
                         return;
                     }
                 }
-                ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Invalid action or path", null));
-                return;
-            }
-            // Parse filter
-            String query = exchange.getRequestURI().getQuery();
-            String filter = "all";
-            if (query != null && query.contains("filter=")) {
-                String[] params = query.split("&");
-                for (String param : params) {
-                    if (param.startsWith("filter=")) {
-                        filter = param.substring(7);
-                        break;
-                    }
-                }
             }
 
-            List<Auction> auctions;
-            switch (filter.toLowerCase()) {
-                case "pending":
-                    auctions = auctionDAO.findByStatus(Auction.AuctionStatus.PENDING);
-                    break;
-                case "live":
-                    auctions = auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING);
-                    break;
-                case "rejected":
-                    auctions = auctionDAO.findByStatus(Auction.AuctionStatus.CANCELLED);
-                    break;
-                case "all":
-                default:
-                    auctions = auctionDAO.findAll();
-                    break;
-            }
-
-            JsonArray dataArr = new JsonArray();
-            if (auctions != null) {
-                for (Auction auction : auctions) {
-                    JsonObject obj = new JsonObject();
-                    obj.addProperty("id", auction.getId());
-                    
-                    Item item = itemDAO.findById(auction.getItemId());
-                    if (item != null) {
-                        obj.addProperty("itemName", item.getName());
-                    } else {
-                        obj.addProperty("itemName", "Unknown Item");
-                    }
-                    
-                    User seller = userDAO.findById(auction.getSellerId());
-                    if (seller != null) {
-                        String sName = seller.getFullName();
-                        if (sName == null || sName.trim().isEmpty()) {
-                            sName = seller.getUsername();
-                        }
-                        obj.addProperty("sellerName", sName);
-                    } else {
-                        obj.addProperty("sellerName", "Unknown Seller");
-                    }
-                    
-                    obj.addProperty("startPrice", auction.getStartingPrice());
-                    obj.addProperty("status", auction.getStatus().name());
-                    obj.addProperty("reportCount", 0);
-                    
-                    dataArr.add(obj);
-                }
-            }
-            
-            ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Admin auction list loaded successfully!", dataArr));
+            exchange.sendResponseHeaders(405, -1);
+        } catch (BusinessException e) {
+            ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();
-            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", e.getMessage(), null));
+            ApiServer.sendResponse(exchange, 500, ApiServer.buildResponse("ERROR", "Operation failed: " + e.getMessage(), null));
         }
+    }
+
+    private String queryParam(String rawQuery, String key) {
+        if (rawQuery == null || rawQuery.isBlank()) {
+            return "";
+        }
+        String[] pairs = rawQuery.split("&");
+        for (String pair : pairs) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2 && key.equals(kv[0])) {
+                return URLDecoder.decode(kv[1], StandardCharsets.UTF_8);
+            }
+        }
+        return "";
     }
 }

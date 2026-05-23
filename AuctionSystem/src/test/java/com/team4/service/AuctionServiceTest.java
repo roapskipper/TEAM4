@@ -16,6 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.team4.db.DatabaseManager;
+import org.mockito.MockedStatic;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,6 +42,9 @@ public class AuctionServiceTest {
 
     @Mock
     private ItemDAO itemDAO;
+
+    @Mock
+    private Connection mockConn;
 
     @InjectMocks
     private AuctionService auctionService;
@@ -218,6 +227,121 @@ public class AuctionServiceTest {
             // THEN
             assertEquals(1, results.size());
             verify(auctionDAO).findByStatus(Auction.AuctionStatus.RUNNING);
+        }
+    }
+
+    @Nested
+    @DisplayName("Nghiệp vụ Thanh toán (markPaid)")
+    class MarkPaidTests {
+        private MockedStatic<DatabaseManager> mockedDatabaseManager;
+
+        @BeforeEach
+        void setUp() {
+            mockedDatabaseManager = mockStatic(DatabaseManager.class);
+            mockedDatabaseManager.when(DatabaseManager::getConnection).thenReturn(mockConn);
+        }
+
+        @AfterEach
+        void tearDown() {
+            mockedDatabaseManager.close();
+        }
+
+        @Test
+        @DisplayName("Thanh toán thành công và có người thắng cuộc")
+        void testMarkPaid_Success_WithWinner() {
+            String auctionId = "auc-1";
+            String itemId = "item-1";
+            String winnerId = "winner-123";
+            Auction auction = new Auction(
+                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                winnerId, new BigDecimal("1000.00"), new BigDecimal("1500.00"),
+                new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
+                Auction.AuctionStatus.FINISHED
+            );
+
+            when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(true);
+            when(itemDAO.updateOwner(eq(mockConn), eq(itemId), eq(winnerId))).thenReturn(true);
+
+            // WHEN
+            AuctionResponseDTO result = auctionService.markPaid(auctionId);
+
+            // THEN
+            assertNotNull(result);
+            assertEquals(Auction.AuctionStatus.PAID, result.getStatus());
+            verify(auctionDAO).updateStatus(mockConn, auctionId, Auction.AuctionStatus.PAID);
+            verify(itemDAO).updateOwner(mockConn, itemId, winnerId);
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn));
+        }
+
+        @Test
+        @DisplayName("Thanh toán thành công nhưng không có người thắng cuộc")
+        void testMarkPaid_Success_NoWinner() {
+            String auctionId = "auc-1";
+            String itemId = "item-1";
+            Auction auction = new Auction(
+                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                null, new BigDecimal("1000.00"), new BigDecimal("1000.00"),
+                new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
+                Auction.AuctionStatus.FINISHED
+            );
+
+            when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(true);
+
+            // WHEN
+            AuctionResponseDTO result = auctionService.markPaid(auctionId);
+
+            // THEN
+            assertNotNull(result);
+            assertEquals(Auction.AuctionStatus.PAID, result.getStatus());
+            verify(auctionDAO).updateStatus(mockConn, auctionId, Auction.AuctionStatus.PAID);
+            verify(itemDAO, never()).updateOwner(any(), any(), any());
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn));
+        }
+
+        @Test
+        @DisplayName("Thanh toán thất bại khi cập nhật trạng thái lỗi - Rollback")
+        void testMarkPaid_Fail_UpdateStatusError() {
+            String auctionId = "auc-1";
+            String itemId = "item-1";
+            Auction auction = new Auction(
+                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                null, new BigDecimal("1000.00"), new BigDecimal("1000.00"),
+                new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
+                Auction.AuctionStatus.FINISHED
+            );
+
+            when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(false);
+
+            // WHEN & THEN
+            assertThrows(BusinessException.class, () -> auctionService.markPaid(auctionId));
+            mockedDatabaseManager.verify(() -> DatabaseManager.rollbackTransaction(mockConn));
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn), never());
+        }
+
+        @Test
+        @DisplayName("Thanh toán thất bại khi cập nhật chủ sở hữu lỗi - Rollback")
+        void testMarkPaid_Fail_UpdateOwnerError() {
+            String auctionId = "auc-1";
+            String itemId = "item-1";
+            String winnerId = "winner-123";
+            Auction auction = new Auction(
+                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                winnerId, new BigDecimal("1000.00"), new BigDecimal("1500.00"),
+                new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
+                Auction.AuctionStatus.FINISHED
+            );
+
+            when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
+            when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(true);
+            when(itemDAO.updateOwner(eq(mockConn), eq(itemId), eq(winnerId))).thenReturn(false);
+
+            // WHEN & THEN
+            assertThrows(BusinessException.class, () -> auctionService.markPaid(auctionId));
+            mockedDatabaseManager.verify(() -> DatabaseManager.rollbackTransaction(mockConn));
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn), never());
         }
     }
 }

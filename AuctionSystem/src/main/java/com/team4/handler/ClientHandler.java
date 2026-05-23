@@ -3,10 +3,7 @@ package com.team4.handler;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.team4.dao.impl.AuctionDAOImpl;
-import com.team4.dao.impl.AutoBiddingDAOImpl;
-import com.team4.dao.impl.BidTransactionDAOImpl;
-import com.team4.dao.impl.UserDAOImpl;
+
 import com.team4.dto.auction.AuctionResponseDTO;
 import com.team4.dto.bidding.BidRequestDTO;
 import com.team4.dto.socket.BidUpdateResponseDTO;
@@ -38,12 +35,7 @@ public class ClientHandler implements Runnable, BidObserver {
         return userId;
     }
 
-    private static final BiddingService biddingService = new BiddingService(
-            new AuctionDAOImpl(),
-            new BidTransactionDAOImpl(),
-            new UserDAOImpl(),
-            new AutoBiddingDAOImpl()
-    );
+
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -139,7 +131,7 @@ public class ClientHandler implements Runnable, BidObserver {
 
                 // Tạo BidRequestDTO và gọi placeBid
                 BidRequestDTO bidDto = new BidRequestDTO(auctionId, bidderId, BigDecimal.valueOf(amount));
-                biddingService.placeBid(bidDto);
+                Server.getBiddingService().placeBid(bidDto);
 
                 // Lấy lại auction raw để có giá và endTime mới nhất
                 Auction updatedAuction = Server.getAuctionService().getRawAuctionById(auctionId);

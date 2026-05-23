@@ -257,20 +257,6 @@ public class AuctionDAOImpl implements AuctionDAO {
         }
     }
 
-    public boolean updateCurrentBid(String id, BigDecimal currentPrice, String highestBidderId) {
-        String sql = "UPDATE auctions SET current_price = ?, current_highest_bidder_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setBigDecimal(1,currentPrice);
-            stmt.setString(2,highestBidderId);
-            stmt.setString(3,id);
-
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            logger.error("Unable to update current bid auctionId={} currentPrice={} highestBidderId={}", id, currentPrice, highestBidderId, e);
-            return false;
-        }
-    }
 
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();

@@ -234,5 +234,50 @@ public class BiddingServiceTest {
             assertEquals(1, history.size());
             assertEquals("bidder-1", history.get(0).getBidderId());
         }
+
+        @Test
+        @DisplayName("Lấy lịch sử đấu giá của Bidder (Trả về DTO)")
+        void testGetBidHistoryByBidder() {
+            String bidderId = "bidder-1";
+            BidTransaction bid = new BidTransaction("auc-1", bidderId, new BigDecimal("150"));
+            when(bidTransactionDAO.findByBidderId(bidderId)).thenReturn(List.of(bid));
+
+            // WHEN
+            List<BidTransactionResponseDTO> history = biddingService.getBidHistoryByBidder(bidderId);
+
+            // THEN
+            assertEquals(1, history.size());
+            assertEquals("auc-1", history.get(0).getAuctionId());
+            assertEquals(bidderId, history.get(0).getBidderId());
+        }
+
+        @Test
+        @DisplayName("Lấy lượt đấu giá cao nhất của phiên")
+        void testGetHighestBid() {
+            String auctionId = "auc-1";
+            BidTransaction bid = new BidTransaction(auctionId, "bidder-1", new BigDecimal("350"));
+            when(bidTransactionDAO.getHighestBid(auctionId)).thenReturn(bid);
+
+            // WHEN
+            BidTransactionResponseDTO highest = biddingService.getHighestBid(auctionId);
+
+            // THEN
+            assertNotNull(highest);
+            assertEquals("bidder-1", highest.getBidderId());
+            assertEquals(0, new BigDecimal("350").compareTo(highest.getBidAmount()));
+        }
+
+        @Test
+        @DisplayName("Lấy lượt đấu giá cao nhất của phiên chưa có ai đấu")
+        void testGetHighestBid_Null() {
+            String auctionId = "auc-empty";
+            when(bidTransactionDAO.getHighestBid(auctionId)).thenReturn(null);
+
+            // WHEN
+            BidTransactionResponseDTO highest = biddingService.getHighestBid(auctionId);
+
+            // THEN
+            assertNull(highest);
+        }
     }
 }
