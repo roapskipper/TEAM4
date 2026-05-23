@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -33,7 +34,45 @@ public class AdminAuctionsController implements Initializable {
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colReports.setCellValueFactory(new PropertyValueFactory<>("reports"));
-        colAction.setCellValueFactory(new PropertyValueFactory<>("action"));
+        
+        setupActionColumn();
+    }
+
+    private void setupActionColumn() {
+        colAction.setCellFactory(param -> new TableCell<>() {
+            private final Button approveBtn = new Button("Approve");
+            private final Button rejectBtn = new Button("Reject");
+            private final HBox actions = new HBox(6, approveBtn, rejectBtn);
+
+            {
+                approveBtn.getStyleClass().add("table-action-btn");
+                approveBtn.setOnAction(event -> {
+                    AuctionRow row = getTableView().getItems().get(getIndex());
+                    onApprove(row.id);
+                });
+
+                rejectBtn.getStyleClass().add("table-action-btn");
+                rejectBtn.setOnAction(event -> {
+                    AuctionRow row = getTableView().getItems().get(getIndex());
+                    onReject(row.id);
+                });
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
+                AuctionRow row = getTableView().getItems().get(getIndex());
+                if ("PENDING".equalsIgnoreCase(row.statusRaw)) {
+                    setGraphic(actions);
+                } else {
+                    setGraphic(null);
+                }
+            }
+        });
     }
 
     private void loadDataFromServer() {
@@ -121,12 +160,57 @@ public class AdminAuctionsController implements Initializable {
         resultCount.setText(filtered.size() + " auctions");
     }
 
-    @FXML private void onApprove(String id) {
-        System.out.println("Approve auction: " + id);
+    private void onApprove(String id) {
+        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                new com.team4.client.ApiClient().approveAuction(id);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            loadDataFromServer();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Auction approved successfully!");
+            alert.show();
+        });
+
+        task.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to approve: " + com.team4.client.ApiClient.toDisplayMessage(task.getException()));
+            alert.show();
+        });
+
+        new Thread(task).start();
     }
 
-    @FXML private void onReject(String id) {
-        System.out.println("Reject auction: " + id);
+    private void onReject(String id) {
+        TextInputDialog dialog = new TextInputDialog("Violation");
+        dialog.setTitle("Reject Auction");
+        dialog.setHeaderText("Enter rejection reason:");
+        dialog.setContentText("Reason:");
+        java.util.Optional<String> result = dialog.showAndWait();
+        if (result.isEmpty()) return;
+
+        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                new com.team4.client.ApiClient().rejectAuction(id, result.get());
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            loadDataFromServer();
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Auction rejected successfully!");
+            alert.show();
+        });
+
+        task.setOnFailed(e -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Failed to reject: " + com.team4.client.ApiClient.toDisplayMessage(task.getException()));
+            alert.show();
+        });
+
+        new Thread(task).start();
     }
 
     @FXML private void onDelete(String id) {
@@ -144,11 +228,11 @@ public class AdminAuctionsController implements Initializable {
         public String getStartPrice() { return startPrice; }
         public String getStatus() {
             return switch(statusRaw.toUpperCase()) {
-                case "PENDING_APPROVAL" -> "Pending";
-                case "APPROVED" -> "Approved";
-                case "LIVE" -> "Live";
-                case "REJECTED" -> "Rejected";
-                case "ENDED" -> "Ended";
+                case "PENDING", "PENDING_APPROVAL" -> "Pending";
+                case "RUNNING", "LIVE" -> "Live";
+                case "FINISHED", "ENDED" -> "Ended";
+                case "PAID" -> "Paid";
+                case "CANCELLED", "REJECTED" -> "Rejected";
                 default -> statusRaw;
             };
         }

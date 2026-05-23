@@ -26,16 +26,43 @@ public class AdminAuctionsHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        if ("OPTIONS".equals(exchange.getRequestMethod())) {
+        String method = exchange.getRequestMethod();
+        if ("OPTIONS".equals(method)) {
             ApiServer.sendResponse(exchange, 204, "");
             return;
         }
-        if (!"GET".equals(exchange.getRequestMethod())) {
+        if (!"GET".equals(method) && !"PUT".equals(method)) {
             exchange.sendResponseHeaders(405, -1);
             return;
         }
 
         try {
+            String path = exchange.getRequestURI().getPath();
+            String[] parts = path.split("/");
+            
+            if ("PUT".equals(method)) {
+                if (parts.length >= 6) {
+                    String auctionId = parts[4];
+                    String action = parts[5];
+                    
+                    com.team4.service.AuctionService service = new com.team4.service.AuctionService(
+                            new com.team4.dao.impl.AuctionDAOImpl(),
+                            new com.team4.dao.impl.ItemDAOImpl()
+                    );
+                    
+                    if ("approve".equalsIgnoreCase(action)) {
+                        service.approveAuction(auctionId);
+                        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Auction approved successfully", null));
+                        return;
+                    } else if ("reject".equalsIgnoreCase(action)) {
+                        service.rejectAuction(auctionId);
+                        ApiServer.sendResponse(exchange, 200, ApiServer.buildResponse("SUCCESS", "Auction rejected successfully", null));
+                        return;
+                    }
+                }
+                ApiServer.sendResponse(exchange, 400, ApiServer.buildResponse("ERROR", "Invalid action or path", null));
+                return;
+            }
             // Parse filter
             String query = exchange.getRequestURI().getQuery();
             String filter = "all";

@@ -27,40 +27,56 @@ public class ItemDAOImpl implements ItemDAO {
         String category = rs.getString("category");
         String ownerId = rs.getString("owner_id");
 
+        Item item;
         // Dùng Switch-Case kết hợp Factory để trả về đúng Class con
         switch (Item.ItemCategory.valueOf(category)) {
             case ART:
-                return new Art(id, createdAt, name, startingPrice, description, ownerId,
+                item = new Art(id, createdAt, name, startingPrice, description, ownerId,
                         rs.getString("artist"), rs.getInt("creation_year"), Art.fromName(rs.getString("medium")),
                         rs.getString("dimensions"));
+                break;
 
             case COLLECTIBLE:
-                return new Collectible(id, createdAt, name, startingPrice, description, ownerId,
+                item = new Collectible(id, createdAt, name, startingPrice, description, ownerId,
                         rs.getInt("year_of_origin"), Collectible.fromNameR(rs.getString("rarity_level")),Collectible.fromNameCon(rs.getString("condition_grade")),
                         rs.getBoolean("has_certificate"),
                         rs.getString("origin"));
+                break;
 
             case ELECTRONICS:
-                return new Electronics(id, createdAt, name, startingPrice, description, ownerId,
+                item = new Electronics(id, createdAt, name, startingPrice, description, ownerId,
                         rs.getString("brand"), rs.getString("model"),
                         Electronics.fromNameCon(rs.getString("condition_grade")), rs.getInt("warranty_months"),
                         rs.getBoolean("fully_functional"));
+                break;
 
             case FASHION:
-                return new Fashion(id, createdAt, name, startingPrice, description, ownerId,
+                item = new Fashion(id, createdAt, name, startingPrice, description, ownerId,
                         rs.getString("brand"), Fashion.fromNameSize(rs.getString("size")), rs.getString("material"),
                         rs.getString("color"), Fashion.fromNameGender(rs.getString("gender")), Fashion.fromNameCon(rs.getString("condition_grade")),
                         rs.getBoolean("authentic"));
+                break;
 
             case VEHICLE:
-                return new Vehicle(id, createdAt, name, startingPrice, description, ownerId,
+                item = new Vehicle(id, createdAt, name, startingPrice, description, ownerId,
                         rs.getString("brand"), rs.getString("model"), rs.getInt("manufacturing_year"),
                         rs.getInt("odo"), Vehicle.fromNameEng(rs.getString("engine_type")), rs.getString("color")
                         , rs.getBoolean("has_legal_papers"), Vehicle.fromNameTran(rs.getString("transmission")));
+                break;
 
             default:
                 throw new SQLException("Lỗi hệ thống: Category không hợp lệ -> " + category);
         }
+
+        try {
+            String auctionStatus = rs.getString("auction_status");
+            if (auctionStatus != null) {
+                item.setStatus(auctionStatus);
+            }
+        } catch (SQLException ignored) {
+            // column not found in result set, which is fine
+        }
+        return item;
     }
 
     /**
@@ -73,7 +89,7 @@ public class ItemDAOImpl implements ItemDAO {
      * Ví dụ: click vào item → load thông tin
      */
     public Item findById(String id) {
-        String sql = "SELECT * FROM items WHERE id = ?";
+        String sql = "SELECT items.*, auctions.status AS auction_status FROM items LEFT JOIN auctions ON items.id = auctions.item_id WHERE items.id = ?";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, id);
@@ -96,7 +112,7 @@ public class ItemDAOImpl implements ItemDAO {
      * Ví dụ: danh sách tất cả sản phẩm đang đấu giá
      */
     public List<Item> findAll() {
-        String sql = "SELECT * FROM items ORDER BY created_at DESC";
+        String sql = "SELECT items.*, auctions.status AS auction_status FROM items LEFT JOIN auctions ON items.id = auctions.item_id ORDER BY items.created_at DESC";
         return executeQueryList(sql);
     }
 
@@ -107,7 +123,7 @@ public class ItemDAOImpl implements ItemDAO {
      * Ví dụ: chỉ xem Electronics, Fashion...
      */
     public List<Item> findByCategory(String category) {
-        String sql = "SELECT * FROM items WHERE category = ? ORDER BY created_at DESC";
+        String sql = "SELECT items.*, auctions.status AS auction_status FROM items LEFT JOIN auctions ON items.id = auctions.item_id WHERE items.category = ? ORDER BY items.created_at DESC";
         return executeQueryListWithParam(sql, category);
     }
 
@@ -119,7 +135,7 @@ public class ItemDAOImpl implements ItemDAO {
      */
     public List<Item> findByOwnerId(String ownerId) {
         // sắp xếp theo thời gian tạo giảm dần (mới nhất lên trước)
-        String sql = "SELECT * FROM items WHERE owner_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT items.*, auctions.status AS auction_status FROM items LEFT JOIN auctions ON items.id = auctions.item_id WHERE items.owner_id = ? ORDER BY items.created_at DESC";
         return executeQueryListWithParam(sql, ownerId);
     }
 
@@ -130,6 +146,16 @@ public class ItemDAOImpl implements ItemDAO {
 
     @Override
     public boolean insert(Item item) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            return insert(conn, item);
+        } catch (SQLException e) {
+            logger.error("Không thể kết nối để tạo item id={}", item.getId(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean insert(Connection conn, Item item) {
         // Lưu ý: Trong Single Table Inheritance, bảng sẽ có rất nhiều cột.
         // Ta set các cột không liên quan thành NULL.
         String sql = "INSERT INTO items (id, created_at, name, description, starting_price, category, owner_id, " +
@@ -141,8 +167,7 @@ public class ItemDAOImpl implements ItemDAO {
                 "manufacturing_year, odo, engine_type, has_legal_papers, transmission) " +
                 "VALUES (?,?,?,?,?,?,?, ?,?,?,?, ?,?,?,?,?,?, ?,?,?,?,?,?,?, ?,?,?,?, ?,?)";
 
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             // 1-7: Cột chung của Item
             stmt.setString(1, item.getId());

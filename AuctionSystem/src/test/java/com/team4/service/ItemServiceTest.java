@@ -1,5 +1,6 @@
 package com.team4.service;
 
+import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
 import com.team4.dto.item.*;
@@ -199,6 +200,28 @@ public class ItemServiceTest {
             when(itemDAO.insert(any(Item.class))).thenReturn(true);
             Item result = itemService.createItem(sellerId, req);
             assertNotNull(result);
+        }
+
+        @Test
+        @DisplayName("Tạo mặt hàng thành công và tự động tạo phiên đấu giá tương ứng")
+        void testCreateItem_AutoCreatesAuction() {
+            String sellerId = "seller-123";
+            Seller seller = createRealSeller(sellerId);
+            CreateArtRequestDTO request = createArtRequest("Masterpiece");
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+
+            when(mockUserDAO.findById(sellerId)).thenReturn(seller);
+            when(mockItemDAO.insert(any(Item.class))).thenReturn(true);
+            when(mockAuctionDAO.insert(any(Auction.class))).thenReturn(true);
+
+            ItemResponseDTO result = customItemService.createItem(sellerId, request);
+
+            assertNotNull(result);
+            verify(mockAuctionDAO).insert(any(Auction.class));
         }
     }
 

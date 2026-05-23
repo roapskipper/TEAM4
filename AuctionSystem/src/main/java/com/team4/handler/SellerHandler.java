@@ -44,8 +44,19 @@ public class SellerHandler implements HttpHandler {
                 List<Item> items = itemDAO.findByOwnerId(sellerId);
                 int totalProducts = items.size();
                 int activeAuctions = 0; 
-                int pendingProducts = totalProducts; 
+                int pendingProducts = 0; 
                 int soldProducts = 0;
+
+                for (Item item : items) {
+                    String status = item.getStatus();
+                    if ("RUNNING".equalsIgnoreCase(status)) {
+                        activeAuctions++;
+                    } else if ("PENDING".equalsIgnoreCase(status)) {
+                        pendingProducts++;
+                    } else if ("FINISHED".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
+                        soldProducts++;
+                    }
+                }
 
                 JsonObject stats = new JsonObject();
                 stats.addProperty("totalProducts", totalProducts);
