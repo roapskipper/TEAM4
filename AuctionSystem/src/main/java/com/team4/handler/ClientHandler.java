@@ -56,7 +56,7 @@ public class ClientHandler implements Runnable, BidObserver {
 
             String message;
             while ((message = in.readLine()) != null) {
-                System.out.println("Nhan duoc tu Socket: " + message);
+                System.out.println("Received from socket: " + message);
                 try {
                     NetworkMessage netMsg = Server.getGson().fromJson(message, NetworkMessage.class);
                     if (netMsg != null && netMsg.getCommand() != null) {
