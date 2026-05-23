@@ -76,6 +76,9 @@ public class ItemService {
             ItemFactory factory = getFactory(itemRequest.getCategory());
             Item item = factory.createItem(itemRequest);
 
+            // Validate price at backend
+            validatePrice(item.getCategory(), item.getStartingPrice());
+
             try {
                 conn = com.team4.db.DatabaseManager.getConnection();
                 com.team4.db.DatabaseManager.beginTransaction(conn);
@@ -106,6 +109,7 @@ public class ItemService {
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
                 java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
                 Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
                 
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
@@ -118,8 +122,8 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng: itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("PENDING");
+                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("RUNNING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }
@@ -168,6 +172,9 @@ public class ItemService {
             ItemFactory factory = getFactory(itemRequest.getCategory());
             Item item = factory.createItem(itemRequest);
 
+            // Validate price at backend
+            validatePrice(item.getCategory(), item.getStartingPrice());
+
             try {
                 conn = com.team4.db.DatabaseManager.getConnection();
                 com.team4.db.DatabaseManager.beginTransaction(conn);
@@ -198,6 +205,7 @@ public class ItemService {
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
                 java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
                 Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
                 
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
@@ -210,8 +218,8 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng: itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("PENDING");
+                logger.info("Đã tự động tạo cuộc đấu giá cho mặt hàng (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("RUNNING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }
