@@ -52,6 +52,10 @@ public class AuctionService {
                     itemId, sellerId, item.getOwnerId());
             throw new BusinessException("Seller does not own this item");
         }
+        if (auctionDAO.findByItemId(itemId) != null) {
+            logger.warn("Auction creation failed: item already has an auction. itemId={}", itemId);
+            throw new BusinessException("This item already has an auction");
+        }
 
         Auction auction = new Auction(itemId, sellerId, startingPrice, bidIncrement, endTime);
         if (!auctionDAO.insert(auction)) {

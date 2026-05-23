@@ -1,6 +1,7 @@
 package com.team4.mapper;
 
 import com.team4.dto.auth.UserResponseDTO;
+import com.team4.model.Admin;
 import com.team4.model.Bidder;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -28,7 +29,9 @@ public class UserMapper {
         );
 
         // Ánh xạ thêm thông tin dựa trên loại User thực tế
-        if (user instanceof Seller seller) {
+        if (user instanceof Admin admin) {
+            dto.setAccessLevelCode(admin.getAccessLevel().getLevel());
+        } else if (user instanceof Seller seller) {
             dto.setStoreName(seller.getStoreName());
             dto.setRating(seller.getRating());
         } else if (user instanceof Bidder bidder) {

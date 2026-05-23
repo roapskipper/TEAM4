@@ -4,13 +4,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import com.team4.mapper.UserMapper;
 import com.team4.dto.auth.UserResponseDTO;
-import com.team4.model.User;
 import com.team4.server.ApiServer;
 import com.team4.server.Server;
+import com.team4.util.BusinessException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -37,8 +37,22 @@ public class AdminUsersHandler implements HttpHandler {
                 handleListUsers(exchange, queryParam(exchange.getRequestURI().getRawQuery(), "q"));
                 return;
             }
+            if ("PUT".equals(method)) {
+                String targetUserId = readUserId(path);
+                if (targetUserId != null && path.endsWith("/grant-admin")) {
+                    handleGrantAdmin(exchange, targetUserId);
+                    return;
+                }
+                if (targetUserId != null && path.endsWith("/revoke-admin")) {
+                    handleRevokeAdmin(exchange, targetUserId);
+                    return;
+                }
+            }
 
             exchange.sendResponseHeaders(405, -1);
+        } catch (BusinessException e) {
+            ApiServer.sendResponse(exchange, 400,
+                    ApiServer.buildResponse("ERROR", e.getMessage(), null));
         } catch (Exception e) {
             e.printStackTrace();
             ApiServer.sendResponse(exchange, 500,
@@ -63,6 +77,23 @@ public class AdminUsersHandler implements HttpHandler {
                 ApiServer.buildResponse("SUCCESS", "Users loaded successfully", data));
     }
 
+    private void handleGrantAdmin(HttpExchange exchange, String targetUserId) throws IOException {
+        String body = readBody(exchange);
+        String requesterId = ApiServer.parseParam(body, "requesterId");
+        String adminCode = ApiServer.parseParam(body, "adminCode");
+        UserResponseDTO dto = Server.getUserService().grantAdminRole(requesterId, targetUserId, adminCode);
+        ApiServer.sendResponse(exchange, 200,
+                ApiServer.buildResponse("SUCCESS", "Admin privileges granted successfully", toJson(dto)));
+    }
+
+    private void handleRevokeAdmin(HttpExchange exchange, String targetUserId) throws IOException {
+        String body = readBody(exchange);
+        String requesterId = ApiServer.parseParam(body, "requesterId");
+        UserResponseDTO dto = Server.getUserService().revokeAdminRole(requesterId, targetUserId);
+        ApiServer.sendResponse(exchange, 200,
+                ApiServer.buildResponse("SUCCESS", "Admin privileges removed successfully", toJson(dto)));
+    }
+
     private boolean matchesQuery(UserResponseDTO dto, String query) {
         if (query == null || query.isBlank()) {
             return true;
@@ -77,12 +108,26 @@ public class AdminUsersHandler implements HttpHandler {
         return value != null && value.toLowerCase(Locale.ROOT).contains(query);
     }
 
-    /**
-     * Serialize UserResponseDTO sang JsonObject.
-     * Lưu ý: không có accessLevel vì UserResponseDTO không chứa trường này.
-     */
     private JsonObject toJson(UserResponseDTO dto) {
         return Server.getGson().toJsonTree(dto).getAsJsonObject();
+    }
+
+    private String readUserId(String path) {
+        if (path == null || !path.startsWith(BASE_PATH + "/")) {
+            return null;
+        }
+        String suffix = path.substring((BASE_PATH + "/").length());
+        int slash = suffix.indexOf('/');
+        if (slash < 0) {
+            return null;
+        }
+        return URLDecoder.decode(suffix.substring(0, slash), StandardCharsets.UTF_8);
+    }
+
+    private String readBody(HttpExchange exchange) throws IOException {
+        try (InputStream input = exchange.getRequestBody()) {
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private String queryParam(String rawQuery, String key) {

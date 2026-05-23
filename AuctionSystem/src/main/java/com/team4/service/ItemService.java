@@ -1,11 +1,12 @@
 package com.team4.service;
 
+import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
-import com.team4.dto.auction.*;
+import com.team4.dto.auction.CreateFashionRequestDTO;
+import com.team4.dto.auction.CreateItemRequestDTO;
 import com.team4.dto.item.*;
 import com.team4.factory.*;
-import com.team4.model.Collectible;
 import com.team4.model.Item;
 import com.team4.model.Seller;
 import com.team4.model.User;
@@ -24,10 +25,16 @@ public class ItemService {
     private static final Logger logger = LoggerFactory.getLogger(ItemService.class);
     private final ItemDAO itemDAO;
     private final UserDAO userDAO;
+    private final AuctionDAO auctionDAO;
 
     public ItemService(ItemDAO itemDAO, UserDAO userDAO) {
+        this(itemDAO, userDAO, null);
+    }
+
+    public ItemService(ItemDAO itemDAO, UserDAO userDAO, AuctionDAO auctionDAO) {
         this.itemDAO = itemDAO;
         this.userDAO = userDAO;
+        this.auctionDAO = auctionDAO;
     }
 
     /**
@@ -58,6 +65,8 @@ public class ItemService {
         try {
             // Map DTO to Factory Request
             ItemRequest itemRequest = mapToItemRequest(sellerId, requestDTO);
+            validateCommonItemRequest(itemRequest);
+            ItemRequestDefaults.apply(itemRequest);
 
             // Chọn Factory
             ItemFactory factory = getFactory(itemRequest.getCategory());
@@ -66,11 +75,11 @@ public class ItemService {
 
             if (!itemDAO.insert(item)) {
                 logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
-                throw new BusinessException("Không thể tạo mặt hàng.");
+                throw new BusinessException("Unable to create item.");
             }
             if (!item.getOwnerId().equals(sellerId)) {
                 logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+                throw new BusinessException("Seller does not own this item.");
             }
             logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
             return ItemMapper.toItemResponseDTO(item);
@@ -92,6 +101,7 @@ public class ItemService {
         try {
             // Common validation
             validateCommonItemRequest(itemRequest);
+            ItemRequestDefaults.apply(itemRequest);
 
             // Chọn Factory
             ItemFactory factory = getFactory(itemRequest.getCategory());
@@ -100,11 +110,11 @@ public class ItemService {
 
             if (!itemDAO.insert(item)) {
                 logger.error("Lỗi hệ thống: Không thể lưu mặt hàng vào database. sellerId={}", sellerId);
-                throw new BusinessException("Không thể tạo mặt hàng.");
+                throw new BusinessException("Unable to create item.");
             }
             if (!item.getOwnerId().equals(sellerId)) {
                 logger.error("Lỗi bảo mật/dữ liệu: Người tạo không khớp với người sở hữu mặt hàng. sellerId={}, ownerId={}", sellerId, item.getOwnerId());
-                throw new BusinessException("LỖI: Người bán không phải chủ sở hữu mặt hàng.");
+                throw new BusinessException("Seller does not own this item.");
             }
             logger.info("Đã tạo thành công mặt hàng: itemId={}, name={}", item.getId(), item.getName());
             return item;
@@ -153,11 +163,11 @@ public class ItemService {
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
             logger.warn("Cập nhật thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
             logger.warn("Cập nhật thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Lỗi về quyền sở hữu.");
+            throw new BusinessException("Seller does not own this item.");
         }
 
         existingItem.setName(newName);
@@ -167,6 +177,7 @@ public class ItemService {
             logger.info("Đã cập nhật thành công mặt hàng: itemId={}", itemId);
         } else {
             logger.error("Lỗi hệ thống: Không thể cập nhật mặt hàng vào database. itemId={}", itemId);
+            throw new BusinessException("Unable to update item.");
         }
         return ItemMapper.toItemResponseDTO(existingItem);
     }
@@ -179,11 +190,16 @@ public class ItemService {
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
             logger.warn("Xóa thất bại: Mặt hàng không tồn tại. itemId={}", itemId);
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         if (!existingItem.getOwnerId().equals(sellerId)) {
             logger.warn("Xóa thất bại: Người bán không có quyền sở hữu mặt hàng này. sellerId={}, ownerId={}", sellerId, existingItem.getOwnerId());
-            throw new BusinessException("Lỗi về quyền sở hữu.");
+            throw new BusinessException("Seller does not own this item.");
+        }
+
+        if (auctionDAO != null && auctionDAO.findByItemId(itemId) != null) {
+            logger.warn("Delete failed: item already has an auction. itemId={}", itemId);
+            throw new BusinessException("Cannot delete an item that already has an auction.");
         }
 
         boolean deleted = itemDAO.delete(itemId);
@@ -191,6 +207,7 @@ public class ItemService {
             logger.info("Đã xóa thành công mặt hàng: itemId={}", itemId);
         } else {
             logger.error("Lỗi hệ thống: Không thể xóa mặt hàng trong database. itemId={}", itemId);
+            throw new BusinessException("Unable to delete item.");
         }
     }
 
@@ -221,7 +238,7 @@ public class ItemService {
     public ItemResponseDTO getItemById(String itemId) {
         Item item = itemDAO.findById(itemId);
         if (item == null) {
-            throw new BusinessException("Mặt hàng không tồn tại.");
+            throw new BusinessException("Item does not exist.");
         }
         return ItemMapper
                 .toItemResponseDTO(item);

@@ -3,8 +3,10 @@ package com.team4.service;
 import com.team4.dao.UserDAO;
 import com.team4.dto.auth.UserResponseDTO;
 import com.team4.mapper.UserMapper;
+import com.team4.model.Admin;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
+import com.team4.util.PasswordHasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +80,61 @@ public class UserService {
         return userDAO.findAll().stream()
                 .map(UserMapper::toUserResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    public UserResponseDTO grantAdminRole(String requesterId, String targetUserId, String adminCode) {
+        requireSuperAdmin(requesterId);
+        if (targetUserId == null || targetUserId.isBlank()) {
+            throw new BusinessException("Target user id is required");
+        }
+        if (adminCode == null || adminCode.isBlank()) {
+            throw new BusinessException("Admin code is required");
+        }
+
+        User target = getRawUserById(targetUserId);
+        if (target.getRole() == User.Role.ADMIN) {
+            throw new BusinessException("User is already an admin");
+        }
+
+        String adminCodeHash = PasswordHasher.hashPassword(adminCode.trim());
+        if (!userDAO.grantAdminRole(targetUserId, adminCodeHash)) {
+            throw new BusinessException("Unable to grant admin role");
+        }
+        return getUserById(targetUserId);
+    }
+
+    public UserResponseDTO revokeAdminRole(String requesterId, String targetUserId) {
+        requireSuperAdmin(requesterId);
+        if (targetUserId == null || targetUserId.isBlank()) {
+            throw new BusinessException("Target user id is required");
+        }
+        if (requesterId.equals(targetUserId)) {
+            throw new BusinessException("You cannot revoke your own admin role");
+        }
+
+        User target = getRawUserById(targetUserId);
+        if (!(target instanceof Admin admin)) {
+            throw new BusinessException("User is not an admin");
+        }
+        if (admin.getAccessLevel() == Admin.AccessLevel.SUPER_ADMIN) {
+            throw new BusinessException("Super Admin role cannot be revoked");
+        }
+
+        if (!userDAO.revokeAdminRole(targetUserId)) {
+            throw new BusinessException("Unable to revoke admin role");
+        }
+        return getUserById(targetUserId);
+    }
+
+    private void requireSuperAdmin(String requesterId) {
+        if (requesterId == null || requesterId.isBlank()) {
+            throw new BusinessException("Requester id is required");
+        }
+        User requester = getRawUserById(requesterId);
+        if (!(requester instanceof Admin admin)
+                || admin.getAccessLevel() != Admin.AccessLevel.SUPER_ADMIN) {
+            throw new BusinessException("Only Super Admin can perform this action");
+        }
     }
 
     /**
