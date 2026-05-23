@@ -291,4 +291,34 @@ public class UserDAOImpl implements UserDAO {
         }
         return true;
     }
+
+    @Override
+    public boolean grantAdminRole(String id, String adminCodeHash) {
+        String sql = "UPDATE users SET previous_role_before_admin = role, role = 'ADMIN', access_level = 1, "
+                + "admin_code_hash = ? WHERE id = ? AND role IN ('SELLER', 'BIDDER')";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, adminCodeHash);
+            stmt.setString(2, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to grant admin role id={}", id, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean revokeAdminRole(String id) {
+        String sql = "UPDATE users SET role = COALESCE(previous_role_before_admin, 'BIDDER'), "
+                + "access_level = NULL, admin_code_hash = NULL, previous_role_before_admin = NULL "
+                + "WHERE id = ? AND role = 'ADMIN' AND (access_level IS NULL OR access_level <> 2)";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to revoke admin role id={}", id, e);
+            return false;
+        }
+    }
 }

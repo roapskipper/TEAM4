@@ -479,8 +479,15 @@ public class ApiClient {
     }
 
     public JsonArray getAllUsers() throws Exception {
+        return getAllUsers("");
+    }
+
+    public JsonArray getAllUsers(String requesterId) throws Exception {
+        String query = requesterId == null || requesterId.isBlank()
+                ? ""
+                : "?requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/users"))
+                .uri(URI.create(API_URL + "admin/users" + query))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -502,8 +509,16 @@ public class ApiClient {
     }
 
     public JsonArray searchUsers(String query) throws Exception {
+        return searchUsers(query, "");
+    }
+
+    public JsonArray searchUsers(String query, String requesterId) throws Exception {
+        String encodedQuery = java.net.URLEncoder.encode(query, StandardCharsets.UTF_8);
+        String encodedRequester = requesterId == null || requesterId.isBlank()
+                ? ""
+                : "&requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/users/search?q=" + java.net.URLEncoder.encode(query, StandardCharsets.UTF_8)))
+                .uri(URI.create(API_URL + "admin/users/search?q=" + encodedQuery + encodedRequester))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -524,10 +539,12 @@ public class ApiClient {
         }
     }
 
-    public String suspendUser(String userId, String reason) throws Exception {
-        String body = reason != null ? "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8) : "";
+
+    public String grantAdmin(String userId, String requesterId, String adminCode) throws Exception {
+        String body = "requesterId=" + java.net.URLEncoder.encode(requesterId, StandardCharsets.UTF_8)
+                + "&adminCode=" + java.net.URLEncoder.encode(adminCode, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/users/" + userId + "/suspend"))
+                .uri(URI.create(API_URL + "admin/users/" + userId + "/grant-admin"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
@@ -539,26 +556,12 @@ public class ApiClient {
         }
     }
 
-    public String banUser(String userId, String reason) throws Exception {
-        String body = reason != null ? "reason=" + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8) : "";
+    public String revokeAdmin(String userId, String requesterId) throws Exception {
+        String body = "requesterId=" + java.net.URLEncoder.encode(requesterId == null ? "" : requesterId, StandardCharsets.UTF_8);
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/users/" + userId + "/ban"))
+                .uri(URI.create(API_URL + "admin/users/" + userId + "/revoke-admin"))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .PUT(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-                .build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        if (response.statusCode() == 200) {
-            return response.body();
-        } else {
-            throw apiException(response);
-        }
-    }
-
-    public String unsuspendUser(String userId) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + "admin/users/" + userId + "/unsuspend"))
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .PUT(HttpRequest.BodyPublishers.noBody())
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() == 200) {

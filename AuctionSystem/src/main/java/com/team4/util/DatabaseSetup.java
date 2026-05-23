@@ -35,6 +35,7 @@ public final class DatabaseSetup {
         List<String> statements = splitStatements(schema);
 
         applySchema(config, statements);
+        applyMigrations(config);
     }
 
     /** Nhiệm vụ của loadConfig là:
@@ -200,6 +201,25 @@ public final class DatabaseSetup {
         }
     }
 
+    private static void applyMigrations(DbConfig config) {
+        try (Connection conn = DriverManager.getConnection(config.url(), config.user(), config.password());
+             Statement stmt = conn.createStatement()) {
+
+            try {
+                stmt.execute("ALTER TABLE users ADD COLUMN previous_role_before_admin ENUM('SELLER', 'BIDDER') NULL AFTER balance");
+            } catch (SQLException e) {
+                if (!isIgnorableSchemaError(e)) {
+                    throw e;
+                }
+            }
+
+            stmt.executeUpdate("UPDATE users SET access_level = 2 WHERE id = 'root-admin' AND role = 'ADMIN'");
+            stmt.executeUpdate("UPDATE users SET access_level = 1 WHERE id LIKE 'mod-%' AND role = 'ADMIN'");
+        } catch (SQLException e) {
+            throw new RuntimeException("Unable to apply database migrations", e);
+        }
+    }
+
     /**
      *buildAdminUrl(String dbUrl) có nhiệm vụ:
      * nhận vào URL JDBC đang trỏ tới một database cụ thể, rồi biến nó thành URL cấp server để có thể tạo database.
@@ -232,7 +252,7 @@ public final class DatabaseSetup {
         int errorCode = e.getErrorCode();
         // 1061 là mã lỗi của MySQL khi báo "Duplicate key name" (Trùng tên Index)
         // 1050 là mã lỗi khi báo "Table already exists"
-        return errorCode == 1061 || errorCode == 1050;
+        return errorCode == 1061 || errorCode == 1050 || errorCode == 1060;
     }
 
     private record DbConfig(String url, String user, String password) {}

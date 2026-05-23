@@ -78,13 +78,11 @@ public class AdminUsersHandler implements HttpHandler {
     }
 
     /**
-     * Serialize UserResponseDTO sang JsonObject, thêm status (hardcode ACTIVE).
+     * Serialize UserResponseDTO sang JsonObject.
      * Lưu ý: không có accessLevel vì UserResponseDTO không chứa trường này.
      */
     private JsonObject toJson(UserResponseDTO dto) {
-        JsonObject obj = Server.getGson().toJsonTree(dto).getAsJsonObject();
-        obj.addProperty("status", "ACTIVE");
-        return obj;
+        return Server.getGson().toJsonTree(dto).getAsJsonObject();
     }
 
     private String queryParam(String rawQuery, String key) {

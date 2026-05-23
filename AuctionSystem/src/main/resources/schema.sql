@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     role ENUM('ADMIN', 'SELLER', 'BIDDER') NOT NULL,
     balance DECIMAL(19,2) NOT NULL DEFAULT 0.00,
+    previous_role_before_admin ENUM('SELLER', 'BIDDER') NULL,
 
     -- Admin
     access_level TINYINT UNSIGNED NULL, -- Tiết kiệm bộ nhớ, số nguyên từ 0-255

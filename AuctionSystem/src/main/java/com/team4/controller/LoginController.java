@@ -211,7 +211,7 @@ public class LoginController {
                         String r = data.has("role") ? data.get("role").getAsString().toUpperCase() : "";
                         if ("SELLER".equals(r)) role = "seller";
                         else if ("ADMIN".equals(r)) {
-                            boolean isSuperAdmin = data.has("accessLevel") && data.get("accessLevel").getAsInt() == 1;
+                            boolean isSuperAdmin = data.has("accessLevel") && data.get("accessLevel").getAsInt() == 2;
                             role = isSuperAdmin ? "admin_super" : "admin_regular";
                         }
                         

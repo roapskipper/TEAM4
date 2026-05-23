@@ -15,5 +15,7 @@ public interface UserDAO {
     boolean update(User user); // cập nhật profile
     boolean updateBalance(String id, BigDecimal newBalance); // nạp/rút tiền
     boolean updateBalance(Connection conn, String id, BigDecimal newBalance);
+    boolean grantAdminRole(String id, String adminCodeHash);
+    boolean revokeAdminRole(String id);
     // Không có ban/xóa user do liên quan đến vật phẩm,cuộc đấu giá
 }

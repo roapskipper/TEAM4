@@ -32,8 +32,7 @@
                 <TableColumn fx:id="colRole" text="Role" minWidth="100" prefWidth="110"/>
                 <TableColumn fx:id="colEmail" text="Email" minWidth="220" prefWidth="260"/>
                 <TableColumn fx:id="colJoinDate" text="Join Date" minWidth="140" prefWidth="150"/>
-                <TableColumn fx:id="colStatus" text="Status" minWidth="120" prefWidth="130"/>
-                <TableColumn fx:id="colAction" text="Action" minWidth="190" prefWidth="220"/>
+                <TableColumn fx:id="colAction" text="Action" minWidth="300" prefWidth="360"/>
             </columns>
         </TableView>
     </VBox>
