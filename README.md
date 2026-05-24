@@ -21,24 +21,33 @@ Giao diện đi theo concept **The Heritage**: nền cream, bề mặt nội dun
 ### Bidder
 
 - Danh sách auction room lấy dữ liệu thật từ database qua `/api/auctions`.
+- Có tìm kiếm, sắp xếp và lọc trạng thái auction theo `Pending`, `Ongoing`, `Ended`.
 - Màn hình chi tiết đấu giá dùng lại UI bidding room hiện có.
-- Đặt giá realtime qua socket server.
+- Chỉ cho đặt giá realtime qua socket server khi auction ở trạng thái `Ongoing`; auction `Pending` hoặc `Ended` vẫn xem được thông tin nhưng không thể bid.
 - Hiển thị giá hiện tại, giá khởi điểm, bước giá, countdown, lịch sử bid, biểu đồ giá và số dư ví.
+- Nạp tiền vào ví dành riêng cho Bidder; số dư được cập nhật lại trên UI sau khi nạp thành công.
+- Có toast notification cho thông báo nhanh như nạp tiền thành công, lỗi nạp tiền hoặc chưa có thông báo mới.
+- Hỗ trợ Auto Bid qua REST API cho từng auction.
 - Service layer có logic proxy bidding và anti-sniping để gia hạn thời gian khi có bid sát giờ kết thúc.
 
 ### Seller
 
 - Dashboard và bảng sản phẩm của seller.
-- Dialog thêm sản phẩm cho các category được hỗ trợ.
+- Chức năng đăng ký/thêm sản phẩm chỉ dành cho role Seller.
+- Dialog thêm và sửa sản phẩm cho các category được hỗ trợ.
+- Bảng sản phẩm hiển thị trạng thái theo `Pending`, `Ongoing`, `Ended`.
 - Tải sản phẩm của seller qua `/api/seller/{sellerId}/items`.
 
 ### Admin
 
 - Các màn dashboard cho admin.
 - Danh sách và tìm kiếm người dùng qua `/api/admin/users`.
-- Bảng quản lý phiên đấu giá qua `/api/admin/auctions`.
+- Super Admin có thể cấp và gỡ quyền Admin cho tài khoản Seller/Bidder.
+- Bảng quản lý phiên đấu giá qua `/api/admin/auctions`, có filter `all`, `pending`, `live`, `rejected`.
+- Admin có thể approve hoặc reject auction đang chờ duyệt.
+- UI hiển thị trạng thái auction theo `Pending`, `Ongoing`, `Ended`.
 
-Một số nút thao tác admin có thể đã xuất hiện trên UI, nhưng trước khi demo end-to-end cần kiểm tra lại handler HTTP tương ứng cho các luồng ban, suspend, grant-admin, approve và reject.
+Lưu ý: hệ thống hiện không có luồng ban/suspend user end-to-end; README không liệt kê tính năng này để tránh lệch với code.
 
 ### Phạm Vi Đã Loại Bỏ
 
@@ -90,6 +99,8 @@ Một số nút thao tác admin có thể đã xuất hiện trên UI, nhưng tr
         │       ├── data.sql
         │       └── database.properties
         └── test/
+            ├── java/com/team4/
+            └── resources/
 ```
 
 ## Cấu Hình Môi Trường
@@ -177,6 +188,8 @@ Nếu database đã có row cùng id, `INSERT IGNORE` sẽ giữ dữ liệu hi�
 | Bidder | `ueteee` | `bidder123` | - | Số dư 10,000,000 VND |
 | Bidder | `thichthimua` | `bidder123` | - | Số dư 100,000,000 VND |
 | Bidder | `nguoimua3` | `bidder123` | - | Số dư 50,000,000 VND |
+| Bidder | `sanhangdoc` | `bidder123` | - | Số dư 20,000,000 VND |
+| Bidder | `svngheo` | `bidder123` | - | Số dư 2,000,000 VND |
 
 ## API Chính
 
@@ -188,17 +201,29 @@ Nếu database đã có row cùng id, `INSERT IGNORE` sẽ giữ dữ liệu hi�
 | `GET` | `/api/items` | Lấy danh sách item |
 | `GET` | `/api/auctions` | Lấy danh sách auction |
 | `GET` | `/api/auctions/{auctionId}` | Lấy chi tiết auction kèm lịch sử bid |
+| `GET` | `/api/auctions/{auctionId}/highest-bid` | Lấy bid cao nhất của auction |
+| `POST` | `/api/auctions/{auctionId}/autobid` | Bật Auto Bid cho bidder |
+| `DELETE` | `/api/auctions/{auctionId}/autobid` | Tắt Auto Bid cho bidder |
+| `GET` | `/api/auctions/{auctionId}/autobid?bidderId=...` | Lấy trạng thái Auto Bid hiện tại |
 | `GET` | `/api/user/{userId}/profile` | Lấy hồ sơ |
 | `PUT` | `/api/user/{userId}/profile` | Cập nhật hồ sơ |
 | `PUT` | `/api/user/{userId}/password` | Đổi mật khẩu |
 | `GET` | `/api/user/{userId}/owned-items` | Item đã sở hữu hoặc thắng đấu giá của bidder |
+| `GET` | `/api/user/{userId}/bid-history` | Lịch sử bid của bidder |
+| `GET` | `/api/user/{userId}/wallet/balance` | Lấy số dư ví |
+| `POST` | `/api/user/{userId}/wallet/deposit` | Nạp tiền vào ví Bidder |
 | `GET` | `/api/seller/{sellerId}/items` | Sản phẩm của seller |
 | `GET` | `/api/seller/{sellerId}/stats` | Thống kê dashboard của seller |
 | `GET` | `/api/admin/users` | Danh sách user cho admin |
 | `GET` | `/api/admin/users/search?q=...` | Tìm kiếm user cho admin |
+| `PUT` | `/api/admin/users/{userId}/grant-admin` | Super Admin cấp quyền Admin |
+| `PUT` | `/api/admin/users/{userId}/revoke-admin` | Super Admin gỡ quyền Admin |
 | `GET` | `/api/admin/auctions?filter=all|pending|live|rejected` | Danh sách auction cho admin |
+| `PUT` | `/api/admin/auctions/{auctionId}/approve` | Duyệt auction |
+| `PUT` | `/api/admin/auctions/{auctionId}/reject` | Từ chối auction |
+| `GET` | `/api/admin/dashboard/stats` | Thống kê dashboard admin |
 
-Socket bidding dùng JSON messages với các command như `LOGIN` và `BID`.
+Các endpoint admin đọc `requesterId` từ query/body hoặc token Bearer nếu client gửi token. Socket bidding dùng JSON messages với các command như `LOGIN` và `BID`.
 
 ## Testing
 
