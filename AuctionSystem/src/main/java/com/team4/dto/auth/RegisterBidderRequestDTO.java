@@ -38,7 +38,7 @@ public class RegisterBidderRequestDTO {
             throw new IllegalArgumentException("Full name is required.");
         }
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("Email is invalid.");
+            throw new IllegalArgumentException("Invalid email.");
         }
         if (phoneNumber == null || !PHONE_PATTERN.matcher(phoneNumber).matches()) {
             throw new IllegalArgumentException("Phone number is invalid.");

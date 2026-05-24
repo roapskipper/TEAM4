@@ -33,7 +33,7 @@ public class RegisterSellerRequestDTO {
             throw new IllegalArgumentException("Full name is required.");
         }
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("Email is invalid.");
+            throw new IllegalArgumentException("Invalid email.");
         }
         if (storeName == null || storeName.isEmpty()) {
             throw new IllegalArgumentException("Store name is required.");

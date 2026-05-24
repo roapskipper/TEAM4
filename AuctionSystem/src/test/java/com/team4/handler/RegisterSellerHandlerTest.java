@@ -142,7 +142,7 @@ public class RegisterSellerHandlerTest {
             verify(exchange).sendResponseHeaders(eq(200), anyLong());
             String resp = responseBody.toString(StandardCharsets.UTF_8);
             assertTrue(resp.contains("SUCCESS"));
-            assertTrue(resp.contains("Dang ky Seller thanh cong"));
+            assertTrue(resp.contains("Seller registration successful."));
         }
 
         @Test
