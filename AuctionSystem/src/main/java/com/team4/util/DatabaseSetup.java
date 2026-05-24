@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** DatabaseSetup chỉ lo 4 việc:
  * 1. đọc cấu hình DB
  * 2. đảm bảo database tồn tại
@@ -23,7 +26,7 @@ import java.util.Properties;
  * 4. chạy schema vào MySQL
  */
 public final class DatabaseSetup {
-
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseSetup.class);
     private static final String DEFAULT_DATABASE = "auction_system";
 
     // method public để bên ngoài có thể gọi vào
@@ -86,11 +89,15 @@ public final class DatabaseSetup {
         try {
             Dotenv d = Dotenv.configure().ignoreIfMissing().load();
             if (d.get("DB_URL") != null) return d;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            logger.debug("Failed to load .env from current directory", e);
+        }
         try {
             Dotenv d = Dotenv.configure().directory("../").ignoreIfMissing().load();
             if (d.get("DB_URL") != null) return d;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            logger.debug("Failed to load .env from parent directory", e);
+        }
         return Dotenv.configure().ignoreIfMissing().load();
     }
 

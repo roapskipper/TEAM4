@@ -33,7 +33,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class BiddingRoomController implements Initializable {
+    private static final Logger logger = LoggerFactory.getLogger(BiddingRoomController.class);
 
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating, itemDescription;
     @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
@@ -312,7 +316,8 @@ public class BiddingRoomController implements Initializable {
                     loadAuction(auctionId);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            logger.warn("Failed to process socket message", e);
         }
     }
 
