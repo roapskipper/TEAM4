@@ -58,6 +58,7 @@ public class BiddingRoomController implements Initializable {
     private double bidIncrement = 100000;
     private BigDecimal availableBalance = BigDecimal.ZERO;
     private LocalDateTime auctionEndTime;
+    private String auctionStatus = "";
     private Timeline countdownTimeline;
     private MainController mainController;
 
@@ -95,6 +96,11 @@ public class BiddingRoomController implements Initializable {
     }
 
     private void setRoomLoadingState() {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        auctionEndTime = null;
+        auctionStatus = "";
         itemName.setText("Loading auction...");
         if (itemDescription != null) {
             itemDescription.setText("");
@@ -106,6 +112,7 @@ public class BiddingRoomController implements Initializable {
         bidAmountField.clear();
         bidHistoryList.getItems().clear();
         priceChart.getData().clear();
+        setBiddingControlsDisabled(true);
     }
 
     private void applyAuctionData(JsonObject data) {
@@ -119,10 +126,11 @@ public class BiddingRoomController implements Initializable {
         currentBid = doubleValue(data, "currentPrice", 0);
         bidIncrement = doubleValue(data, "bidIncrement", 100000);
         auctionEndTime = parseTime(stringValue(data, "endTime", null));
+        auctionStatus = stringValue(data, "status", "");
 
         itemName.setText(stringValue(data, "itemName", "Untitled item"));
         itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
-        itemCondition.setText(formatStatus(stringValue(data, "status", "")));
+        itemCondition.setText(formatStatus(auctionStatus));
         sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
         if (sellerRating != null) {
             double rating = doubleValue(data, "sellerRating", 0);
@@ -172,12 +180,18 @@ public class BiddingRoomController implements Initializable {
     private void updateCountdownLabel() {
         if (auctionEndTime == null) {
             timeLeft.setText("--:--:--");
+            setBiddingControlsDisabled(true);
+            return;
+        }
+        if (!isOngoingStatus(auctionStatus)) {
+            timeLeft.setText(isPendingStatus(auctionStatus) ? "Pending" : "00:00:00 (Ended)");
+            setBiddingControlsDisabled(true);
             return;
         }
         long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
         if (secondsBetween <= 0) {
             timeLeft.setText("00:00:00 (Ended)");
-            placeBidBtn.setDisable(true);
+            setBiddingControlsDisabled(true);
             return;
         }
 
@@ -190,7 +204,18 @@ public class BiddingRoomController implements Initializable {
         } else {
             timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
         }
-        placeBidBtn.setDisable(false);
+        setBiddingControlsDisabled(false);
+    }
+
+    private void setBiddingControlsDisabled(boolean disabled) {
+        if (bidAmountField != null) bidAmountField.setDisable(disabled);
+        if (placeBidBtn != null) placeBidBtn.setDisable(disabled);
+        if (quick100k != null) quick100k.setDisable(disabled);
+        if (quick200k != null) quick200k.setDisable(disabled);
+        if (quick500k != null) quick500k.setDisable(disabled);
+        if (quick1m != null) quick1m.setDisable(disabled);
+        if (autoBidToggle != null) autoBidToggle.setDisable(disabled);
+        if (applyAutoBidBtn != null && disabled) applyAutoBidBtn.setDisable(true);
     }
 
     private void ensureSocketListener() {
@@ -308,6 +333,10 @@ public class BiddingRoomController implements Initializable {
             showBidError("Auction is not ready yet.");
             return;
         }
+        if (!isOngoingStatus(auctionStatus)) {
+            showBidError("Bidding is only available for ongoing auctions.");
+            return;
+        }
 
         BigDecimal requestedBid = BigDecimal.valueOf(amount);
         BigDecimal spendable = availableForBid(session);
@@ -343,6 +372,10 @@ public class BiddingRoomController implements Initializable {
         }
         if (auctionId == null || auctionId.isBlank()) {
             showBidError("The auction is not ready yet.");
+            return;
+        }
+        if (!isOngoingStatus(auctionStatus)) {
+            showBidError("Auto Bid is only available for ongoing auctions.");
             return;
         }
 
@@ -584,13 +617,44 @@ public class BiddingRoomController implements Initializable {
     }
 
     private String formatStatus(String value) {
-        if ("RUNNING".equalsIgnoreCase(value)) {
-            return "Live";
+        if (isPendingStatus(value)) {
+            return "Pending";
         }
-        if ("FINISHED".equalsIgnoreCase(value)) {
+        if (isOngoingStatus(value)) {
+            return "Ongoing";
+        }
+        if (isEndedStatus(value)) {
             return "Ended";
         }
-        return value == null ? "" : value;
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return formatCategory(value);
+    }
+
+    private boolean isPendingStatus(String value) {
+        return hasStatus(value, "PENDING", "PENDING_APPROVAL");
+    }
+
+    private boolean isOngoingStatus(String value) {
+        return hasStatus(value, "RUNNING", "LIVE", "ACTIVE", "APPROVED", "ONGOING");
+    }
+
+    private boolean isEndedStatus(String value) {
+        return hasStatus(value, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD");
+    }
+
+    private boolean hasStatus(String value, String... candidates) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        for (String candidate : candidates) {
+            if (candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String stringValue(JsonObject obj, String key, String fallback) {
