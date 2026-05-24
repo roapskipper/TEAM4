@@ -163,7 +163,11 @@ public class BiddingRoomController implements Initializable {
         startCountdown();
         refreshWalletBalance();
         ensureSocketListener();
-        fetchAutoBidStatus();
+        if (isAuctionOpenForBidding()) {
+            fetchAutoBidStatus();
+        } else {
+            resetAutoBidUi();
+        }
     }
 
     private void startCountdown() {
@@ -216,6 +220,34 @@ public class BiddingRoomController implements Initializable {
         if (quick1m != null) quick1m.setDisable(disabled);
         if (autoBidToggle != null) autoBidToggle.setDisable(disabled);
         if (applyAutoBidBtn != null && disabled) applyAutoBidBtn.setDisable(true);
+        if (disabled && !isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+        }
+    }
+
+    private boolean isAuctionOpenForBidding() {
+        return isOngoingStatus(auctionStatus)
+                && auctionEndTime != null
+                && ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime) > 0;
+    }
+
+    private void resetAutoBidUi() {
+        autoBidActive = false;
+        if (autoBidToggle != null) {
+            autoBidToggle.setSelected(false);
+        }
+        if (autoBidPanel != null) {
+            autoBidPanel.setManaged(false);
+            autoBidPanel.setVisible(false);
+        }
+        if (autoBidMax != null) {
+            autoBidMax.clear();
+            autoBidMax.setDisable(true);
+        }
+        if (applyAutoBidBtn != null) {
+            applyAutoBidBtn.setText("Enable Auto Bid");
+            applyAutoBidBtn.setDisable(true);
+        }
     }
 
     private void ensureSocketListener() {
@@ -333,7 +365,7 @@ public class BiddingRoomController implements Initializable {
             showBidError("Auction is not ready yet.");
             return;
         }
-        if (!isOngoingStatus(auctionStatus)) {
+        if (!isAuctionOpenForBidding()) {
             showBidError("Bidding is only available for ongoing auctions.");
             return;
         }
@@ -356,9 +388,18 @@ public class BiddingRoomController implements Initializable {
     }
 
     @FXML private void onAutoBidToggle() {
+        if (!isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+            setBiddingControlsDisabled(true);
+            return;
+        }
         boolean active = autoBidToggle.isSelected();
         autoBidPanel.setManaged(active);
         autoBidPanel.setVisible(active);
+        if (active) {
+            autoBidMax.setDisable(autoBidActive);
+            applyAutoBidBtn.setDisable(false);
+        }
         if (active) {
             fetchAutoBidStatus();
         }
@@ -374,8 +415,10 @@ public class BiddingRoomController implements Initializable {
             showBidError("The auction is not ready yet.");
             return;
         }
-        if (!isOngoingStatus(auctionStatus)) {
+        if (!isAuctionOpenForBidding()) {
             showBidError("Auto Bid is only available for ongoing auctions.");
+            resetAutoBidUi();
+            setBiddingControlsDisabled(true);
             return;
         }
 
@@ -452,6 +495,10 @@ public class BiddingRoomController implements Initializable {
         if (session == null || session.getUserId() == null || auctionId == null) {
             return;
         }
+        if (!isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+            return;
+        }
 
         Task<JsonObject> task = new Task<JsonObject>() {
             @Override
@@ -461,12 +508,17 @@ public class BiddingRoomController implements Initializable {
         };
 
         task.setOnSucceeded(e -> {
+            if (!isAuctionOpenForBidding()) {
+                resetAutoBidUi();
+                return;
+            }
             JsonObject status = task.getValue();
             if (status != null && status.has("active") && status.get("active").getAsBoolean()) {
                 autoBidActive = true;
                 double maxAmount = status.get("maxAmount").getAsDouble();
                 autoBidMax.setText(String.format(Locale.US, "%.0f", maxAmount));
                 applyAutoBidBtn.setText("Disable Auto Bid");
+                applyAutoBidBtn.setDisable(false);
                 autoBidMax.setDisable(true);
 
                 autoBidToggle.setSelected(true);
@@ -478,13 +530,19 @@ public class BiddingRoomController implements Initializable {
                     autoBidMax.clear();
                 }
                 applyAutoBidBtn.setText("Enable Auto Bid");
+                applyAutoBidBtn.setDisable(false);
                 autoBidMax.setDisable(false);
             }
         });
 
         task.setOnFailed(e -> {
+            if (!isAuctionOpenForBidding()) {
+                resetAutoBidUi();
+                return;
+            }
             autoBidActive = false;
             applyAutoBidBtn.setText("Enable Auto Bid");
+            applyAutoBidBtn.setDisable(false);
             autoBidMax.setDisable(false);
         });
 

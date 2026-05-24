@@ -613,6 +613,14 @@
     -fx-border-width: 1;
 }
 
+.auto-bid-toggle:disabled {
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: #CBD5E1;
+    -fx-text-fill: #9CA3AF;
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
 .bid-list {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
