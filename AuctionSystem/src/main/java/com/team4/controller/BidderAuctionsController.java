@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.team4.client.ApiClient;
+import com.team4.util.UserSession;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -112,9 +113,16 @@ public class BidderAuctionsController implements Initializable {
             auctions.clear();
             JsonArray data = task.getValue();
             if (data != null) {
+                UserSession session = UserSession.getInstance();
+                boolean isSeller = session != null && "seller".equalsIgnoreCase(session.getRole());
+                String currentUserId = session != null ? session.getUserId() : "";
+
                 for (JsonElement element : data) {
                     if (element.isJsonObject()) {
-                        auctions.add(new AuctionCardData(element.getAsJsonObject()));
+                        AuctionCardData cardData = new AuctionCardData(element.getAsJsonObject());
+                        if (!isSeller || currentUserId.equals(cardData.sellerId)) {
+                            auctions.add(cardData);
+                        }
                     }
                 }
             }
@@ -435,6 +443,7 @@ public class BidderAuctionsController implements Initializable {
         private final String description;
         private final String category;
         private final String sellerName;
+        private final String sellerId;
         private final String status;
         private final BigDecimal currentPrice;
         private final long bidCount;
@@ -447,6 +456,7 @@ public class BidderAuctionsController implements Initializable {
             this.description = fallback(stringValue(obj, "itemDescription"), "No description provided.");
             this.category = stringValue(obj, "category");
             this.sellerName = fallback(stringValue(obj, "sellerName"), "Unknown Seller");
+            this.sellerId = stringValue(obj, "sellerId");
             this.status = fallback(stringValue(obj, "status"), "RUNNING");
             this.currentPrice = moneyValue(obj, "currentPrice");
             this.bidCount = longValue(obj, "bidCount");
