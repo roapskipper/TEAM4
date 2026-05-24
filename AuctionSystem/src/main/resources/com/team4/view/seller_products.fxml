@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.FlowPane?>
 
 <VBox prefWidth="1100" spacing="18" style="-fx-background-color: transparent;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.SellerProductsController">
 
@@ -34,16 +35,104 @@
 
     <HBox alignment="CENTER_LEFT" spacing="12">
         <TextField fx:id="searchField" prefWidth="300" promptText="Search products..." styleClass="admin-input" />
-        <ComboBox fx:id="categoryFilter" prefWidth="190" promptText="All Categories" styleClass="admin-combo" />
+        <ComboBox fx:id="categoryFilter" prefWidth="190" promptText="All" styleClass="admin-combo" />
         <Region HBox.hgrow="ALWAYS" />
-        <Button fx:id="addProductBtn" minWidth="140" onAction="#onAddProduct" styleClass="btn-primary" text="Add Product" />
+        <Button fx:id="addProductBtn" minWidth="140" onAction="#onAddProduct" styleClass="btn-primary" text="Đăng sản phẩm" />
     </HBox>
 
-    <TitledPane expanded="true" text="Product Listing Rules" styleClass="rules-pane">
-        <content>
-            <Label wrapText="true" styleClass="dialog-help"
-                   text="Required fields: name, category, starting price, and description. Category-specific fields are shown in the product form. Optional unknown values can be left blank when the form allows it." />
-        </content>
+    <TitledPane expanded="true" text="Quy tắc đăng sản phẩm" styleClass="rules-pane">
+        <VBox spacing="16" style="-fx-padding: 10;">
+            <!-- CHUNG -->
+            <VBox spacing="8">
+                <Label text="CHUNG (BẮT BUỘC)" style="-fx-font-weight: bold; -fx-text-fill: #555555; -fx-font-size: 11px;"/>
+                <FlowPane hgap="10" vgap="10">
+                    <Label text="Tên (Không quá 100 kí tự)" styleClass="rule-pill-required" />
+                    <Label text="Danh mục" styleClass="rule-pill-required" />
+                    <Label text="Giá khởi điểm (Lớn hơn 0 VNĐ), giá nhỏ nhất: 50 000 VNĐ" styleClass="rule-pill-required" />
+                    <Label text="Mô tả (Không quá 500 kí tự)" styleClass="rule-pill-required" />
+                </FlowPane>
+            </VBox>
+
+            <!-- THEO DANH MỤC -->
+            <VBox spacing="8">
+                <Label text="THEO DANH MỤC" style="-fx-font-weight: bold; -fx-text-fill: #555555; -fx-font-size: 11px;"/>
+                <FlowPane hgap="12" vgap="12">
+                    <!-- Nghệ thuật -->
+                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                        <Label text="🎨 Nghệ thuật" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                        <FlowPane hgap="8" vgap="8">
+                            <Label text="Chất liệu" styleClass="rule-pill-required" />
+                            <Label text="Tác giả" styleClass="rule-pill-optional" />
+                            <Label text="Năm" styleClass="rule-pill-optional" />
+                            <Label text="Kích thước" styleClass="rule-pill-optional" />
+                        </FlowPane>
+                    </VBox>
+                    
+                    <!-- Đồ sưu tầm -->
+                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                        <Label text="🏺 Đồ sưu tầm" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                        <FlowPane hgap="8" vgap="8">
+                            <Label text="Độ hiếm" styleClass="rule-pill-required" />
+                            <Label text="Tình trạng" styleClass="rule-pill-required" />
+                            <Label text="Năm" styleClass="rule-pill-optional" />
+                            <Label text="Xuất xứ" styleClass="rule-pill-optional" />
+                            <Label text="Chứng chỉ" styleClass="rule-pill-optional" />
+                        </FlowPane>
+                    </VBox>
+                    
+                    <!-- Điện tử -->
+                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                        <Label text="📱 Điện tử" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                        <FlowPane hgap="8" vgap="8">
+                            <Label text="Tình trạng" styleClass="rule-pill-required" />
+                            <Label text="Bảo hành" styleClass="rule-pill-required" />
+                            <Label text="Thương hiệu" styleClass="rule-pill-optional" />
+                            <Label text="Model" styleClass="rule-pill-optional" />
+                        </FlowPane>
+                    </VBox>
+                    
+                    <!-- Thời trang -->
+                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                        <Label text="👕 Thời trang" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                        <FlowPane hgap="8" vgap="8">
+                            <Label text="Kích cỡ" styleClass="rule-pill-required" />
+                            <Label text="Tình trạng" styleClass="rule-pill-required" />
+                            <Label text="Đối tượng" styleClass="rule-pill-optional" />
+                            <Label text="Thương hiệu" styleClass="rule-pill-optional" />
+                            <Label text="Chất liệu" styleClass="rule-pill-optional" />
+                            <Label text="Màu" styleClass="rule-pill-optional" />
+                        </FlowPane>
+                    </VBox>
+
+                    <!-- Phương tiện -->
+                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                        <Label text="🚗 Phương tiện" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
+                        <FlowPane hgap="8" vgap="8">
+                            <Label text="Động cơ" styleClass="rule-pill-required" />
+                            <Label text="Hộp số" styleClass="rule-pill-required" />
+                            <Label text="Số km" styleClass="rule-pill-required" />
+                            <Label text="Năm SX" styleClass="rule-pill-optional" />
+                            <Label text="Thương hiệu" styleClass="rule-pill-optional" />
+                            <Label text="Model" styleClass="rule-pill-optional" />
+                        </FlowPane>
+                    </VBox>
+                </FlowPane>
+            </VBox>
+            
+            <!-- Legend -->
+            <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 6 0 0 0;">
+                <HBox alignment="CENTER_LEFT" spacing="5">
+                    <Label style="-fx-background-color: #B91C1C; -fx-min-width: 6; -fx-min-height: 6; -fx-max-width: 6; -fx-max-height: 6; -fx-background-radius: 3;"/>
+                    <Label text="Bắt buộc" style="-fx-text-fill: #555555; -fx-font-size: 11px;"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="5">
+                    <Label style="-fx-background-color: #9CA3AF; -fx-min-width: 6; -fx-min-height: 6; -fx-max-width: 6; -fx-max-height: 6; -fx-background-radius: 3;"/>
+                    <Label text="Tùy chọn" style="-fx-text-fill: #555555; -fx-font-size: 11px;"/>
+                </HBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="Nhấn «Đăng sản phẩm» để mở form đầy đủ các trường trên." style="-fx-text-fill: #555555; -fx-font-size: 11px;"/>
+            </HBox>
+        </VBox>
     </TitledPane>
 
     <VBox minHeight="420" styleClass="admin-card table-card" VBox.vgrow="ALWAYS">
