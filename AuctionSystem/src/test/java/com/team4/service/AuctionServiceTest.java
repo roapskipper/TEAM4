@@ -33,6 +33,9 @@ import static org.mockito.Mockito.*;
  * Kiểm thử nghiệp vụ AuctionService.
  * Đảm bảo quản lý vòng đời phiên đấu giá chính xác với cấu trúc DTO mới.
  */
+import com.team4.dao.UserDAO;
+import com.team4.model.User;
+
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Unit Tests for AuctionService")
 public class AuctionServiceTest {
@@ -42,6 +45,9 @@ public class AuctionServiceTest {
 
     @Mock
     private ItemDAO itemDAO;
+
+    @Mock
+    private UserDAO userDAO;
 
     @Mock
     private Connection mockConn;
@@ -252,15 +258,23 @@ public class AuctionServiceTest {
             String auctionId = "auc-1";
             String itemId = "item-1";
             String winnerId = "winner-123";
+            String sellerId = "seller-1";
             Auction auction = new Auction(
-                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                auctionId, LocalDateTime.now(), itemId, sellerId,
                 winnerId, new BigDecimal("1000.00"), new BigDecimal("1500.00"),
                 new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
                 Auction.AuctionStatus.FINISHED
             );
 
+            var bidder = new com.team4.model.Bidder(winnerId, LocalDateTime.now(), "bidder", "pass", "Bidder Name", "bidder@test.com", new BigDecimal("5000.00"), "Hanoi", "0912123456");
+            var seller = new com.team4.model.Seller(sellerId, LocalDateTime.now(), "seller", "pass", "Seller Name", "seller@test.com", new BigDecimal("100.00"), "My Store", 5.0);
+
             when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
             when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(true);
+            when(userDAO.findById(eq(mockConn), eq(winnerId))).thenReturn(bidder);
+            when(userDAO.updateBalance(eq(mockConn), eq(winnerId), any(BigDecimal.class))).thenReturn(true);
+            when(userDAO.findById(eq(mockConn), eq(sellerId))).thenReturn(seller);
+            when(userDAO.updateBalance(eq(mockConn), eq(sellerId), any(BigDecimal.class))).thenReturn(true);
             when(itemDAO.updateOwner(eq(mockConn), eq(itemId), eq(winnerId))).thenReturn(true);
 
             // WHEN
@@ -269,6 +283,8 @@ public class AuctionServiceTest {
             // THEN
             assertNotNull(result);
             assertEquals(Auction.AuctionStatus.PAID, result.getStatus());
+            assertEquals(0, new BigDecimal("3500.00").compareTo(bidder.getBalance())); // 5000 - 1500 = 3500
+            assertEquals(0, new BigDecimal("1600.00").compareTo(seller.getBalance())); // 100 + 1500 = 1600
             verify(auctionDAO).updateStatus(mockConn, auctionId, Auction.AuctionStatus.PAID);
             verify(itemDAO).updateOwner(mockConn, itemId, winnerId);
             mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn));
@@ -327,15 +343,23 @@ public class AuctionServiceTest {
             String auctionId = "auc-1";
             String itemId = "item-1";
             String winnerId = "winner-123";
+            String sellerId = "seller-1";
             Auction auction = new Auction(
-                auctionId, LocalDateTime.now(), itemId, "seller-1",
+                auctionId, LocalDateTime.now(), itemId, sellerId,
                 winnerId, new BigDecimal("1000.00"), new BigDecimal("1500.00"),
                 new BigDecimal("100.00"), LocalDateTime.now().minusDays(1), LocalDateTime.now().minusMinutes(5),
                 Auction.AuctionStatus.FINISHED
             );
 
+            var bidder = new com.team4.model.Bidder(winnerId, LocalDateTime.now(), "bidder", "pass", "Bidder Name", "bidder@test.com", new BigDecimal("5000.00"), "Hanoi", "0912123456");
+            var seller = new com.team4.model.Seller(sellerId, LocalDateTime.now(), "seller", "pass", "Seller Name", "seller@test.com", new BigDecimal("100.00"), "My Store", 5.0);
+
             when(auctionDAO.findById(eq(mockConn), eq(auctionId))).thenReturn(auction);
             when(auctionDAO.updateStatus(eq(mockConn), eq(auctionId), eq(Auction.AuctionStatus.PAID))).thenReturn(true);
+            when(userDAO.findById(eq(mockConn), eq(winnerId))).thenReturn(bidder);
+            when(userDAO.updateBalance(eq(mockConn), eq(winnerId), any(BigDecimal.class))).thenReturn(true);
+            when(userDAO.findById(eq(mockConn), eq(sellerId))).thenReturn(seller);
+            when(userDAO.updateBalance(eq(mockConn), eq(sellerId), any(BigDecimal.class))).thenReturn(true);
             when(itemDAO.updateOwner(eq(mockConn), eq(itemId), eq(winnerId))).thenReturn(false);
 
             // WHEN & THEN

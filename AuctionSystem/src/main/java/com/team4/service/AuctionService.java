@@ -19,17 +19,26 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.team4.dao.UserDAO;
+import com.team4.model.User;
+
 /**
  * Quản lý vòng đời của các phiên đấu giá.
  */
 public class AuctionService {
     private final AuctionDAO auctionDAO;
     private final ItemDAO itemDAO;
+    private final UserDAO userDAO;
     private static final Logger logger = LoggerFactory.getLogger(AuctionService.class);
 
     public AuctionService(AuctionDAO auctionDAO, ItemDAO itemDAO) {
+        this(auctionDAO, itemDAO, new com.team4.dao.impl.UserDAOImpl());
+    }
+
+    public AuctionService(AuctionDAO auctionDAO, ItemDAO itemDAO, UserDAO userDAO) {
         this.auctionDAO = auctionDAO;
         this.itemDAO = itemDAO;
+        this.userDAO = userDAO;
     }
 
     /**
@@ -179,13 +188,33 @@ public class AuctionService {
 
         for (Auction auction : activeAuctions) {
             if (!auction.getEndTime().isAfter(now)) {
-                auction.close();
-                if (auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED)) {
-                    closedCount++;
-                    logger.info("Auction closed: auctionId={}, endTime={}, closedAt={}",
-                            auction.getId(), auction.getEndTime(), now);
-                } else {
-                    logger.error("Failed to close expired auction in database: auctionId={}", auction.getId());
+                try {
+                    auction.close();
+                    if (auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED)) {
+                        closedCount++;
+                        logger.info("Auction closed: auctionId={}, endTime={}, closedAt={}",
+                                auction.getId(), auction.getEndTime(), now);
+
+                        // Tự động xử lý chuyển giao item và thanh toán tiền đấu giá
+                        String winnerId = auction.getCurrentHighestBidderId();
+                        if (winnerId != null && !winnerId.isBlank()) {
+                            BigDecimal finalPrice = auction.getCurrentPrice();
+                            User winner = userDAO.findById(winnerId);
+                            if (winner != null && winner.hasEnoughBalance(finalPrice)) {
+                                logger.info("Winner has sufficient balance. Processing automated payment: auctionId={}, winnerId={}",
+                                        auction.getId(), winnerId);
+                                markPaid(auction.getId());
+                            } else {
+                                logger.info("Winner has insufficient balance or does not exist. Cancelling auction: auctionId={}, winnerId={}",
+                                        auction.getId(), winnerId);
+                                cancelDueToInsufficientFunds(auction.getId());
+                            }
+                        }
+                    } else {
+                        logger.error("Failed to close expired auction in database: auctionId={}", auction.getId());
+                    }
+                } catch (Exception e) {
+                    logger.error("Error processing expired auction closure: auctionId={}, error={}", auction.getId(), e.getMessage());
                 }
             }
         }
@@ -221,13 +250,44 @@ public class AuctionService {
 
                 String winnerId = auction.getCurrentHighestBidderId();
                 if (winnerId != null && !winnerId.isBlank()) {
+                    BigDecimal finalPrice = auction.getCurrentPrice();
+
+                    // Deduct from bidder balance
+                    User bidder = userDAO.findById(conn, winnerId);
+                    if (bidder == null) {
+                        logger.warn("Winner not found: winnerId={}", winnerId);
+                        throw new BusinessException("Winner does not exist.");
+                    }
+                    if (!bidder.withdraw(finalPrice)) {
+                        logger.warn("Winner has insufficient funds: winnerId={}, price={}", winnerId, finalPrice);
+                        throw new BusinessException("Winner has insufficient balance for auction payment.");
+                    }
+                    if (!userDAO.updateBalance(conn, winnerId, bidder.getBalance())) {
+                        logger.error("Failed to update winner balance: winnerId={}", winnerId);
+                        throw new BusinessException("Failed to deduct winner balance.");
+                    }
+
+                    // Deposit to seller balance
+                    String sellerId = auction.getSellerId();
+                    User seller = userDAO.findById(conn, sellerId);
+                    if (seller == null) {
+                        logger.warn("Seller not found: sellerId={}", sellerId);
+                        throw new BusinessException("Seller does not exist.");
+                    }
+                    seller.deposit(finalPrice);
+                    if (!userDAO.updateBalance(conn, sellerId, seller.getBalance())) {
+                        logger.error("Failed to update seller balance: sellerId={}", sellerId);
+                        throw new BusinessException("Failed to credit seller balance.");
+                    }
+
+                    // Transfer item ownership
                     if (!itemDAO.updateOwner(conn, auction.getItemId(), winnerId)) {
                         logger.error("Failed to update item owner to winner: itemId={}, winnerId={}",
                                 auction.getItemId(), winnerId);
                         throw new BusinessException("Failed to transfer item ownership to the winner.");
                     }
-                    logger.info("Item ownership successfully transferred to winner: itemId={}, winnerId={}",
-                            auction.getItemId(), winnerId);
+                    logger.info("Item ownership and funds successfully transferred: itemId={}, winnerId={}, sellerId={}, price={}",
+                            auction.getItemId(), winnerId, sellerId, finalPrice);
                 }
 
                 DatabaseManager.commitTransaction(conn);
