@@ -245,12 +245,13 @@ public class AdminAuctionsController implements Initializable {
         public String getSeller() { return seller; }
         public String getStartPrice() { return startPrice; }
         public String getStatus() {
-            return switch(statusRaw.toUpperCase()) {
-                case "PENDING_APPROVAL" -> "Pending";
-                case "APPROVED" -> "Approved";
-                case "LIVE" -> "Live";
+            String value = statusRaw == null ? "" : statusRaw.trim().toUpperCase();
+            return switch(value) {
+                case "PENDING", "PENDING_APPROVAL" -> "Pending";
+                case "RUNNING", "LIVE", "ACTIVE", "APPROVED", "ONGOING" -> "Ongoing";
+                case "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD" -> "Ended";
                 case "REJECTED" -> "Rejected";
-                case "ENDED" -> "Ended";
+                case "CANCELLED" -> "Cancelled";
                 default -> statusRaw;
             };
         }

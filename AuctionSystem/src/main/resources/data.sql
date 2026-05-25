@@ -8,13 +8,13 @@ VALUES ('root-admin', CURRENT_TIMESTAMP, 'superadmin', '$2a$10$Ew.YIn0n3k6S22qP8
 
 -- Moderators: mod123 & mod-code-01/02/03
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-001', CURRENT_TIMESTAMP, 'moderator1', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Cac Le', 'mod1@gmail.com', 'ADMIN', 0, '$2a$10$K7Xk9B5aH3R8V2u1S4t6Q.9p0N2m4O6q8r0N2m4O6q8r0N2m4O6q', 1);
+VALUES ('mod-001', CURRENT_TIMESTAMP, 'moderator1', '$2a$10$jgym2Ka5mu8NziXsENcni.ad8BfT1U.hRJqrQmRF7pzD9WBWByjWe', 'Cac Le', 'mod1@gmail.com', 'ADMIN', 0, '$2a$10$kBnkaGClcePTE6FwActYJOvEq8WatWVru4uKzVLgo8gU6UlzIav4C', 1);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-002', CURRENT_TIMESTAMP, 'moderator2', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Hieu Le', 'mod2@gmail.com', 'ADMIN', 0, '$2a$10$T5v8Y7w3Q4x1V2u3S6t9R.0qK/r5sH6g7R9x1/4L8t1u.5/K9z2Z', 1);
+VALUES ('mod-002', CURRENT_TIMESTAMP, 'moderator2', '$2a$10$jgym2Ka5mu8NziXsENcni.ad8BfT1U.hRJqrQmRF7pzD9WBWByjWe', 'Hieu Le', 'mod2@gmail.com', 'ADMIN', 0, '$2a$10$lKx1JCDjKeEtMOfn2as.lu96792D.rOXyYYw/cYrvrEiInHMWJWm.', 1);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Du Di Min', 'mod3@gmail.com', 'ADMIN', 0, '$2a$10$M8J6L.Qk/7q7g4FMe.K1z.9Y3V5x8T0w2S4u6R8p0N2m4O6q8r0N', 1);
+VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$jgym2Ka5mu8NziXsENcni.ad8BfT1U.hRJqrQmRF7pzD9WBWByjWe', 'Du Di Min', 'mod3@gmail.com', 'ADMIN', 0, '$2a$10$uyaOmo.D9ONPa05tlpMVY.BJFeQh31YNb6Xl.78UkLx5DDQtMSBJO', 1);
 
 
 -- =========================================================================
@@ -23,13 +23,13 @@ VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$wNq/r5sH6g7R9x1/4L8t
 -- =========================================================================
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-001', CURRENT_TIMESTAMP, 'domixi', '$2a$10$K8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK/r5sH6g7R9x1/4L8z', 'Thanh Do Phung', 'ban1@gmail.com', 'SELLER', 0, 'Mixi Shop', 5.0);
+VALUES ('seller-001', CURRENT_TIMESTAMP, 'domixi', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Thanh Do Phung', 'ban1@gmail.com', 'SELLER', 0, 'Mixi Shop', 5.0);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-002', CURRENT_TIMESTAMP, 'daucatmoi', '$2a$10$K8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK/r5sH6g7R9x1/4L8z', 'Kim Ri Cha', 'ban2@gmail.com', 'SELLER', 0, 'Premium Finds', 5.0);
+VALUES ('seller-002', CURRENT_TIMESTAMP, 'daucatmoi', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Kim Ri Cha', 'ban2@gmail.com', 'SELLER', 0, 'Premium Finds', 5.0);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-003', CURRENT_TIMESTAMP, 'j.bieber', '$2a$10$K8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK/r5sH6g7R9x1/4L8z', 'Nam Tram Do', 'ban3@gmail.com', 'SELLER', 0, 'JQK', 4.8);
+VALUES ('seller-003', CURRENT_TIMESTAMP, 'j.bieber', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Nam Tram Do', 'ban3@gmail.com', 'SELLER', 0, 'JQK', 4.8);
 
 
 -- =========================================================================
@@ -38,19 +38,19 @@ VALUES ('seller-003', CURRENT_TIMESTAMP, 'j.bieber', '$2a$10$K8t1u.5/K9z2Z5v8Y7w
 -- =========================================================================
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-001', CURRENT_TIMESTAMP, 'ueteee', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Van Si Tran', 'mua1@gmail.com', 'BIDDER', 10000000, 'House 36, 120 Yen Lang, Hanoi');
+VALUES ('bidder-001', CURRENT_TIMESTAMP, 'ueteee', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Van Si Tran', 'mua1@gmail.com', 'BIDDER', 10000000, 'House 36, 120 Yen Lang, Hanoi');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-002', CURRENT_TIMESTAMP, 'thichthimua', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Duy Kien Ha', 'mua2@gmail.com', 'BIDDER', 100000000, 'House 12, 34 Pham Van Dong, Hanoi');
+VALUES ('bidder-002', CURRENT_TIMESTAMP, 'thichthimua', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Duy Kien Ha', 'mua2@gmail.com', 'BIDDER', 100000000, 'House 12, 34 Pham Van Dong, Hanoi');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-003', CURRENT_TIMESTAMP, 'nguoimua3', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Heavy Buyer Le', 'mua3@gmail.com', 'BIDDER', 50000000, 'District 1, Ho Chi Minh City');
+VALUES ('bidder-003', CURRENT_TIMESTAMP, 'nguoimua3', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Heavy Buyer Le', 'mua3@gmail.com', 'BIDDER', 50000000, 'District 1, Ho Chi Minh City');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-004', CURRENT_TIMESTAMP, 'sanhangdoc', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Rare Goods Hunter Hoang', 'mua4@gmail.com', 'BIDDER', 20000000, 'Da Nang');
+VALUES ('bidder-004', CURRENT_TIMESTAMP, 'sanhangdoc', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Rare Goods Hunter Hoang', 'mua4@gmail.com', 'BIDDER', 20000000, 'Da Nang');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-005', CURRENT_TIMESTAMP, 'svngheo', '$2a$10$wNq/r5sH6g7R9x1/4L8t1u.5/K9z2Z5v8Y7w3Q4x1V2u3S6t9R0qK', 'Student Nguyen', 'mua5@gmail.com', 'BIDDER', 2000000, 'VNU Dormitory');
+VALUES ('bidder-005', CURRENT_TIMESTAMP, 'svngheo', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Student Nguyen', 'mua5@gmail.com', 'BIDDER', 2000000, 'VNU Dormitory');
 
 
 -- =========================================================================

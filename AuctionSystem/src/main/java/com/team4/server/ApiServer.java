@@ -29,9 +29,10 @@ public class ApiServer {
                 server.createContext("/api/seller", new SellerHandler());
                 server.createContext("/api/admin/users", new AdminUsersHandler());
                 server.createContext("/api/admin/auctions", new AdminAuctionsHandler());
+                server.createContext("/api/admin/dashboard/stats", new AdminDashboardHandler());
                 server.setExecutor(null);
                 server.start();
-                System.out.println("API Server dang chay tren port " + API_PORT + "...");
+                System.out.println("API Server is running on port " + API_PORT + "...");
             } catch (IOException e) {
                 e.printStackTrace();
             }

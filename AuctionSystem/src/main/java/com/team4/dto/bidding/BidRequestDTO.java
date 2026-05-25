@@ -18,12 +18,15 @@ public class BidRequestDTO {
     }
 
     public void validateBidRequest() {
-        if (auctionId == null)
-            throw new IllegalArgumentException("AuctionId không được null");
-        if (bidderId == null)
-            throw new IllegalArgumentException("BidderId không được null");
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("BidAmount phải lớn hơn 0");
+        if (auctionId == null) {
+            throw new IllegalArgumentException("AuctionId must not be null.");
+        }
+        if (bidderId == null) {
+            throw new IllegalArgumentException("BidderId must not be null.");
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("BidAmount must be greater than 0.");
+        }
     }
 
     public String getAuctionId() {

@@ -154,7 +154,7 @@ public class RegisterBidderHandlerTest {
             verify(exchange).sendResponseHeaders(eq(200), anyLong());
             String resp = responseBody.toString(StandardCharsets.UTF_8);
             assertTrue(resp.contains("SUCCESS"));
-            assertTrue(resp.contains("Dang ky Bidder thanh cong"));
+            assertTrue(resp.contains("Bidder registration successful."));
         }
 
         @Test

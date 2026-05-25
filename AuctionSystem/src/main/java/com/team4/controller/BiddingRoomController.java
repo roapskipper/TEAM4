@@ -58,6 +58,7 @@ public class BiddingRoomController implements Initializable {
     private double bidIncrement = 100000;
     private BigDecimal availableBalance = BigDecimal.ZERO;
     private LocalDateTime auctionEndTime;
+    private String auctionStatus = "";
     private Timeline countdownTimeline;
     private MainController mainController;
 
@@ -95,6 +96,11 @@ public class BiddingRoomController implements Initializable {
     }
 
     private void setRoomLoadingState() {
+        if (countdownTimeline != null) {
+            countdownTimeline.stop();
+        }
+        auctionEndTime = null;
+        auctionStatus = "";
         itemName.setText("Loading auction...");
         if (itemDescription != null) {
             itemDescription.setText("");
@@ -106,6 +112,7 @@ public class BiddingRoomController implements Initializable {
         bidAmountField.clear();
         bidHistoryList.getItems().clear();
         priceChart.getData().clear();
+        setBiddingControlsDisabled(true);
     }
 
     private void applyAuctionData(JsonObject data) {
@@ -119,10 +126,11 @@ public class BiddingRoomController implements Initializable {
         currentBid = doubleValue(data, "currentPrice", 0);
         bidIncrement = doubleValue(data, "bidIncrement", 100000);
         auctionEndTime = parseTime(stringValue(data, "endTime", null));
+        auctionStatus = stringValue(data, "status", "");
 
         itemName.setText(stringValue(data, "itemName", "Untitled item"));
         itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
-        itemCondition.setText(formatStatus(stringValue(data, "status", "")));
+        itemCondition.setText(formatStatus(auctionStatus));
         sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
         if (sellerRating != null) {
             double rating = doubleValue(data, "sellerRating", 0);
@@ -155,7 +163,11 @@ public class BiddingRoomController implements Initializable {
         startCountdown();
         refreshWalletBalance();
         ensureSocketListener();
-        fetchAutoBidStatus();
+        if (isAuctionOpenForBidding()) {
+            fetchAutoBidStatus();
+        } else {
+            resetAutoBidUi();
+        }
     }
 
     private void startCountdown() {
@@ -172,12 +184,18 @@ public class BiddingRoomController implements Initializable {
     private void updateCountdownLabel() {
         if (auctionEndTime == null) {
             timeLeft.setText("--:--:--");
+            setBiddingControlsDisabled(true);
+            return;
+        }
+        if (!isOngoingStatus(auctionStatus)) {
+            timeLeft.setText(isPendingStatus(auctionStatus) ? "Pending" : "00:00:00 (Ended)");
+            setBiddingControlsDisabled(true);
             return;
         }
         long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
         if (secondsBetween <= 0) {
             timeLeft.setText("00:00:00 (Ended)");
-            placeBidBtn.setDisable(true);
+            setBiddingControlsDisabled(true);
             return;
         }
 
@@ -190,7 +208,46 @@ public class BiddingRoomController implements Initializable {
         } else {
             timeLeft.setText(String.format("%02d:%02d:%02d", h, m, s));
         }
-        placeBidBtn.setDisable(false);
+        setBiddingControlsDisabled(false);
+    }
+
+    private void setBiddingControlsDisabled(boolean disabled) {
+        if (bidAmountField != null) bidAmountField.setDisable(disabled);
+        if (placeBidBtn != null) placeBidBtn.setDisable(disabled);
+        if (quick100k != null) quick100k.setDisable(disabled);
+        if (quick200k != null) quick200k.setDisable(disabled);
+        if (quick500k != null) quick500k.setDisable(disabled);
+        if (quick1m != null) quick1m.setDisable(disabled);
+        if (autoBidToggle != null) autoBidToggle.setDisable(disabled);
+        if (applyAutoBidBtn != null && disabled) applyAutoBidBtn.setDisable(true);
+        if (disabled && !isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+        }
+    }
+
+    private boolean isAuctionOpenForBidding() {
+        return isOngoingStatus(auctionStatus)
+                && auctionEndTime != null
+                && ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime) > 0;
+    }
+
+    private void resetAutoBidUi() {
+        autoBidActive = false;
+        if (autoBidToggle != null) {
+            autoBidToggle.setSelected(false);
+        }
+        if (autoBidPanel != null) {
+            autoBidPanel.setManaged(false);
+            autoBidPanel.setVisible(false);
+        }
+        if (autoBidMax != null) {
+            autoBidMax.clear();
+            autoBidMax.setDisable(true);
+        }
+        if (applyAutoBidBtn != null) {
+            applyAutoBidBtn.setText("Enable Auto Bid");
+            applyAutoBidBtn.setDisable(true);
+        }
     }
 
     private void ensureSocketListener() {
@@ -308,6 +365,10 @@ public class BiddingRoomController implements Initializable {
             showBidError("Auction is not ready yet.");
             return;
         }
+        if (!isAuctionOpenForBidding()) {
+            showBidError("Bidding is only available for ongoing auctions.");
+            return;
+        }
 
         BigDecimal requestedBid = BigDecimal.valueOf(amount);
         BigDecimal spendable = availableForBid(session);
@@ -327,9 +388,18 @@ public class BiddingRoomController implements Initializable {
     }
 
     @FXML private void onAutoBidToggle() {
+        if (!isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+            setBiddingControlsDisabled(true);
+            return;
+        }
         boolean active = autoBidToggle.isSelected();
         autoBidPanel.setManaged(active);
         autoBidPanel.setVisible(active);
+        if (active) {
+            autoBidMax.setDisable(autoBidActive);
+            applyAutoBidBtn.setDisable(false);
+        }
         if (active) {
             fetchAutoBidStatus();
         }
@@ -338,11 +408,17 @@ public class BiddingRoomController implements Initializable {
     @FXML private void onApplyAutoBid() {
         UserSession session = UserSession.getInstance();
         if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
-            showBidError("Vui lòng đăng nhập để sử dụng tính năng Auto Bid.");
+            showBidError("Please sign in to use Auto Bid.");
             return;
         }
         if (auctionId == null || auctionId.isBlank()) {
-            showBidError("Phiên đấu giá chưa sẵn sàng.");
+            showBidError("The auction is not ready yet.");
+            return;
+        }
+        if (!isAuctionOpenForBidding()) {
+            showBidError("Auto Bid is only available for ongoing auctions.");
+            resetAutoBidUi();
+            setBiddingControlsDisabled(true);
             return;
         }
 
@@ -361,12 +437,12 @@ public class BiddingRoomController implements Initializable {
                 applyAutoBidBtn.setDisable(false);
                 autoBidActive = false;
                 autoBidMax.setDisable(false);
-                applyAutoBidBtn.setText("Bật Auto Bid");
-                showBidError("Đã tắt tự động đặt giá.");
+                applyAutoBidBtn.setText("Enable Auto Bid");
+                showBidError("Auto Bid has been disabled.");
             });
             task.setOnFailed(e -> {
                 applyAutoBidBtn.setDisable(false);
-                showBidError("Tắt Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+                showBidError("Failed to disable Auto Bid: " + ApiClient.toDisplayMessage(task.getException()));
             });
             Thread thread = new Thread(task);
             thread.setDaemon(true);
@@ -374,19 +450,19 @@ public class BiddingRoomController implements Initializable {
         } else {
             String maxStr = autoBidMax.getText().trim();
             if (maxStr.isEmpty()) {
-                showBidError("Vui lòng nhập giá tối đa.");
+                showBidError("Please enter a maximum bid.");
                 return;
             }
             double maxAmount;
             try {
                 maxAmount = Double.parseDouble(maxStr);
             } catch (NumberFormatException e) {
-                showBidError("Giá tối đa không hợp lệ.");
+                showBidError("Maximum bid is invalid.");
                 return;
             }
 
             if (maxAmount <= currentBid) {
-                showBidError("Giá tối đa phải lớn hơn giá hiện tại: " + formatPrice(currentBid));
+                showBidError("Maximum bid must be greater than the current price: " + formatPrice(currentBid));
                 return;
             }
 
@@ -401,12 +477,12 @@ public class BiddingRoomController implements Initializable {
                 applyAutoBidBtn.setDisable(false);
                 autoBidActive = true;
                 autoBidMax.setDisable(true);
-                applyAutoBidBtn.setText("Tắt Auto Bid");
-                showBidError("Đã bật tự động đặt giá.");
+                applyAutoBidBtn.setText("Disable Auto Bid");
+                showBidError("Auto Bid has been enabled.");
             });
             task.setOnFailed(e -> {
                 applyAutoBidBtn.setDisable(false);
-                showBidError("Bật Auto Bid thất bại: " + ApiClient.toDisplayMessage(task.getException()));
+                showBidError("Failed to enable Auto Bid: " + ApiClient.toDisplayMessage(task.getException()));
             });
             Thread thread = new Thread(task);
             thread.setDaemon(true);
@@ -419,6 +495,10 @@ public class BiddingRoomController implements Initializable {
         if (session == null || session.getUserId() == null || auctionId == null) {
             return;
         }
+        if (!isAuctionOpenForBidding()) {
+            resetAutoBidUi();
+            return;
+        }
 
         Task<JsonObject> task = new Task<JsonObject>() {
             @Override
@@ -428,12 +508,17 @@ public class BiddingRoomController implements Initializable {
         };
 
         task.setOnSucceeded(e -> {
+            if (!isAuctionOpenForBidding()) {
+                resetAutoBidUi();
+                return;
+            }
             JsonObject status = task.getValue();
             if (status != null && status.has("active") && status.get("active").getAsBoolean()) {
                 autoBidActive = true;
                 double maxAmount = status.get("maxAmount").getAsDouble();
                 autoBidMax.setText(String.format(Locale.US, "%.0f", maxAmount));
-                applyAutoBidBtn.setText("Tắt Auto Bid");
+                applyAutoBidBtn.setText("Disable Auto Bid");
+                applyAutoBidBtn.setDisable(false);
                 autoBidMax.setDisable(true);
 
                 autoBidToggle.setSelected(true);
@@ -444,14 +529,20 @@ public class BiddingRoomController implements Initializable {
                 if (!autoBidToggle.isSelected()) {
                     autoBidMax.clear();
                 }
-                applyAutoBidBtn.setText("Bật Auto Bid");
+                applyAutoBidBtn.setText("Enable Auto Bid");
+                applyAutoBidBtn.setDisable(false);
                 autoBidMax.setDisable(false);
             }
         });
 
         task.setOnFailed(e -> {
+            if (!isAuctionOpenForBidding()) {
+                resetAutoBidUi();
+                return;
+            }
             autoBidActive = false;
-            applyAutoBidBtn.setText("Bật Auto Bid");
+            applyAutoBidBtn.setText("Enable Auto Bid");
+            applyAutoBidBtn.setDisable(false);
             autoBidMax.setDisable(false);
         });
 
@@ -584,13 +675,44 @@ public class BiddingRoomController implements Initializable {
     }
 
     private String formatStatus(String value) {
-        if ("RUNNING".equalsIgnoreCase(value)) {
-            return "Live";
+        if (isPendingStatus(value)) {
+            return "Pending";
         }
-        if ("FINISHED".equalsIgnoreCase(value)) {
+        if (isOngoingStatus(value)) {
+            return "Ongoing";
+        }
+        if (isEndedStatus(value)) {
             return "Ended";
         }
-        return value == null ? "" : value;
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return formatCategory(value);
+    }
+
+    private boolean isPendingStatus(String value) {
+        return hasStatus(value, "PENDING", "PENDING_APPROVAL");
+    }
+
+    private boolean isOngoingStatus(String value) {
+        return hasStatus(value, "RUNNING", "LIVE", "ACTIVE", "APPROVED", "ONGOING");
+    }
+
+    private boolean isEndedStatus(String value) {
+        return hasStatus(value, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD");
+    }
+
+    private boolean hasStatus(String value, String... candidates) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        for (String candidate : candidates) {
+            if (candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String stringValue(JsonObject obj, String key, String fallback) {

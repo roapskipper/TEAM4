@@ -191,7 +191,7 @@ public class LoginController {
 
                         socketClient.startListening(null);
                     } catch (Exception e) {
-                        System.out.println("Loi parse userId tu response: " + e.getMessage());
+                        System.out.println("Failed to parse userId from response: " + e.getMessage());
                     }
                 } else {
                     System.out.println("Failed to connect to Socket server!");

@@ -477,6 +477,15 @@ public class SellerProductsController implements Initializable {
         if (rawStatus == null || rawStatus.isBlank()) {
             return "Pending";
         }
+        if (isPendingStatus(rawStatus)) {
+            return "Pending";
+        }
+        if (isOngoingStatus(rawStatus)) {
+            return "Ongoing";
+        }
+        if (isEndedStatus(rawStatus)) {
+            return "Ended";
+        }
         String value = rawStatus.replace("_", " ").toLowerCase(Locale.ROOT);
         StringBuilder result = new StringBuilder();
         for (String part : value.split(" ")) {
@@ -491,14 +500,45 @@ public class SellerProductsController implements Initializable {
     }
 
     private String statusClass(String status) {
-        String value = status.toLowerCase(Locale.ROOT);
-        if (value.contains("active") || value.contains("approved") || value.contains("sold")) {
+        if (isOngoingStatus(status)) {
             return "badge-green";
         }
+        if (isEndedStatus(status)) {
+            return "badge-red";
+        }
+        if (isPendingStatus(status)) {
+            return "badge-yellow";
+        }
+        String value = status.toLowerCase(Locale.ROOT);
         if (value.contains("reject") || value.contains("cancel")) {
             return "badge-red";
         }
         return "badge-yellow";
+    }
+
+    private boolean isPendingStatus(String value) {
+        return hasStatus(value, "PENDING", "PENDING_APPROVAL");
+    }
+
+    private boolean isOngoingStatus(String value) {
+        return hasStatus(value, "RUNNING", "LIVE", "ACTIVE", "APPROVED", "ONGOING");
+    }
+
+    private boolean isEndedStatus(String value) {
+        return hasStatus(value, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD");
+    }
+
+    private boolean hasStatus(String value, String... candidates) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        for (String candidate : candidates) {
+            if (candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String cleanMessage(Throwable throwable) {

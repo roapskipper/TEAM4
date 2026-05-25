@@ -613,6 +613,14 @@
     -fx-border-width: 1;
 }
 
+.auto-bid-toggle:disabled {
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: #CBD5E1;
+    -fx-text-fill: #9CA3AF;
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
 .bid-list {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
@@ -1037,6 +1045,26 @@
     -fx-background-color: rgba(114, 47, 55, 0.14);
 }
 
+.notification-btn {
+    -fx-background-color: rgba(114, 47, 55, 0.06);
+    -fx-border-color: rgba(114, 47, 55, 0.16);
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 10 14;
+    -fx-font-size: 13px;
+    -fx-font-family: "Lato";
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.notification-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.14);
+    -fx-text-fill: #722F37;
+}
+
 .logout-btn {
     -fx-background-color: rgba(114, 47, 55, 0.06);
     -fx-background-radius: 10;
@@ -1063,6 +1091,87 @@
     -fx-padding: 2 6;
     -fx-background-color: #B91C1C;
     -fx-background-radius: 10;
+}
+
+.deposit-btn {
+    -fx-background-color: #722F37;
+    -fx-background-radius: 10;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Lato";
+    -fx-padding: 10 12;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.deposit-btn:hover {
+    -fx-background-color: #5F2630;
+}
+
+.deposit-dialog-pane {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 16;
+}
+
+.deposit-dialog-content {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 18;
+    -fx-min-width: 360;
+}
+
+.deposit-action-btn {
+    -fx-background-color: #722F37;
+    -fx-background-radius: 9;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: "Lato";
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.deposit-action-btn:hover {
+    -fx-background-color: #5F2630;
+}
+
+.dialog-secondary-btn {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-background-radius: 9;
+    -fx-text-fill: #2C2C2C;
+    -fx-font-family: "Lato";
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.dialog-secondary-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.16);
+    -fx-text-fill: #722F37;
+}
+
+.toast-notification,
+.toast-notification-error {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 14;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.16), 18, 0, 0, 6);
+}
+
+.toast-notification {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(114, 47, 55, 0.22);
+    -fx-text-fill: #2C2C2C;
+}
+
+.toast-notification-error {
+    -fx-background-color: #FFF7F7;
+    -fx-border-color: rgba(185, 28, 28, 0.26);
+    -fx-text-fill: #7F1D1D;
 }
 
 .stat-number-accent {
@@ -1204,4 +1313,30 @@
     -fx-font-family: "Lato";
     -fx-font-size: 12px;
     -fx-text-fill: #555555;
+}
+
+.rule-pill-required {
+    -fx-background-color: rgba(185, 28, 28, 0.08);
+    -fx-border-color: rgba(185, 28, 28, 0.3);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-text-fill: #B91C1C;
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-padding: 3 9;
+    -fx-background-radius: 12;
+    -fx-font-weight: bold;
+}
+
+.rule-pill-optional {
+    -fx-background-color: rgba(156, 163, 175, 0.15);
+    -fx-border-color: rgba(156, 163, 175, 0.4);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-text-fill: #555555;
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-padding: 3 9;
+    -fx-background-radius: 12;
+    -fx-font-weight: bold;
 }

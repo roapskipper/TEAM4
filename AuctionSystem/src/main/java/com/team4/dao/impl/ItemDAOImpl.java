@@ -65,7 +65,7 @@ public class ItemDAOImpl implements ItemDAO {
                 break;
 
             default:
-                throw new SQLException("Lỗi hệ thống: Category không hợp lệ -> " + category);
+                throw new SQLException("System error: invalid category -> " + category);
         }
 
         try {
@@ -97,10 +97,10 @@ public class ItemDAOImpl implements ItemDAO {
                 if (rs.next()) return mapRowToItem(rs);
             }
         } catch (SQLException e) {
-            logger.error("Không thể tìm item với id={}", id, e);
+            logger.error("Unable to find item with id={}", id, e);
         } catch (Exception e) {
             // Bắt IllegalArgumentException từ constructor subclass (VD: condition trống)
-            logger.warn("Item id={} có dữ liệu không hợp lệ, bỏ qua: {}", id, e.getMessage());
+            logger.warn("Item id={} has invalid data, skipping: {}", id, e.getMessage());
         }
         return null;
     }
@@ -149,7 +149,7 @@ public class ItemDAOImpl implements ItemDAO {
         try (Connection conn = DatabaseManager.getConnection()) {
             return insert(conn, item);
         } catch (SQLException e) {
-            logger.error("Không thể kết nối để tạo item id={}", item.getId(), e);
+            logger.error("Unable to connect while creating item id={}", item.getId(), e);
             return false;
         }
     }
@@ -231,7 +231,7 @@ public class ItemDAOImpl implements ItemDAO {
             return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            logger.error("Không thể tạo item id={}", item.getId(), e);
+            logger.error("Unable to create item id={}", item.getId(), e);
             return false;
         }
     }
@@ -249,7 +249,7 @@ public class ItemDAOImpl implements ItemDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể update item id={}", item.getId(), e);
+            logger.error("Unable to update item id={}", item.getId(), e);
             return false;
         }
     }
@@ -275,7 +275,7 @@ public class ItemDAOImpl implements ItemDAO {
             stmt.setString(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            logger.error("Không thể xóa item id={}", id, e);
+            logger.error("Unable to delete item id={}", id, e);
             return false;
         }
     }

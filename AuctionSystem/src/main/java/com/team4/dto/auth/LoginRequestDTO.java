@@ -16,17 +16,17 @@ public class LoginRequestDTO {
         validate();
     }
 
-    // Validate
     private static final Pattern USERNAME_PATTERN =
             Pattern.compile("^[a-zA-Z0-9._-]{4,30}$");
+
     public void validate() {
         if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
             throw new IllegalArgumentException(
-                    "Tên đăng nhập phải dài từ 4–30 ký tự và chỉ được chứa chữ cái, số, dấu chấm (.), gạch dưới (_) và gạch ngang (-)."
+                    "Username must be 4-30 characters and may contain only letters, numbers, dots (.), underscores (_), and hyphens (-)."
             );
         }
         if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("Mật khẩu không được trống");
+            throw new IllegalArgumentException("Password is required.");
         }
     }
 

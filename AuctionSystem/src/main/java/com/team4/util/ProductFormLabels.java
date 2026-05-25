@@ -7,7 +7,7 @@ import com.team4.model.Fashion;
 import com.team4.model.Vehicle;
 
 /**
- * Vietnamese display labels for product form enum values.
+ * English display labels for product form enum values.
  */
 public final class ProductFormLabels {
 
@@ -15,39 +15,39 @@ public final class ProductFormLabels {
 
     public static String artMedium(Art.Medium m) {
         return switch (m) {
-            case OIL_PAINT -> "Sơn dầu";
-            case WATERCOLOR -> "Màu nước";
+            case OIL_PAINT -> "Oil Paint";
+            case WATERCOLOR -> "Watercolor";
             case ACRYLIC -> "Acrylic";
             case GOUACHE -> "Gouache";
-            case PASTEL -> "Phấn màu";
-            case INK -> "Mực";
-            case SCULPTURE_MARBLE -> "Điêu khắc đá";
-            case SCULPTURE_WOOD -> "Điêu khắc gỗ";
-            case SCULPTURE_CERAMIC -> "Gốm sứ";
-            case PHOTOGRAPHY -> "Nhiếp ảnh";
-            case MIXED_MEDIA -> "Đa chất liệu";
-            case OTHER -> "Khác";
+            case PASTEL -> "Pastel";
+            case INK -> "Ink";
+            case SCULPTURE_MARBLE -> "Marble Sculpture";
+            case SCULPTURE_WOOD -> "Wood Sculpture";
+            case SCULPTURE_CERAMIC -> "Ceramic Sculpture";
+            case PHOTOGRAPHY -> "Photography";
+            case MIXED_MEDIA -> "Mixed Media";
+            case OTHER -> "Other";
         };
     }
 
     public static String collectibleRarity(Collectible.RarityLevel r) {
         return switch (r) {
-            case COMMON -> "Phổ biến";
-            case UNCOMMON -> "Ít phổ biến";
-            case RARE -> "Hiếm";
-            case VERY_RARE -> "Rất hiếm";
-            case ULTRA_RARE -> "Cực hiếm";
+            case COMMON -> "Common";
+            case UNCOMMON -> "Uncommon";
+            case RARE -> "Rare";
+            case VERY_RARE -> "Very Rare";
+            case ULTRA_RARE -> "Ultra Rare";
         };
     }
 
     public static String conditionGrade(String prefix, String grade) {
         return switch (grade) {
-            case "POOR" -> prefix + "Kém";
-            case "FAIR" -> prefix + "Trung bình";
-            case "GOOD" -> prefix + "Tốt";
-            case "VERY_GOOD" -> prefix + "Rất tốt";
-            case "EXCELLENT" -> prefix + "Xuất sắc";
-            case "MINT" -> prefix + "Hoàn hảo";
+            case "POOR" -> prefix + "Poor";
+            case "FAIR" -> prefix + "Fair";
+            case "GOOD" -> prefix + "Good";
+            case "VERY_GOOD" -> prefix + "Very Good";
+            case "EXCELLENT" -> prefix + "Excellent";
+            case "MINT" -> prefix + "Mint";
             default -> grade;
         };
     }
@@ -62,31 +62,31 @@ public final class ProductFormLabels {
 
     public static String fashionGender(Fashion.Gender g) {
         return switch (g) {
-            case MALE -> "Nam (MALE)";
-            case FEMALE -> "Nữ (FEMALE)";
-            case UNISEX -> "Unisex (mặc định)";
+            case MALE -> "Male";
+            case FEMALE -> "Female";
+            case UNISEX -> "Unisex (Default)";
         };
     }
 
     public static String vehicleEngine(Vehicle.EngineType e) {
         return switch (e) {
-            case GASOLINE -> "Xăng";
-            case DIESEL -> "Dầu diesel";
-            case ELECTRIC -> "Điện";
+            case GASOLINE -> "Gasoline";
+            case DIESEL -> "Diesel";
+            case ELECTRIC -> "Electric";
             case HYBRID -> "Hybrid";
             case PLUG_IN_HYBRID -> "Plug-in Hybrid";
-            case HYDROGEN -> "Hydro";
-            case OTHER -> "Khác";
+            case HYDROGEN -> "Hydrogen";
+            case OTHER -> "Other";
         };
     }
 
     public static String vehicleTransmission(Vehicle.Transmission t) {
         return switch (t) {
-            case MANUAL -> "Số sàn";
-            case AUTOMATIC -> "Tự động";
-            case CVT -> "Vô cấp (CVT)";
-            case DCT -> "Ly hợp kép (DCT)";
-            case OTHER -> "Khác (mặc định)";
+            case MANUAL -> "Manual";
+            case AUTOMATIC -> "Automatic";
+            case CVT -> "CVT";
+            case DCT -> "Dual-Clutch (DCT)";
+            case OTHER -> "Other (Default)";
         };
     }
 }

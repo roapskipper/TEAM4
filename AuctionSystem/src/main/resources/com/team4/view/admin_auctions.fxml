@@ -20,7 +20,7 @@
         <HBox spacing="8">
             <Button fx:id="filterAll" text="All" onAction="#onFilterAll" styleClass="admin-filter-active"/>
             <Button fx:id="filterPending" text="Pending" onAction="#onFilterPending" styleClass="admin-filter"/>
-            <Button fx:id="filterLive" text="Live" onAction="#onFilterLive" styleClass="admin-filter"/>
+            <Button fx:id="filterLive" text="Ongoing" onAction="#onFilterLive" styleClass="admin-filter"/>
             <Button fx:id="filterViolated" text="Violated" onAction="#onFilterViolated" styleClass="admin-filter"/>
         </HBox>
 

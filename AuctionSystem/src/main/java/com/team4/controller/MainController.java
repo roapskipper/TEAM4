@@ -1,15 +1,24 @@
 package com.team4.controller;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.team4.client.ApiClient;
+import com.team4.util.UserSession;
+import javafx.animation.PauseTransition;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.util.Duration;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -26,6 +35,7 @@ public class MainController implements Initializable {
     @FXML private StackPane userAvatarBg;
     @FXML private Button notiBtn;
     @FXML private Label notiBadge;
+    @FXML private Button depositBtn;
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
 
@@ -41,6 +51,7 @@ public class MainController implements Initializable {
         setupSidebar();
         updateUserInfo();
         updateBalanceVisibility();
+        updateDepositVisibility();
         refreshUserBalance();
 
         if (role != null && role.startsWith("admin")) {
@@ -151,7 +162,7 @@ public class MainController implements Initializable {
     }
 
     public void refreshUserBalance() {
-        com.team4.util.UserSession session = com.team4.util.UserSession.getInstance();
+        UserSession session = UserSession.getInstance();
         if (balanceValueLabel == null || session == null || session.getUserId() == null) {
             return;
         }
@@ -165,11 +176,11 @@ public class MainController implements Initializable {
         javafx.concurrent.Task<com.google.gson.JsonObject> task = new javafx.concurrent.Task<>() {
             @Override
             protected com.google.gson.JsonObject call() throws Exception {
-                return new com.team4.client.ApiClient().getUserProfile(session.getUserId());
+                return new ApiClient().getUserProfile(session.getUserId());
             }
         };
         task.setOnSucceeded(e -> {
-            com.google.gson.JsonObject profile = task.getValue();
+            JsonObject profile = task.getValue();
             if (profile != null && profile.has("balance") && !profile.get("balance").isJsonNull()) {
                 BigDecimal balance = profile.get("balance").getAsBigDecimal();
                 session.setBalance(balance);
@@ -194,6 +205,19 @@ public class MainController implements Initializable {
 
     private boolean isAdminRole() {
         return userRole != null && userRole.startsWith("admin");
+    }
+
+    private boolean isBidderRole() {
+        return "bidder".equalsIgnoreCase(userRole);
+    }
+
+    private void updateDepositVisibility() {
+        if (depositBtn == null) {
+            return;
+        }
+        boolean showDeposit = isBidderRole();
+        depositBtn.setManaged(showDeposit);
+        depositBtn.setVisible(showDeposit);
     }
 
     private String formatMoney(BigDecimal value) {
@@ -232,6 +256,150 @@ public class MainController implements Initializable {
     }
 
     @FXML private void onNotificationClick() {
-        System.out.println("Notifications clicked");
+        showNotification("No new notifications.", false);
+    }
+
+    @FXML private void onDeposit() {
+        UserSession session = UserSession.getInstance();
+        if (!isBidderRole() || session == null || session.getUserId() == null) {
+            showNotification("Only bidders can add funds.", true);
+            return;
+        }
+
+        showDepositDialog().ifPresent(amount -> {
+            depositBtn.setDisable(true);
+            javafx.concurrent.Task<BigDecimal> task = new javafx.concurrent.Task<>() {
+                @Override
+                protected BigDecimal call() throws Exception {
+                    String response = new ApiClient().depositWallet(session.getUserId(), amount);
+                    JsonObject root = JsonParser.parseString(response).getAsJsonObject();
+                    if (root.has("data") && root.get("data").isJsonObject()) {
+                        JsonObject data = root.getAsJsonObject("data");
+                        if (data.has("balance") && !data.get("balance").isJsonNull()) {
+                            return data.get("balance").getAsBigDecimal();
+                        }
+                    }
+                    return amount.add(session.getBalance() != null ? session.getBalance() : BigDecimal.ZERO);
+                }
+            };
+
+            task.setOnSucceeded(e -> {
+                BigDecimal newBalance = task.getValue();
+                session.setBalance(newBalance);
+                balanceValueLabel.setText("Balance: " + formatMoney(newBalance));
+                depositBtn.setDisable(false);
+                showNotification("Deposit completed. Balance updated.", false);
+            });
+
+            task.setOnFailed(e -> {
+                depositBtn.setDisable(false);
+                showNotification(cleanMessage(task.getException()), true);
+            });
+
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
+        });
+    }
+
+    private java.util.Optional<BigDecimal> showDepositDialog() {
+        Dialog<BigDecimal> dialog = new Dialog<>();
+        dialog.setTitle("Deposit Funds");
+        dialog.setHeaderText(null);
+
+        DialogPane pane = dialog.getDialogPane();
+        pane.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
+        pane.getStyleClass().add("deposit-dialog-pane");
+
+        ButtonType depositType = new ButtonType("Deposit", ButtonBar.ButtonData.OK_DONE);
+        pane.getButtonTypes().addAll(depositType, ButtonType.CANCEL);
+
+        Label title = new Label("Deposit Funds");
+        title.getStyleClass().add("dialog-title");
+        Label help = new Label("Enter the amount you want to add to your bidder balance.");
+        help.setWrapText(true);
+        help.getStyleClass().add("dialog-help");
+
+        TextField amountField = new TextField();
+        amountField.setPromptText("Amount (VND)");
+        amountField.getStyleClass().add("input-field");
+
+        Label error = new Label();
+        error.getStyleClass().add("error-message");
+        error.setManaged(false);
+        error.setVisible(false);
+
+        VBox content = new VBox(12, title, help, amountField, error);
+        content.getStyleClass().add("deposit-dialog-content");
+        pane.setContent(content);
+
+        Button depositButton = (Button) pane.lookupButton(depositType);
+        depositButton.getStyleClass().add("deposit-action-btn");
+        Button cancelButton = (Button) pane.lookupButton(ButtonType.CANCEL);
+        cancelButton.getStyleClass().add("dialog-secondary-btn");
+        depositButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                parseDepositAmount(amountField.getText());
+            } catch (IllegalArgumentException ex) {
+                error.setText(ex.getMessage());
+                error.setManaged(true);
+                error.setVisible(true);
+                event.consume();
+            }
+        });
+
+        dialog.setResultConverter(button -> button == depositType
+                ? parseDepositAmount(amountField.getText())
+                : null);
+        return dialog.showAndWait();
+    }
+
+    private BigDecimal parseDepositAmount(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            throw new IllegalArgumentException("Amount is required.");
+        }
+        try {
+            BigDecimal amount = new BigDecimal(raw.trim().replace(",", ""));
+            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Amount must be greater than 0.");
+            }
+            if (amount.remainder(BigDecimal.valueOf(1000)).compareTo(BigDecimal.ZERO) != 0) {
+                throw new IllegalArgumentException("Amount must be a multiple of 1,000 VND.");
+            }
+            return amount.setScale(2, RoundingMode.HALF_UP);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Enter a valid amount.");
+        }
+    }
+
+    private void showNotification(String message, boolean error) {
+        if (contentArea == null) {
+            return;
+        }
+        Label toast = new Label(message);
+        toast.getStyleClass().add(error ? "toast-notification-error" : "toast-notification");
+        toast.setMaxWidth(360);
+        toast.setWrapText(true);
+        StackPane.setAlignment(toast, Pos.TOP_RIGHT);
+        contentArea.getChildren().add(toast);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(2.8));
+        delay.setOnFinished(event -> contentArea.getChildren().remove(toast));
+        delay.play();
+    }
+
+    private String cleanMessage(Throwable throwable) {
+        String raw = throwable == null ? "" : throwable.getMessage();
+        if (raw == null || raw.trim().isEmpty()) {
+            return "Please try again.";
+        }
+        try {
+            JsonObject parsed = JsonParser.parseString(raw).getAsJsonObject();
+            if (parsed.has("message") && !parsed.get("message").isJsonNull()) {
+                return parsed.get("message").getAsString();
+            }
+        } catch (Exception ignored) {
+        }
+        return raw.trim();
     }
 }

@@ -10,7 +10,6 @@ public class CreateItemRequestDTO {
     private Item.ItemCategory category;
     private static final int NAME_MAX = 255;
     private static final int DESC_MAX = 2000;
-    private static final int OWNER_ID_MAX = 36;
 
     public CreateItemRequestDTO() {}
     public CreateItemRequestDTO(String name, BigDecimal startingPrice, String description, Item.ItemCategory category) {
@@ -23,22 +22,22 @@ public class CreateItemRequestDTO {
 
     protected final void validateItemDTO() {
         if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Tên mặt hàng không được để trống.");
+            throw new IllegalArgumentException("Item name is required.");
         }
         if (name.length() > NAME_MAX) {
-            throw new IllegalArgumentException("Tên mặt hàng không được vượt quá " + NAME_MAX + " ký tự.");
+            throw new IllegalArgumentException("Item name must not exceed " + NAME_MAX + " characters.");
         }
         if (startingPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Giá khởi điểm không được âm.");
+            throw new IllegalArgumentException("Starting price cannot be negative.");
         }
         if (category == null) {
-            throw new IllegalArgumentException("Category không được để trống.");
+            throw new IllegalArgumentException("Category is required.");
         }
         if (description == null || description.isEmpty()) {
-            throw new IllegalArgumentException("Mô tả không được để trống.");
+            throw new IllegalArgumentException("Description is required.");
         }
         if (description.length() > DESC_MAX) {
-            throw new IllegalArgumentException("Mô tả không được vượt quá " + DESC_MAX + " ký tự.");
+            throw new IllegalArgumentException("Description must not exceed " + DESC_MAX + " characters.");
         }
     }
 
@@ -59,7 +58,7 @@ public class CreateItemRequestDTO {
     public String toString() {
         return "ItemRequestDTO: " +
                 " | name: " + name +
-                " | startingPrice: " + (startingPrice==null ? "n/a" : startingPrice.toPlainString()) +
-                " | category: " + category ;
+                " | startingPrice: " + (startingPrice == null ? "n/a" : startingPrice.toPlainString()) +
+                " | category: " + category;
     }
 }

@@ -7,7 +7,6 @@ import com.team4.dto.auction.AuctionResponseDTO;
 import com.team4.dto.auction.AdminAuctionResponseDTO;
 import com.team4.dto.auth.UserResponseDTO;
 import com.team4.mapper.AuctionMapper;
-import com.team4.mapper.UserMapper;
 import com.team4.model.Admin;
 import com.team4.model.Auction;
 import com.team4.model.Item;
@@ -16,6 +15,20 @@ import com.team4.util.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.team4.db.DatabaseManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -219,5 +232,119 @@ public class AdminService {
             throw new BusinessException("Failed to revoke admin role or user is not an Admin or is a Super Admin.");
         }
         logger.info("Admin privileges revoked successfully from targetUserId={}", targetUserId);
+    }
+
+    /**
+     * Lấy dữ liệu thống kê tổng quan cho Admin Dashboard.
+     */
+    public JsonObject getDashboardStats(String adminId) {
+        logger.info("Admin is requesting dashboard stats: adminId={}", adminId);
+        User admin = userService.getRawUserById(adminId);
+        if (admin.getRole() != User.Role.ADMIN) {
+            throw new BusinessException("User does not have admin privileges");
+        }
+
+        JsonObject stats = new JsonObject();
+        long totalUsers = 0;
+        long totalAuctions = 0;
+        long activeAuctions = 0;
+        long pendingAuctions = 0;
+        double totalRevenue = 0.0;
+        long totalTransactions = 0;
+
+        String queryUsers = "SELECT COUNT(*) FROM users";
+        String queryAuctions = "SELECT COUNT(*) FROM auctions";
+        String queryActiveAuctions = "SELECT COUNT(*) FROM auctions WHERE status = 'RUNNING'";
+        String queryPendingAuctions = "SELECT COUNT(*) FROM auctions WHERE status = 'PENDING'";
+        String queryRevenue = "SELECT COALESCE(SUM(current_price), 0.0) FROM auctions WHERE status = 'PAID'";
+        String queryTransactions = "SELECT COUNT(*) FROM bid_transactions";
+        String queryChart = "SELECT created_at FROM users ORDER BY created_at ASC";
+
+        try (Connection conn = DatabaseManager.getConnection()) {
+            // 1. Total Users
+            try (PreparedStatement stmt = conn.prepareStatement(queryUsers);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) totalUsers = rs.getLong(1);
+            }
+            // 2. Total Auctions
+            try (PreparedStatement stmt = conn.prepareStatement(queryAuctions);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) totalAuctions = rs.getLong(1);
+            }
+            // 3. Active Auctions
+            try (PreparedStatement stmt = conn.prepareStatement(queryActiveAuctions);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) activeAuctions = rs.getLong(1);
+            }
+            // 4. Pending Auctions
+            try (PreparedStatement stmt = conn.prepareStatement(queryPendingAuctions);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) pendingAuctions = rs.getLong(1);
+            }
+            // 5. Total Revenue
+            try (PreparedStatement stmt = conn.prepareStatement(queryRevenue);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) totalRevenue = rs.getDouble(1);
+            }
+            // 6. Total Transactions
+            try (PreparedStatement stmt = conn.prepareStatement(queryTransactions);
+                 ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) totalTransactions = rs.getLong(1);
+            }
+
+            // 7. Registration Chart
+            List<LocalDateTime> userCreatedDates = new ArrayList<>();
+            try (PreparedStatement stmt = conn.prepareStatement(queryChart);
+                 ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Timestamp ts = rs.getTimestamp("created_at");
+                    if (ts != null) {
+                        userCreatedDates.add(ts.toLocalDateTime());
+                    }
+                }
+            }
+
+            // Gom nhóm theo tháng (VD: "Jan", "Feb"...)
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM", Locale.US);
+            Map<String, Integer> monthlyCountMap = new LinkedHashMap<>();
+            
+            // Khởi tạo các tháng trước (để đảm bảo có đủ ít nhất 6 tháng gần nhất)
+            LocalDateTime temp = LocalDateTime.now().minusMonths(5);
+            for (int i = 0; i < 6; i++) {
+                monthlyCountMap.put(temp.plusMonths(i).format(formatter), 0);
+            }
+
+            for (LocalDateTime date : userCreatedDates) {
+                String monthKey = date.format(formatter);
+                if (monthlyCountMap.containsKey(monthKey)) {
+                    monthlyCountMap.put(monthKey, monthlyCountMap.get(monthKey) + 1);
+                } else {
+                    // Để vẽ biểu đồ, ta cũng chấp nhận gom nhóm các tháng trước đó nếu có dữ liệu
+                    monthlyCountMap.put(monthKey, monthlyCountMap.getOrDefault(monthKey, 0) + 1);
+                }
+            }
+
+            JsonArray chartArray = new JsonArray();
+            for (Map.Entry<String, Integer> entry : monthlyCountMap.entrySet()) {
+                JsonObject point = new JsonObject();
+                point.addProperty("month", entry.getKey());
+                point.addProperty("count", entry.getValue());
+                chartArray.add(point);
+            }
+
+            stats.addProperty("totalUsers", totalUsers);
+            stats.addProperty("totalAuctions", totalAuctions);
+            stats.addProperty("activeAuctions", activeAuctions);
+            stats.addProperty("pendingAuctions", pendingAuctions);
+            stats.addProperty("totalRevenue", totalRevenue);
+            stats.addProperty("totalTransactions", totalTransactions);
+            stats.add("registrationChart", chartArray);
+
+        } catch (SQLException e) {
+            logger.error("Failed to load dashboard stats", e);
+            throw new BusinessException("Failed to retrieve dashboard statistics from database");
+        }
+
+        return stats;
     }
 }

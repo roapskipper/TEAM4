@@ -22,21 +22,22 @@ public class CreateAuctionRequestDTO {
 
     public void validateAuctionRequestDTO() {
         if (itemId == null || itemId.trim().isEmpty()) {
-            throw new IllegalArgumentException("ItemId không được để trống.");
+            throw new IllegalArgumentException("ItemId is required.");
         }
-        if (sellerId == null)
-            throw new IllegalArgumentException("SellerId không được để trống");
+        if (sellerId == null || sellerId.trim().isEmpty()) {
+            throw new IllegalArgumentException("SellerId is required.");
+        }
         if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0.");
+            throw new IllegalArgumentException("Starting price must be greater than 0.");
         }
         if (bidIncrement == null || bidIncrement.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Bước giá phải lớn hơn 0.");
+            throw new IllegalArgumentException("Bid increment must be greater than 0.");
         }
         if (endTime == null) {
-            throw new IllegalArgumentException("Thời gian kết thúc không được để trống.");
+            throw new IllegalArgumentException("End time is required.");
         }
         if (endTime.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Thời gian kết thúc phải ở trong tương lai.");
+            throw new IllegalArgumentException("End time must be in the future.");
         }
     }
 

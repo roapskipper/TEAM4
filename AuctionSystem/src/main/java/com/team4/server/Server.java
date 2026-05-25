@@ -100,7 +100,7 @@ public class Server {
 
         threadPool = Executors.newFixedThreadPool(50);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Dang tat server. Giai phong thread pool...");
+            System.out.println("Shutting down server. Releasing thread pool...");
             if (auctionScheduler != null && !auctionScheduler.isShutdown()) {
                 auctionScheduler.shutdown();
             }
@@ -109,7 +109,7 @@ public class Server {
             }
         }));
 
-        System.out.println("Server dang khoi dong tren port " + PORT + "...");
+        System.out.println("Server is starting on port " + PORT + "...");
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept();
@@ -152,12 +152,12 @@ public class Server {
     public static void registerUser(String userId, ClientHandler newHandler) {
         ClientHandler oldHandler = activeUsers.get(userId);
         if (oldHandler != null && oldHandler != newHandler) {
-            System.out.println("Phat hien dang nhap tu thiet bi khac cho user: " + userId);
+        System.out.println("Detected login from another device for user: " + userId);
             oldHandler.forceLogout();
             removeClient(oldHandler);
         }
         activeUsers.put(userId, newHandler);
-        System.out.println("Dang ky Socket session cho user: " + userId);
+        System.out.println("Registered socket session for user: " + userId);
     }
 
     public static void broadcast(String message, ClientHandler excludeUser) {

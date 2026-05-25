@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.team4.client.ApiClient;
+import com.team4.util.UserSession;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -99,7 +100,7 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private void loadAuctionCards() {
-        showLoading("Loading active auctions...");
+        showLoading("Loading auctions...");
 
         Task<JsonArray> task = new Task<JsonArray>() {
             @Override
@@ -112,9 +113,16 @@ public class BidderAuctionsController implements Initializable {
             auctions.clear();
             JsonArray data = task.getValue();
             if (data != null) {
+                UserSession session = UserSession.getInstance();
+                boolean isSeller = session != null && "seller".equalsIgnoreCase(session.getRole());
+                String currentUserId = session != null ? session.getUserId() : "";
+
                 for (JsonElement element : data) {
                     if (element.isJsonObject()) {
-                        auctions.add(new AuctionCardData(element.getAsJsonObject()));
+                        AuctionCardData cardData = new AuctionCardData(element.getAsJsonObject());
+                        if (!isSeller || currentUserId.equals(cardData.sellerId)) {
+                            auctions.add(cardData);
+                        }
                     }
                 }
             }
@@ -134,14 +142,14 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private void updateStats() {
-        long live = auctions.stream().filter(a -> "RUNNING".equalsIgnoreCase(a.status)).count();
-        long categories = auctions.stream().map(a -> a.category).filter(value -> value != null && !value.isBlank()).distinct().count();
-        long sellers = auctions.stream().map(a -> a.sellerName).filter(value -> value != null && !value.isBlank()).distinct().count();
+        long ongoing = auctions.stream().filter(a -> isOngoingStatus(a.status)).count();
+        long pending = auctions.stream().filter(a -> isPendingStatus(a.status)).count();
+        long ended = auctions.stream().filter(a -> isEndedStatus(a.status)).count();
         long bids = auctions.stream().mapToLong(a -> a.bidCount).sum();
 
-        liveCount.setText(String.valueOf(live));
-        upcomingCount.setText(String.valueOf(categories));
-        endedCount.setText(String.valueOf(sellers));
+        liveCount.setText(String.valueOf(ongoing));
+        upcomingCount.setText(String.valueOf(pending));
+        endedCount.setText(String.valueOf(ended));
         totalBids.setText(String.valueOf(bids));
     }
 
@@ -154,7 +162,7 @@ public class BidderAuctionsController implements Initializable {
                 .forEach(auction -> auctionsGrid.getChildren().add(createAuctionCard(auction)));
 
         if (auctionsGrid.getChildren().isEmpty()) {
-            showLoading("No active auctions found");
+            showLoading("No auctions found");
         }
     }
 
@@ -172,7 +180,7 @@ public class BidderAuctionsController implements Initializable {
                 || normalizeCategory(selectedCategory).equalsIgnoreCase(auction.category);
 
         boolean matchesStatus = "All".equals(selectedStatus)
-                || normalizeStatus(selectedStatus).equalsIgnoreCase(auction.status);
+                || normalizeStatus(selectedStatus).equalsIgnoreCase(canonicalStatus(auction.status));
 
         return matchesKeyword && matchesCategory && matchesStatus;
     }
@@ -202,7 +210,7 @@ public class BidderAuctionsController implements Initializable {
         Label category = new Label(formatCategory(auction.category));
         category.getStyleClass().addAll("badge", categoryBadge(auction.category));
         Label status = new Label(formatStatus(auction.status));
-        status.getStyleClass().addAll("badge", "badge-green");
+        status.getStyleClass().addAll("badge", statusBadge(auction.status));
         topLine.getChildren().addAll(category, status);
 
         Label title = new Label(auction.itemName);
@@ -252,7 +260,7 @@ public class BidderAuctionsController implements Initializable {
 
             if (mainController != null) {
                 // Path 1: Navigate via MainController (proper way)
-                mainController.navigateTo(page, "Auction Room", "Place bids in a live session");
+                mainController.navigateTo(page, "Auction Room", "Review auction details and bids");
             } else {
                 // Path 2: Fallback — look up contentArea from scene (may be null if scene not ready)
                 javafx.scene.Scene scene = auctionsGrid.getScene();
@@ -268,7 +276,7 @@ public class BidderAuctionsController implements Initializable {
                 Label pageTitle = (Label) scene.getRoot().lookup("#pageTitle");
                 Label pageSubtitle = (Label) scene.getRoot().lookup("#pageSubtitle");
                 if (pageTitle != null) pageTitle.setText("Auction Room");
-                if (pageSubtitle != null) pageSubtitle.setText("Place bids in a live session");
+                if (pageSubtitle != null) pageSubtitle.setText("Review auction details and bids");
             }
         } catch (Exception ex) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -302,14 +310,27 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private String normalizeStatus(String value) {
-        if ("Live".equals(value)) {
+        if ("Ongoing".equals(value)) {
             return "RUNNING";
         }
         if ("Ended".equals(value)) {
             return "FINISHED";
         }
-        if ("Upcoming".equals(value)) {
+        if ("Pending".equals(value)) {
             return "PENDING";
+        }
+        return value == null ? "" : value.toUpperCase(Locale.ROOT);
+    }
+
+    private String canonicalStatus(String value) {
+        if (isPendingStatus(value)) {
+            return "PENDING";
+        }
+        if (isOngoingStatus(value)) {
+            return "RUNNING";
+        }
+        if (isEndedStatus(value)) {
+            return "FINISHED";
         }
         return value == null ? "" : value.toUpperCase(Locale.ROOT);
     }
@@ -323,16 +344,57 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private String formatStatus(String value) {
-        if ("RUNNING".equalsIgnoreCase(value)) {
-            return "Live";
+        if (isPendingStatus(value)) {
+            return "Pending";
         }
-        if ("FINISHED".equalsIgnoreCase(value)) {
+        if (isOngoingStatus(value)) {
+            return "Ongoing";
+        }
+        if (isEndedStatus(value)) {
             return "Ended";
         }
-        if ("PENDING".equalsIgnoreCase(value)) {
-            return "Upcoming";
+        if (value == null || value.isBlank()) {
+            return "";
         }
-        return value == null ? "" : value;
+        return formatCategory(value);
+    }
+
+    private String statusBadge(String value) {
+        if (isOngoingStatus(value)) {
+            return "badge-green";
+        }
+        if (isEndedStatus(value)) {
+            return "badge-red";
+        }
+        if (isPendingStatus(value)) {
+            return "badge-yellow";
+        }
+        return "badge-purple";
+    }
+
+    private boolean isPendingStatus(String value) {
+        return hasStatus(value, "PENDING", "PENDING_APPROVAL");
+    }
+
+    private boolean isOngoingStatus(String value) {
+        return hasStatus(value, "RUNNING", "LIVE", "ACTIVE", "APPROVED", "ONGOING");
+    }
+
+    private boolean isEndedStatus(String value) {
+        return hasStatus(value, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD");
+    }
+
+    private boolean hasStatus(String value, String... candidates) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        for (String candidate : candidates) {
+            if (candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String categoryBadge(String category) {
@@ -381,6 +443,7 @@ public class BidderAuctionsController implements Initializable {
         private final String description;
         private final String category;
         private final String sellerName;
+        private final String sellerId;
         private final String status;
         private final BigDecimal currentPrice;
         private final long bidCount;
@@ -393,6 +456,7 @@ public class BidderAuctionsController implements Initializable {
             this.description = fallback(stringValue(obj, "itemDescription"), "No description provided.");
             this.category = stringValue(obj, "category");
             this.sellerName = fallback(stringValue(obj, "sellerName"), "Unknown Seller");
+            this.sellerId = stringValue(obj, "sellerId");
             this.status = fallback(stringValue(obj, "status"), "RUNNING");
             this.currentPrice = moneyValue(obj, "currentPrice");
             this.bidCount = longValue(obj, "bidCount");
