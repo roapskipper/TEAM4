@@ -258,7 +258,7 @@ public class AdminService {
         String queryPendingAuctions = "SELECT COUNT(*) FROM auctions WHERE status = 'PENDING'";
         String queryRevenue = "SELECT COALESCE(SUM(current_price), 0.0) FROM auctions WHERE status = 'PAID'";
         String queryTransactions = "SELECT COUNT(*) FROM bid_transactions";
-        String queryChart = "SELECT created_at FROM users ORDER BY created_at ASC";
+        String queryChart = "SELECT created_at FROM users WHERE created_at >= ? ORDER BY created_at ASC";
 
         try (Connection conn = DatabaseManager.getConnection()) {
             // 1. Total Users
@@ -294,12 +294,15 @@ public class AdminService {
 
             // 7. Registration Chart
             List<LocalDateTime> userCreatedDates = new ArrayList<>();
-            try (PreparedStatement stmt = conn.prepareStatement(queryChart);
-                 ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Timestamp ts = rs.getTimestamp("created_at");
-                    if (ts != null) {
-                        userCreatedDates.add(ts.toLocalDateTime());
+            LocalDateTime cutoff = LocalDateTime.now().minusMonths(5).withDayOfMonth(1).toLocalDate().atStartOfDay();
+            try (PreparedStatement stmt = conn.prepareStatement(queryChart)) {
+                stmt.setTimestamp(1, java.sql.Timestamp.valueOf(cutoff));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Timestamp ts = rs.getTimestamp("created_at");
+                        if (ts != null) {
+                            userCreatedDates.add(ts.toLocalDateTime());
+                        }
                     }
                 }
             }
@@ -318,9 +321,6 @@ public class AdminService {
                 String monthKey = date.format(formatter);
                 if (monthlyCountMap.containsKey(monthKey)) {
                     monthlyCountMap.put(monthKey, monthlyCountMap.get(monthKey) + 1);
-                } else {
-                    // Để vẽ biểu đồ, ta cũng chấp nhận gom nhóm các tháng trước đó nếu có dữ liệu
-                    monthlyCountMap.put(monthKey, monthlyCountMap.getOrDefault(monthKey, 0) + 1);
                 }
             }
 

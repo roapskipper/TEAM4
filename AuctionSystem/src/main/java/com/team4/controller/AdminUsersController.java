@@ -84,11 +84,11 @@ public class AdminUsersController implements Initializable {
                         current.getStyleClass().add("muted-text-sm");
                         actionBox.getChildren().add(current);
                     } else {
-                        boolean adminRole = "ADMIN".equalsIgnoreCase(user.getRole());
+                        boolean adminRole = "ADMIN".equalsIgnoreCase(user.getRole()) || "MODERATOR".equalsIgnoreCase(user.getRole());
                         if (canGrantAdmin() && adminRole && user.getAccessLevelCode() != 2) {
                             revokeBtn.setOnAction(e -> handleRevokeAdmin(user));
                             actionBox.getChildren().add(revokeBtn);
-                        } else if (canGrantAdmin() && !adminRole) {
+                        } else if (canGrantAdmin() && !adminRole && !"SUPER_ADMIN".equalsIgnoreCase(user.getRole())) {
                             grantBtn.setOnAction(e -> handleGrantAdmin(user));
                             actionBox.getChildren().add(grantBtn);
                         }
@@ -129,6 +129,14 @@ public class AdminUsersController implements Initializable {
                 String email = obj.has("email") ? obj.get("email").getAsString() : "";
                 String joinDate = obj.has("createdAt") ? obj.get("createdAt").getAsString() : "";
                 int accessLevelCode = obj.has("accessLevelCode") ? obj.get("accessLevelCode").getAsInt() : 0;
+                
+                if ("ADMIN".equalsIgnoreCase(role)) {
+                    if (accessLevelCode == 1) {
+                        role = "MODERATOR";
+                    } else if (accessLevelCode == 2) {
+                        role = "SUPER_ADMIN";
+                    }
+                }
                 
                 allUsers.add(new UserRow(id, username, fullName, role, email, joinDate, accessLevelCode));
             }
@@ -172,7 +180,9 @@ public class AdminUsersController implements Initializable {
             } else if ("Sellers Only".equals(roleStr)) {
                 matchFilter = "SELLER".equalsIgnoreCase(u.getRole());
             } else if ("Admins Only".equals(roleStr)) {
-                matchFilter = "ADMIN".equalsIgnoreCase(u.getRole());
+                matchFilter = "ADMIN".equalsIgnoreCase(u.getRole()) || 
+                              "MODERATOR".equalsIgnoreCase(u.getRole()) || 
+                              "SUPER_ADMIN".equalsIgnoreCase(u.getRole());
             }
             return matchSearch && matchFilter;
         });

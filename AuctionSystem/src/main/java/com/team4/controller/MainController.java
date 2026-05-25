@@ -90,6 +90,7 @@ public class MainController implements Initializable {
         Button btn = new Button(label);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.getStyleClass().add("nav-btn");
+        btn.setUserData(pageId);
         btn.setOnAction(e -> {
             selectNavButton(btn);
             loadPage(pageId, label, subtitle);
@@ -134,7 +135,7 @@ public class MainController implements Initializable {
         userRoleBadge.setText(roleText);
     }
 
-    private void loadPage(String pageId, String title, String subtitle) {
+    public Object loadPage(String pageId, String title, String subtitle) {
         this.currentPage = pageId;
         pageTitle.setText(title);
         pageSubtitle.setText(subtitle);
@@ -149,16 +150,41 @@ public class MainController implements Initializable {
                 ((BidderAuctionsController) controller).setMainController(this);
             } else if (controller instanceof BiddingRoomController) {
                 ((BiddingRoomController) controller).setMainController(this);
+            } else if (controller instanceof AdminDashboardController) {
+                ((AdminDashboardController) controller).setMainController(this);
             }
 
             contentArea.getChildren().clear();
             contentArea.getChildren().add(page);
+            return controller;
         } catch (Exception ex) {
+            ex.printStackTrace();
             Label placeholder = new Label("Page " + title + " (under development)");
             placeholder.getStyleClass().add("muted-text");
             contentArea.getChildren().clear();
             contentArea.getChildren().add(placeholder);
+            return null;
         }
+    }
+
+    public Object navigateByPageId(String pageId) {
+        for (Node n : navContainer.getChildren()) {
+            if (n instanceof Button) {
+                Button btn = (Button) n;
+                if (pageId.equals(btn.getUserData())) {
+                    selectNavButton(btn);
+                    String title = btn.getText();
+                    String subtitle = "";
+                    if ("admin_dashboard".equals(pageId)) subtitle = "Monitor and manage the system";
+                    else if ("admin_users".equals(pageId)) subtitle = "Lock/unlock accounts";
+                    else if ("admin_auctions".equals(pageId)) subtitle = "Approve and manage auctions";
+                    else if ("profile".equals(pageId)) subtitle = "Update your information";
+                    
+                    return loadPage(pageId, title, subtitle);
+                }
+            }
+        }
+        return loadPage(pageId, pageId, "");
     }
 
     public void refreshUserBalance() {

@@ -3,7 +3,10 @@ package com.team4.controller;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.util.StringConverter;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
@@ -37,14 +40,50 @@ public class AdminDashboardController implements Initializable {
     @FXML private Button refreshButton;
 
     private Timeline autoRefresh;
+    private MainController mainController;
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        regChart.setAnimated(true);
+        
+        // Cấu hình trục Y chỉ hiển thị các mốc số nguyên (bước nhảy = 1, tránh nhảy chẵn hoặc hiển thị số thập phân)
+        if (regChart.getYAxis() instanceof NumberAxis) {
+            NumberAxis yAxis = (NumberAxis) regChart.getYAxis();
+            yAxis.setForceZeroInRange(true);
+            yAxis.setTickUnit(1.0);
+            yAxis.setMinorTickVisible(false);
+            yAxis.setTickLabelFormatter(new StringConverter<Number>() {
+                @Override
+                public String toString(Number object) {
+                    if (object.doubleValue() == object.intValue()) {
+                        return String.valueOf(object.intValue());
+                    }
+                    return "";
+                }
+
+                @Override
+                public Number fromString(String string) {
+                    return Double.valueOf(string);
+                }
+            });
+        }
+
         loadData();
         
         autoRefresh = new Timeline(new KeyFrame(Duration.seconds(30), e -> loadData()));
         autoRefresh.setCycleCount(Timeline.INDEFINITE);
         autoRefresh.play();
+
+        // Dừng timeline khi view bị gỡ khỏi Scene (tránh trùng lặp tài nguyên và rò rỉ bộ nhớ)
+        regChart.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null && autoRefresh != null) {
+                autoRefresh.stop();
+            }
+        });
     }
 
     @FXML
@@ -82,20 +121,27 @@ public class AdminDashboardController implements Initializable {
     }
 
     private void navigateTo(String pageId, Consumer<Object> controllerAction) {
-        try {
-            javafx.scene.layout.StackPane contentArea = (javafx.scene.layout.StackPane) refreshButton.getScene().getRoot().lookup("#contentArea");
-            if (contentArea != null) {
-                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
-                javafx.scene.Parent page = loader.load();
-                if (controllerAction != null) {
-                    controllerAction.accept(loader.getController());
-                }
-                contentArea.getChildren().clear();
-                contentArea.getChildren().add(page);
+        if (mainController != null) {
+            Object controller = mainController.navigateByPageId(pageId);
+            if (controllerAction != null && controller != null) {
+                controllerAction.accept(controller);
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            showError("Failed to navigate to " + pageId);
+        } else {
+            try {
+                javafx.scene.layout.StackPane contentArea = (javafx.scene.layout.StackPane) refreshButton.getScene().getRoot().lookup("#contentArea");
+                if (contentArea != null) {
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/com/team4/view/" + pageId + ".fxml"));
+                    javafx.scene.Parent page = loader.load();
+                    if (controllerAction != null) {
+                        controllerAction.accept(loader.getController());
+                    }
+                    contentArea.getChildren().clear();
+                    contentArea.getChildren().add(page);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                showError("Failed to navigate to " + pageId);
+            }
         }
     }
 
@@ -159,25 +205,101 @@ public class AdminDashboardController implements Initializable {
     }
 
     private void updateChart(JsonObject data) {
-        regChart.getData().clear();
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("New Users");
-
+        // 1. Tải dữ liệu mới trước
+        java.util.List<javafx.scene.chart.XYChart.Data<String, Number>> newPoints = new java.util.ArrayList<>();
         if (data.has("registrationChart") && data.get("registrationChart").isJsonArray()) {
             JsonArray chartData = data.getAsJsonArray("registrationChart");
             for (JsonElement el : chartData) {
                 JsonObject point = el.getAsJsonObject();
                 String month = point.has("month") ? point.get("month").getAsString() : "";
                 int count = point.has("count") ? point.get("count").getAsInt() : 0;
-                series.getData().add(new XYChart.Data<>(month, count));
+                newPoints.add(new XYChart.Data<>(month, count));
             }
         } else {
-            series.getData().add(new XYChart.Data<>("Jan", 120));
-            series.getData().add(new XYChart.Data<>("Feb", 180));
-            series.getData().add(new XYChart.Data<>("Mar", 240));
-            series.getData().add(new XYChart.Data<>("Apr", 310));
+            newPoints.add(new XYChart.Data<>("Jan", 120));
+            newPoints.add(new XYChart.Data<>("Feb", 180));
+            newPoints.add(new XYChart.Data<>("Mar", 240));
+            newPoints.add(new XYChart.Data<>("Apr", 310));
         }
-        regChart.getData().add(series);
+
+        // 2. Khóa cứng các nhãn trục X bằng cách thiết lập categories một cách tường minh (ngăn lỗi trùng lặp/sai thứ tự của JavaFX)
+        if (regChart.getXAxis() instanceof CategoryAxis) {
+            CategoryAxis xAxis = (CategoryAxis) regChart.getXAxis();
+            java.util.List<String> months = new java.util.ArrayList<>();
+            for (XYChart.Data<String, Number> pt : newPoints) {
+                months.add(pt.getXValue());
+            }
+            xAxis.setCategories(javafx.collections.FXCollections.observableArrayList(months));
+        }
+
+        // 3. Cấu hình giới hạn trục Y thủ công dựa trên dữ liệu thực tế để tránh lỗi auto-ranging bị kẹt ở [0, 10] do hiệu ứng hoạt họa của JavaFX
+        if (regChart.getYAxis() instanceof NumberAxis) {
+            NumberAxis yAxis = (NumberAxis) regChart.getYAxis();
+            yAxis.setAutoRanging(false);
+            yAxis.setLowerBound(0);
+            
+            double maxVal = 0;
+            for (XYChart.Data<String, Number> pt : newPoints) {
+                double val = pt.getYValue().doubleValue();
+                if (val > maxVal) {
+                    maxVal = val;
+                }
+            }
+
+            double tickUnit = 1.0;
+            if (maxVal <= 10) {
+                tickUnit = 1.0;
+            } else if (maxVal <= 20) {
+                tickUnit = 2.0;
+            } else if (maxVal <= 50) {
+                tickUnit = 5.0;
+            } else if (maxVal <= 100) {
+                tickUnit = 10.0;
+            } else {
+                tickUnit = Math.ceil(maxVal / 10.0);
+            }
+
+            double upperBound = Math.ceil(maxVal / tickUnit) * tickUnit;
+            if (upperBound == 0) {
+                upperBound = 10.0;
+            } else if (upperBound == maxVal) {
+                upperBound += tickUnit;
+            }
+
+            yAxis.setTickUnit(tickUnit);
+            yAxis.setUpperBound(upperBound);
+        }
+
+        // 3. Tách biệt việc gán/cập nhật dữ liệu
+        XYChart.Series<String, Number> series;
+        if (regChart.getData().isEmpty()) {
+            series = new XYChart.Series<>();
+            series.setName("New Users");
+            regChart.getData().add(series);
+        } else {
+            series = regChart.getData().get(0);
+        }
+
+        // Cập nhật giá trị mượt mà để giữ nguyên hiệu ứng hoạt họa và tránh lỗi lặp trục CategoryAxis
+        if (series.getData().isEmpty()) {
+            series.getData().addAll(newPoints);
+        } else {
+            // Cập nhật giá trị điểm cũ
+            for (int i = 0; i < newPoints.size(); i++) {
+                XYChart.Data<String, Number> newPt = newPoints.get(i);
+                if (i < series.getData().size()) {
+                    XYChart.Data<String, Number> existingPt = series.getData().get(i);
+                    existingPt.setXValue(newPt.getXValue());
+                    existingPt.setYValue(newPt.getYValue());
+                } else {
+                    series.getData().add(newPt);
+                }
+            }
+            // Xóa phần thừa
+            if (series.getData().size() > newPoints.size()) {
+                series.getData().remove(newPoints.size(), series.getData().size());
+            }
+        }
     }
 
     private void updateAlerts(JsonObject data) {
