@@ -4,7 +4,7 @@
 
 -- Super Admin: admin123 & adminteam4
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
-VALUES ('root-admin', CURRENT_TIMESTAMP, 'superadmin', '$2a$10$11LHcGDgscLK6AfF.b.v.u0IpjD38/WFFraZpmAH7wkjuCROeXgCO', 'Trung Tran', 'admin@auctionsystem.com', 'ADMIN', 0, '$2a$10$KR9gs3SsPt.BzkVh6GFiFOhTzolKb1iXoCzjp9bbzrUpO4WIGTrhu', 2);
+VALUES ('root-admin', CURRENT_TIMESTAMP, 'superadmin', '$2a$10$Ew.YIn0n3k6S22qP8u68N.0q/sL/7m693Q06z3FqK3v.h9C2e4w1W', 'Trung Tran', 'admin@auctionsystem.com', 'ADMIN', 0, '$2a$10$vQ4RTsfsmWKTRKHsRboTxuhrnf8Sq5TUIuHbV9FrQh9oCe5jFpShi', 2);
 
 -- Moderators: mod123 & mod-code-01/02/03
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, admin_code_hash, access_level)
