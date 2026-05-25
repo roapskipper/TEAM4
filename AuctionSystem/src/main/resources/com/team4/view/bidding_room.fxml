@@ -96,7 +96,7 @@
 
         <VBox spacing="16" prefWidth="380">
 
-            <VBox styleClass="bidding-card" spacing="14">
+            <VBox fx:id="bidControlsCard" styleClass="bidding-card" spacing="14">
                 <HBox alignment="CENTER_LEFT" spacing="10">
                     <Label text="Place Bid" styleClass="section-title" HBox.hgrow="ALWAYS"/>
                     <Label fx:id="walletBalance" text="Wallet: --" styleClass="balance-pill-compact"/>

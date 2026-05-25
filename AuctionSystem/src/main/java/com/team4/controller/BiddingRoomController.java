@@ -43,7 +43,7 @@ public class BiddingRoomController implements Initializable {
     @FXML private TextField bidAmountField;
     @FXML private Button quick100k, quick200k, quick500k, quick1m, placeBidBtn;
     @FXML private ToggleButton autoBidToggle;
-    @FXML private VBox autoBidPanel;
+    @FXML private VBox bidControlsCard, autoBidPanel;
     @FXML private TextField autoBidMax;
     @FXML private Button applyAutoBidBtn;
 
@@ -70,6 +70,7 @@ public class BiddingRoomController implements Initializable {
         hideBidError();
         updateWalletBalanceLabel();
         setRoomLoadingState();
+        applyRoleVisibility();
     }
 
     public void setMainController(MainController mainController) {
@@ -102,6 +103,7 @@ public class BiddingRoomController implements Initializable {
         auctionEndTime = null;
         auctionStatus = "";
         itemName.setText("Loading auction...");
+        applyRoleVisibility();
         if (itemDescription != null) {
             itemDescription.setText("");
         }
@@ -129,6 +131,7 @@ public class BiddingRoomController implements Initializable {
         auctionStatus = stringValue(data, "status", "");
 
         itemName.setText(stringValue(data, "itemName", "Untitled item"));
+        applyRoleVisibility();
         itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
         itemCondition.setText(formatStatus(auctionStatus));
         sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
@@ -212,21 +215,45 @@ public class BiddingRoomController implements Initializable {
     }
 
     private void setBiddingControlsDisabled(boolean disabled) {
-        if (bidAmountField != null) bidAmountField.setDisable(disabled);
-        if (placeBidBtn != null) placeBidBtn.setDisable(disabled);
-        if (quick100k != null) quick100k.setDisable(disabled);
-        if (quick200k != null) quick200k.setDisable(disabled);
-        if (quick500k != null) quick500k.setDisable(disabled);
-        if (quick1m != null) quick1m.setDisable(disabled);
-        if (autoBidToggle != null) autoBidToggle.setDisable(disabled);
-        if (applyAutoBidBtn != null && disabled) applyAutoBidBtn.setDisable(true);
-        if (disabled && !isAuctionOpenForBidding()) {
+        boolean shouldDisable = disabled || !isBidderRole();
+        if (bidAmountField != null) bidAmountField.setDisable(shouldDisable);
+        if (placeBidBtn != null) placeBidBtn.setDisable(shouldDisable);
+        if (quick100k != null) quick100k.setDisable(shouldDisable);
+        if (quick200k != null) quick200k.setDisable(shouldDisable);
+        if (quick500k != null) quick500k.setDisable(shouldDisable);
+        if (quick1m != null) quick1m.setDisable(shouldDisable);
+        if (autoBidToggle != null) autoBidToggle.setDisable(shouldDisable);
+        if (applyAutoBidBtn != null && shouldDisable) applyAutoBidBtn.setDisable(true);
+        if (shouldDisable && !isAuctionOpenForBidding()) {
             resetAutoBidUi();
         }
     }
 
+    private void applyRoleVisibility() {
+        boolean seller = isSellerRole();
+        if (bidControlsCard != null) {
+            bidControlsCard.setManaged(!seller);
+            bidControlsCard.setVisible(!seller);
+        }
+        if (seller) {
+            setBiddingControlsDisabled(true);
+            hideBidError();
+        }
+    }
+
+    private boolean isSellerRole() {
+        UserSession session = UserSession.getInstance();
+        return session != null && "seller".equalsIgnoreCase(session.getRole());
+    }
+
+    private boolean isBidderRole() {
+        UserSession session = UserSession.getInstance();
+        return session != null && "bidder".equalsIgnoreCase(session.getRole());
+    }
+
     private boolean isAuctionOpenForBidding() {
-        return isOngoingStatus(auctionStatus)
+        return isBidderRole()
+                && isOngoingStatus(auctionStatus)
                 && auctionEndTime != null
                 && ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime) > 0;
     }
@@ -279,13 +306,13 @@ public class BiddingRoomController implements Initializable {
             }
 
             if ("BID_FAILED".equals(action)) {
-                placeBidBtn.setDisable(false);
+                setBiddingControlsDisabled(!isAuctionOpenForBidding());
                 showBidError(stringValue(json, "message", "Bid failed."));
                 return;
             }
 
             if ("BID_SUCCESS".equals(action) || "BID_UPDATE".equals(action)) {
-                placeBidBtn.setDisable(false);
+                setBiddingControlsDisabled(!isAuctionOpenForBidding());
                 hideBidError();
                 if (data.has("currentHighestBidderId")) {
                     currentLeaderId = stringValue(data, "currentHighestBidderId", currentLeaderId);
@@ -357,6 +384,10 @@ public class BiddingRoomController implements Initializable {
 
     private void placeBid(double amount) {
         UserSession session = UserSession.getInstance();
+        if (!isBidderRole()) {
+            showBidError("Only bidders can place bids.");
+            return;
+        }
         if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
             showBidError("Please log in as a bidder before placing a bid.");
             return;
@@ -383,7 +414,7 @@ public class BiddingRoomController implements Initializable {
         if (Client.getInstance().isConnected()) {
             Client.getInstance().sendBid(auctionId, session.getUserId(), amount);
         } else {
-            placeBidBtn.setDisable(false);
+            setBiddingControlsDisabled(!isAuctionOpenForBidding());
         }
     }
 
