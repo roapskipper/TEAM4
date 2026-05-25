@@ -218,8 +218,7 @@ public class AddProductDialogController implements Initializable {
 
         Item.ItemCategory category = Item.ItemCategory.valueOf(categoryLabel.toUpperCase());
         try {
-            new com.team4.service.ItemService(null, null)
-                    .validatePrice(category, price);
+            com.team4.service.ItemService.validatePrice(category, price);
         } catch (com.team4.util.BusinessException be) {
             throw new IllegalArgumentException(be.getMessage());
         }
@@ -414,6 +413,7 @@ public class AddProductDialogController implements Initializable {
     }
 
     /** @deprecated use {@link #getItemRequest()} */
+    @Deprecated
     public String getName() {
         return builtRequest != null ? builtRequest.getName() : null;
     }

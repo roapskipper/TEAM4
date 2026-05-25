@@ -28,6 +28,21 @@ public class ItemService {
     private final UserDAO userDAO;
     private final AuctionDAO auctionDAO;
 
+    private static final java.math.BigDecimal BD_5000 = new java.math.BigDecimal("5000");
+    private static final java.math.BigDecimal BD_50000 = new java.math.BigDecimal("50000");
+    private static final java.math.BigDecimal BD_1000 = new java.math.BigDecimal("1000");
+    private static final java.math.BigDecimal BD_100000 = new java.math.BigDecimal("100000");
+    private static final java.math.BigDecimal BD_500000 = new java.math.BigDecimal("500000");
+    private static final java.math.BigDecimal BD_1_MILLION = new java.math.BigDecimal("1000000");
+    private static final java.math.BigDecimal BD_2_MILLION = new java.math.BigDecimal("2000000");
+    private static final java.math.BigDecimal BD_10_MILLION = new java.math.BigDecimal("10000000");
+    private static final java.math.BigDecimal BD_50_MILLION = new java.math.BigDecimal("50000000");
+    private static final java.math.BigDecimal BD_100_MILLION = new java.math.BigDecimal("100000000");
+    private static final java.math.BigDecimal BD_500_MILLION = new java.math.BigDecimal("500000000");
+    private static final java.math.BigDecimal BD_2_BILLION = new java.math.BigDecimal("2000000000");
+    private static final java.math.BigDecimal BD_5_BILLION = new java.math.BigDecimal("5000000000");
+    private static final java.math.BigDecimal BD_10_BILLION = new java.math.BigDecimal("10000000000");
+
     @Deprecated
     public ItemService(ItemDAO itemDAO, UserDAO userDAO) {
         this(itemDAO, userDAO, null);
@@ -433,34 +448,34 @@ public class ItemService {
     /**
      * Validate product pricing rules based on category
      */
-    public void validatePrice(Item.ItemCategory category, java.math.BigDecimal price) {
+    public static void validatePrice(Item.ItemCategory category, java.math.BigDecimal price) {
         if (price == null) {
             throw new BusinessException("Starting price cannot be null.");
         }
-        if (price.compareTo(new java.math.BigDecimal("50000")) < 0) {
+        if (price.compareTo(BD_50000) < 0) {
             throw new BusinessException("Minimum starting price is 50,000 VND.");
         }
-        if (price.remainder(new java.math.BigDecimal("1000")).compareTo(java.math.BigDecimal.ZERO) != 0) {
+        if (price.remainder(BD_1000).compareTo(java.math.BigDecimal.ZERO) != 0) {
             throw new BusinessException("Price must be a multiple of 1,000 VND (no decimals).");
         }
 
         java.math.BigDecimal maxPrice;
         switch (category) {
             case ELECTRONICS:
-                maxPrice = new java.math.BigDecimal("5000000000");
+                maxPrice = BD_5_BILLION;
                 break;
             case VEHICLE:
-                maxPrice = new java.math.BigDecimal("10000000000");
+                maxPrice = BD_10_BILLION;
                 break;
             case ART:
             case COLLECTIBLE:
-                maxPrice = new java.math.BigDecimal("2000000000");
+                maxPrice = BD_2_BILLION;
                 break;
             case FASHION:
-                maxPrice = new java.math.BigDecimal("500000000");
+                maxPrice = BD_500_MILLION;
                 break;
             default:
-                maxPrice = new java.math.BigDecimal("10000000000");
+                maxPrice = BD_10_BILLION;
         }
         if (price.compareTo(maxPrice) > 0) {
             java.text.NumberFormat formatter = java.text.NumberFormat.getInstance(java.util.Locale.US);
@@ -469,18 +484,18 @@ public class ItemService {
     }
 
     private java.math.BigDecimal calculateDefaultBidIncrement(java.math.BigDecimal startingPrice) {
-        if (startingPrice.compareTo(new java.math.BigDecimal("100000")) < 0) {
-            return new java.math.BigDecimal("5000");
-        } else if (startingPrice.compareTo(new java.math.BigDecimal("1000000")) < 0) {
-            return new java.math.BigDecimal("50000");
-        } else if (startingPrice.compareTo(new java.math.BigDecimal("10000000")) < 0) {
-            return new java.math.BigDecimal("100000");
-        } else if (startingPrice.compareTo(new java.math.BigDecimal("50000000")) < 0) {
-            return new java.math.BigDecimal("500000");
-        } else if (startingPrice.compareTo(new java.math.BigDecimal("100000000")) < 0) {
-            return new java.math.BigDecimal("1000000");
+        if (startingPrice.compareTo(BD_100000) < 0) {
+            return BD_5000;
+        } else if (startingPrice.compareTo(BD_1_MILLION) < 0) {
+            return BD_50000;
+        } else if (startingPrice.compareTo(BD_10_MILLION) < 0) {
+            return BD_100000;
+        } else if (startingPrice.compareTo(BD_50_MILLION) < 0) {
+            return BD_500000;
+        } else if (startingPrice.compareTo(BD_100_MILLION) < 0) {
+            return BD_1_MILLION;
         } else {
-            return new java.math.BigDecimal("2000000");
+            return BD_2_MILLION;
         }
     }
 }

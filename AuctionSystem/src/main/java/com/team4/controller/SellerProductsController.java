@@ -340,7 +340,7 @@ public class SellerProductsController implements Initializable {
                 new ApiClient().updateItem(
                         currentSellerId(),
                         item.getId(),
-                        dialogController.getName(),
+                        dialogController.getItemRequest().getName(),
                         dialogController.getCategory(),
                         dialogController.getPrice(),
                         dialogController.getDescription()
