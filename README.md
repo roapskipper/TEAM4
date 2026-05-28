@@ -137,13 +137,13 @@ mvn -q -DskipTests compile
 Chạy backend server trước. Class này sẽ khởi động database setup, REST API server, socket server và auction scheduler:
 
 ```bash
-mvn exec:java -Dexec.mainClass="com.team4.server.Server"
+mvn exec:java "-Dexec.mainClass=com.team4.server.Server"
 ```
 
 Sau đó chạy JavaFX client ở terminal khác:
 
 ```bash
-mvn exec:java -Dexec.mainClass="com.team4.Launcher"
+mvn exec:java "-Dexec.mainClass=com.team4.Launcher"
 ```
 
 Trong IntelliJ, chạy trực tiếp các class:
