@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: auction_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: auction_system
+      MYSQL_USER: team4
+      MYSQL_PASSWORD: team4pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./AuctionSystem
+      dockerfile: Dockerfile
+    container_name: auction_server
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "18368:18368"
+    environment:
+      - DB_URL=jdbc:mysql://db:3306/auction_system?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+      - DB_USERNAME=team4
+      - DB_PASSWORD=team4pass
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=18368
+      - API_BASE_URL=http://localhost:8080/api/
+
+volumes:
+  mysql_data:
