@@ -14,6 +14,8 @@ public interface ItemDAO {
     boolean insert(Item item);
     boolean insert(Connection conn, Item item);
     boolean update(Item item);
+    boolean update(Connection conn, Item item);
     boolean updateOwner(Connection conn, String itemId, String ownerId);
     boolean delete(String id);
+    boolean delete(Connection conn, String id);
 }

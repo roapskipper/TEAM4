@@ -255,6 +255,23 @@ public class ItemDAOImpl implements ItemDAO {
     }
 
     @Override
+    public boolean update(Connection conn, Item item) {
+        String sql = "UPDATE items SET name = ?, description = ?, starting_price = ?, category = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, item.getName());
+            stmt.setString(2, item.getDescription());
+            stmt.setBigDecimal(3, item.getStartingPrice());
+            stmt.setString(4, item.getCategory().name());
+            stmt.setString(5, item.getId());
+
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to update item id={} in transaction", item.getId(), e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean updateOwner(Connection conn, String itemId, String ownerId) {
         String sql = "UPDATE items SET owner_id = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -276,6 +293,18 @@ public class ItemDAOImpl implements ItemDAO {
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("Unable to delete item id={}", id, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(Connection conn, String id) {
+        String sql = "DELETE FROM items WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to delete item id={} in transaction", id, e);
             return false;
         }
     }

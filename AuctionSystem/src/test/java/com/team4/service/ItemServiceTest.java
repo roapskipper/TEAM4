@@ -3,6 +3,7 @@ package com.team4.service;
 import com.team4.dao.AuctionDAO;
 import com.team4.dao.ItemDAO;
 import com.team4.dao.UserDAO;
+import com.team4.db.DatabaseManager;
 import com.team4.dto.item.*;
 import com.team4.factory.ItemRequest;
 import com.team4.model.*;
@@ -12,10 +13,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -221,7 +225,9 @@ public class ItemServiceTest {
             ItemResponseDTO result = customItemService.createItem(sellerId, request);
 
             assertNotNull(result);
-            verify(mockAuctionDAO).insert(any(Auction.class));
+            ArgumentCaptor<Auction> auctionCaptor = ArgumentCaptor.forClass(Auction.class);
+            verify(mockAuctionDAO).insert(auctionCaptor.capture());
+            assertEquals(Auction.AuctionStatus.PENDING, auctionCaptor.getValue().getStatus());
         }
     }
 
@@ -677,6 +683,42 @@ public class ItemServiceTest {
             );
             assertEquals("Seller does not own this item.", ex.getMessage());
         }
+
+        @Test
+        @DisplayName("Khong cho sua gia neu auction da chay")
+        void testUpdateItem_RunningAuctionPriceChangeBlocked() {
+            String sellerId = "seller-1";
+            String itemId = "item-running";
+            Art item = new Art(itemId, LocalDateTime.now(), "Live Item", new BigDecimal("100000"), "Desc", sellerId, "Artist", 2000, Art.Medium.INK, "10x10 cm");
+            Auction auction = new Auction(
+                    "auction-1",
+                    LocalDateTime.now(),
+                    itemId,
+                    sellerId,
+                    null,
+                    new BigDecimal("100000"),
+                    new BigDecimal("100000"),
+                    new BigDecimal("10000"),
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusHours(1),
+                    Auction.AuctionStatus.RUNNING
+            );
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+
+            when(mockItemDAO.findById(itemId)).thenReturn(item);
+            when(mockAuctionDAO.findByItemId(itemId)).thenReturn(auction);
+
+            BusinessException ex = assertThrows(BusinessException.class, () ->
+                    customItemService.updateItem(sellerId, itemId, "Live Item", "Desc", new BigDecimal("120000"), Item.ItemCategory.ART)
+            );
+
+            assertEquals("Starting price can only be changed while the auction is pending.", ex.getMessage());
+            verify(mockItemDAO, never()).update(any(Item.class));
+        }
     }
 
     @Nested
@@ -698,6 +740,88 @@ public class ItemServiceTest {
 
             // THEN: Xác nhận DAO xóa đã được gọi
             verify(itemDAO).delete(itemId);
+        }
+
+        @Test
+        @DisplayName("Xoa mat hang kem auction PENDING thanh cong")
+        void testDeleteItem_PendingAuctionDeletesAuctionAndItem() throws Exception {
+            String sellerId = "seller-1";
+            String itemId = "item-pending-delete";
+            Art item = new Art(itemId, LocalDateTime.now(), "DeleteMe", new BigDecimal("100000"), "...", sellerId, "Artist", 2000, Art.Medium.INK, "10x10 cm");
+            Auction auction = new Auction(
+                    "auction-pending",
+                    LocalDateTime.now(),
+                    itemId,
+                    sellerId,
+                    null,
+                    new BigDecimal("100000"),
+                    new BigDecimal("100000"),
+                    new BigDecimal("10000"),
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusHours(1),
+                    Auction.AuctionStatus.PENDING
+            );
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+            Connection connection = mock(Connection.class);
+
+            when(mockItemDAO.findById(itemId)).thenReturn(item);
+            when(mockAuctionDAO.findByItemId(itemId)).thenReturn(auction);
+            when(mockAuctionDAO.deletePendingByItemId(connection, itemId)).thenReturn(true);
+            when(mockItemDAO.delete(connection, itemId)).thenReturn(true);
+
+            try (MockedStatic<DatabaseManager> databaseManager = mockStatic(DatabaseManager.class)) {
+                databaseManager.when(DatabaseManager::getConnection).thenReturn(connection);
+
+                customItemService.deleteItem(itemId, sellerId);
+
+                databaseManager.verify(() -> DatabaseManager.beginTransaction(connection));
+                databaseManager.verify(() -> DatabaseManager.commitTransaction(connection));
+            }
+
+            verify(mockAuctionDAO).deletePendingByItemId(connection, itemId);
+            verify(mockItemDAO).delete(connection, itemId);
+            verify(connection).close();
+            verify(mockItemDAO, never()).delete(itemId);
+        }
+
+        @Test
+        @DisplayName("Khong xoa mat hang neu auction da chay")
+        void testDeleteItem_RunningAuctionBlocked() {
+            String sellerId = "seller-1";
+            String itemId = "item-running-delete";
+            Art item = new Art(itemId, LocalDateTime.now(), "Running", new BigDecimal("100000"), "...", sellerId, "Artist", 2000, Art.Medium.INK, "10x10 cm");
+            Auction auction = new Auction(
+                    "auction-running",
+                    LocalDateTime.now(),
+                    itemId,
+                    sellerId,
+                    null,
+                    new BigDecimal("100000"),
+                    new BigDecimal("100000"),
+                    new BigDecimal("10000"),
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusHours(1),
+                    Auction.AuctionStatus.RUNNING
+            );
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+
+            when(mockItemDAO.findById(itemId)).thenReturn(item);
+            when(mockAuctionDAO.findByItemId(itemId)).thenReturn(auction);
+
+            BusinessException ex = assertThrows(BusinessException.class, () ->
+                    customItemService.deleteItem(itemId, sellerId)
+            );
+
+            assertEquals("Only products with pending auctions can be deleted.", ex.getMessage());
+            verify(mockItemDAO, never()).delete(anyString());
         }
     }
 

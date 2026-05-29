@@ -106,7 +106,9 @@ public class ItemsHandler implements HttpHandler {
                 param(body, "sellerId"),
                 itemId,
                 param(body, "name"),
-                param(body, "description"));
+                param(body, "description"),
+                parseBigDecimal(param(body, "startingPrice")),
+                parseEnum(Item.ItemCategory.class, param(body, "category")));
         ApiServer.sendResponse(exchange, 200,
                 ApiServer.buildResponse("SUCCESS", "Item updated successfully",
                         Server.getGson().toJsonTree(dto)));

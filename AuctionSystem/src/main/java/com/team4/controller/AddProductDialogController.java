@@ -392,12 +392,12 @@ public class AddProductDialogController implements Initializable {
         priceField.setText(String.format(java.util.Locale.US, "%.0f", p));
         descArea.setText(d != null ? d : "");
         hideAllCategoryPanels();
+        categoryBox.setDisable(true);
 
         if (!"PENDING".equalsIgnoreCase(status)) {
             priceField.setDisable(true);
             if ("ACTIVE".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status)) {
                 nameField.setDisable(true);
-                categoryBox.setDisable(true);
                 descArea.setDisable(true);
             }
         }

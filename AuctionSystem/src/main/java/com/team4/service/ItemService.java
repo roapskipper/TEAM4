@@ -124,7 +124,6 @@ public class ItemService {
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
                 java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
                 Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
-                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
                 
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
@@ -137,8 +136,8 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Auto-created auction for item (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("RUNNING");
+                logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("PENDING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }
@@ -220,7 +219,6 @@ public class ItemService {
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
                 java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
                 Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
-                auction.approve(); // Tự động kích hoạt trạng thái RUNNING (Live)
                 
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
@@ -233,8 +231,8 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Auto-created auction for item (RUNNING): itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("RUNNING");
+                logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                item.setStatus("PENDING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }
@@ -298,6 +296,12 @@ public class ItemService {
      * Cập nhật thông tin mặt hàng: kiểm tra item thuộc về seller này không, cập nhật DB
      */
     public ItemResponseDTO updateItem(String sellerId, String itemId, String newName, String newDescription) {
+        return updateItem(sellerId, itemId, newName, newDescription, null, null);
+    }
+
+    public ItemResponseDTO updateItem(String sellerId, String itemId, String newName, String newDescription,
+                                      java.math.BigDecimal newStartingPrice,
+                                      Item.ItemCategory newCategory) {
         logger.info("Updating item: itemId={}, sellerId={}", itemId, sellerId);
         Item existingItem = itemDAO.findById(itemId);
         if (existingItem == null) {
@@ -309,9 +313,61 @@ public class ItemService {
             throw new BusinessException("Seller does not own this item.");
         }
 
+        Auction auction = auctionDAO != null ? auctionDAO.findByItemId(itemId) : null;
+        if (newCategory != null && newCategory != existingItem.getCategory()) {
+            throw new BusinessException("Product category cannot be changed after creation.");
+        }
+        if (newStartingPrice != null) {
+            validatePrice(existingItem.getCategory(), newStartingPrice);
+            if (auction != null && auction.getStatus() != Auction.AuctionStatus.PENDING) {
+                throw new BusinessException("Starting price can only be changed while the auction is pending.");
+            }
+        }
+
         existingItem.setName(newName);
         existingItem.setDescription(newDescription);
-        boolean updated = itemDAO.update(existingItem);
+        if (newStartingPrice != null) {
+            existingItem.setStartingPrice(newStartingPrice);
+        }
+        if (newCategory != null) {
+            existingItem.setCategory(newCategory);
+        }
+
+        boolean updated;
+        if (auctionDAO != null && auction != null) {
+            java.sql.Connection conn = null;
+            try {
+                conn = com.team4.db.DatabaseManager.getConnection();
+                com.team4.db.DatabaseManager.beginTransaction(conn);
+
+                updated = itemDAO.update(conn, existingItem);
+                if (!updated) {
+                    throw new BusinessException("Unable to update item.");
+                }
+
+                if (newStartingPrice != null) {
+                    java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(existingItem.getStartingPrice());
+                    if (!auctionDAO.updatePendingPricingByItemId(conn, itemId, existingItem.getStartingPrice(), bidIncrement)) {
+                        throw new BusinessException("Unable to update pending auction price.");
+                    }
+                }
+
+                com.team4.db.DatabaseManager.commitTransaction(conn);
+            } catch (BusinessException e) {
+                if (conn != null) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+                throw e;
+            } catch (Exception e) {
+                if (conn != null) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+                logger.error("System error during item update", e);
+                throw new BusinessException("System error: " + e.getMessage());
+            } finally {
+                if (conn != null) {
+                    try { conn.close(); } catch (Exception ignored) {}
+                }
+            }
+        } else {
+            updated = itemDAO.update(existingItem);
+        }
         if (updated) {
             logger.info("Item updated successfully: itemId={}", itemId);
         } else {
@@ -336,9 +392,41 @@ public class ItemService {
             throw new BusinessException("Seller does not own this item.");
         }
 
-        if (auctionDAO != null && auctionDAO.findByItemId(itemId) != null) {
-            logger.warn("Delete failed: item already has an auction. itemId={}", itemId);
-            throw new BusinessException("Cannot delete an item that already has an auction.");
+        Auction auction = auctionDAO != null ? auctionDAO.findByItemId(itemId) : null;
+        if (auction != null) {
+            if (auction.getStatus() != Auction.AuctionStatus.PENDING) {
+                logger.warn("Delete failed: item already has a non-pending auction. itemId={}, status={}",
+                        itemId, auction.getStatus());
+                throw new BusinessException("Only products with pending auctions can be deleted.");
+            }
+
+            java.sql.Connection conn = null;
+            try {
+                conn = com.team4.db.DatabaseManager.getConnection();
+                com.team4.db.DatabaseManager.beginTransaction(conn);
+
+                if (!auctionDAO.deletePendingByItemId(conn, itemId)) {
+                    throw new BusinessException("Unable to delete pending auction.");
+                }
+                if (!itemDAO.delete(conn, itemId)) {
+                    throw new BusinessException("Unable to delete item.");
+                }
+
+                com.team4.db.DatabaseManager.commitTransaction(conn);
+                logger.info("Item and pending auction deleted successfully: itemId={}", itemId);
+                return;
+            } catch (BusinessException e) {
+                if (conn != null) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+                throw e;
+            } catch (Exception e) {
+                if (conn != null) com.team4.db.DatabaseManager.rollbackTransaction(conn);
+                logger.error("System error during item deletion", e);
+                throw new BusinessException("System error: " + e.getMessage());
+            } finally {
+                if (conn != null) {
+                    try { conn.close(); } catch (Exception ignored) {}
+                }
+            }
         }
 
         boolean deleted = itemDAO.delete(itemId);

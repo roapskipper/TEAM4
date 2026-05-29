@@ -258,6 +258,34 @@ public class AuctionDAOImpl implements AuctionDAO {
     }
 
 
+    @Override
+    public boolean updatePendingPricingByItemId(Connection conn, String itemId, BigDecimal startingPrice, BigDecimal bidIncrement) {
+        String sql = "UPDATE auctions SET starting_price = ?, current_price = ?, bid_increment = ? " +
+                "WHERE item_id = ? AND status = 'PENDING'";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1, startingPrice);
+            stmt.setBigDecimal(2, startingPrice);
+            stmt.setBigDecimal(3, bidIncrement);
+            stmt.setString(4, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to update pending auction pricing itemId={}", itemId, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deletePendingByItemId(Connection conn, String itemId) {
+        String sql = "DELETE FROM auctions WHERE item_id = ? AND status = 'PENDING'";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("Unable to delete pending auction for itemId={}", itemId, e);
+            return false;
+        }
+    }
+
     private List<Auction> executeQueryList(String sql) {
         List<Auction> list = new ArrayList<>();
         try (Connection conn = DatabaseManager.getConnection();

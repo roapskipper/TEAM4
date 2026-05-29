@@ -129,6 +129,10 @@ public abstract class Item extends Entity {
         validateBaseItem();
     }
     public BigDecimal getStartingPrice() { return startingPrice; }
+    public void setStartingPrice(BigDecimal startingPrice) {
+        this.startingPrice = money(startingPrice);
+        validateBaseItem();
+    }
     public ItemCategory getCategory() { return category; }
     public void setCategory(ItemCategory category) {
         this.category = category;

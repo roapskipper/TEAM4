@@ -20,4 +20,6 @@ public interface AuctionDAO {
     boolean updateStatus(String auctionId, Auction.AuctionStatus newStatus);
     boolean updateStatus(Connection conn, String auctionId, Auction.AuctionStatus newStatus);
     boolean updateCurrentBid(Connection conn, String id, BigDecimal currentPrice, String highestBidderId);
+    boolean updatePendingPricingByItemId(Connection conn, String itemId, BigDecimal startingPrice, BigDecimal bidIncrement);
+    boolean deletePendingByItemId(Connection conn, String itemId);
 }

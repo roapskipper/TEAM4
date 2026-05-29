@@ -145,7 +145,7 @@
 
     <build>
         <plugins>
-            <!-- Surefire: chạy unit tests, bỏ qua @Tag("integration") cần MySQL thật -->
+            <!-- Surefire: run unit tests and exclude @Tag("integration") tests that need MySQL. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -154,17 +154,17 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
-                    <!-- Bỏ qua các test cần DB thật (MySQL) trong CI -->
+                    <!-- Exclude tests that require a real MySQL database in CI. -->
                     <excludedGroups>integration</excludedGroups>
-                    <argLine>-Dnet.bytebuddy.experimental=true -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
+                    <argLine>@{argLine} -Dnet.bytebuddy.experimental=true -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo: đo coverage, báo fail nếu < 70% -->
+            <!-- JaCoCo: collect coverage and enforce the configured threshold during verify. -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
+                <version>0.8.14</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -195,7 +195,7 @@
                         </configuration>
                     </execution>
                 </executions>
-                <!-- Bỏ qua các class không cần đo -->
+                <!-- Exclude bootstrap and UI classes from coverage. -->
                 <configuration>
                     <excludes>
                         <exclude>com/team4/Main.class</exclude>
