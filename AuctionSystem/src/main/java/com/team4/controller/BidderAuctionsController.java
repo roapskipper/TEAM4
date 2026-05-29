@@ -265,7 +265,7 @@ public class BidderAuctionsController implements Initializable {
                 // Path 2: Fallback — look up contentArea from scene (may be null if scene not ready)
                 javafx.scene.Scene scene = auctionsGrid.getScene();
                 if (scene == null) {
-                    throw new IllegalStateException("Scene not ready — cannot navigate");
+                    throw new IllegalStateException("Scene not ready - cannot navigate");
                 }
                 StackPane contentArea = (StackPane) scene.getRoot().lookup("#contentArea");
                 if (contentArea == null) {

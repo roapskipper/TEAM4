@@ -113,7 +113,7 @@ public class Server {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Co ket noi moi: " + socket.getInetAddress());
+                System.out.println("New client connected: " + socket.getInetAddress());
 
                 ClientHandler handler = new ClientHandler(socket);
                 clientHandlers.add(handler);
@@ -121,7 +121,7 @@ public class Server {
 
                 if (threadPool instanceof java.util.concurrent.ThreadPoolExecutor) {
                     java.util.concurrent.ThreadPoolExecutor tpe = (java.util.concurrent.ThreadPoolExecutor) threadPool;
-                    System.out.println("Trang thai ThreadPool - Active: " + tpe.getActiveCount() + ", Pool Size: " + tpe.getPoolSize());
+                    System.out.println("ThreadPool status - Active: " + tpe.getActiveCount() + ", Pool Size: " + tpe.getPoolSize());
                 }
             }
         } catch (IOException e) {
@@ -146,7 +146,7 @@ public class Server {
             // Chỉ xóa nếu ClientHandler hiện tại trong map đúng là handler này (tránh xóa nhầm của session mới)
             activeUsers.remove(handler.getUserId(), handler);
         }
-        System.out.println("Mot client da ngat ket noi. So luong hien tai: " + clientHandlers.size());
+        System.out.println("A client disconnected. Current count: " + clientHandlers.size());
     }
 
     public static void registerUser(String userId, ClientHandler newHandler) {

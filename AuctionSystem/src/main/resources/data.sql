@@ -23,13 +23,13 @@ VALUES ('mod-003', CURRENT_TIMESTAMP, 'moderator3', '$2a$10$jgym2Ka5mu8NziXsENcn
 -- =========================================================================
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-001', CURRENT_TIMESTAMP, 'domixi', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Thanh Do Phung', 'ban1@gmail.com', 'SELLER', 0, 'Mixi Shop', 5.0);
+VALUES ('seller-001', CURRENT_TIMESTAMP, 'heritage_seller', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Olivia Carter', 'seller1@auctionsystem.com', 'SELLER', 0, 'Heritage Gallery', 5.0);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-002', CURRENT_TIMESTAMP, 'daucatmoi', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Kim Ri Cha', 'ban2@gmail.com', 'SELLER', 0, 'Premium Finds', 5.0);
+VALUES ('seller-002', CURRENT_TIMESTAMP, 'premium_seller', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Ethan Brooks', 'seller2@auctionsystem.com', 'SELLER', 0, 'Premium Finds', 5.0);
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, store_name, rating)
-VALUES ('seller-003', CURRENT_TIMESTAMP, 'j.bieber', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Nam Tram Do', 'ban3@gmail.com', 'SELLER', 0, 'JQK', 4.8);
+VALUES ('seller-003', CURRENT_TIMESTAMP, 'curated_seller', '$2a$10$g/21snU80tiBtt6TkkZxteXPiKxCqltvqbLXQ39ADPwJQtQgsUkru', 'Sophia Reed', 'seller3@auctionsystem.com', 'SELLER', 0, 'Curated Classics', 4.8);
 
 
 -- =========================================================================
@@ -38,19 +38,19 @@ VALUES ('seller-003', CURRENT_TIMESTAMP, 'j.bieber', '$2a$10$g/21snU80tiBtt6TkkZ
 -- =========================================================================
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-001', CURRENT_TIMESTAMP, 'ueteee', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Van Si Tran', 'mua1@gmail.com', 'BIDDER', 10000000, 'House 36, 120 Yen Lang, Hanoi');
+VALUES ('bidder-001', CURRENT_TIMESTAMP, 'heritage_bidder', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Noah Bennett', 'buyer1@auctionsystem.com', 'BIDDER', 10000000, '36 Heritage Lane, New York');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-002', CURRENT_TIMESTAMP, 'thichthimua', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Duy Kien Ha', 'mua2@gmail.com', 'BIDDER', 100000000, 'House 12, 34 Pham Van Dong, Hanoi');
+VALUES ('bidder-002', CURRENT_TIMESTAMP, 'active_bidder', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Mia Anderson', 'buyer2@auctionsystem.com', 'BIDDER', 100000000, '12 Market Street, Chicago');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-003', CURRENT_TIMESTAMP, 'nguoimua3', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Heavy Buyer Le', 'mua3@gmail.com', 'BIDDER', 50000000, 'District 1, Ho Chi Minh City');
+VALUES ('bidder-003', CURRENT_TIMESTAMP, 'power_bidder', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Lucas Morgan', 'buyer3@auctionsystem.com', 'BIDDER', 50000000, '1 Harbor Road, San Francisco');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-004', CURRENT_TIMESTAMP, 'sanhangdoc', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Rare Goods Hunter Hoang', 'mua4@gmail.com', 'BIDDER', 20000000, 'Da Nang');
+VALUES ('bidder-004', CURRENT_TIMESTAMP, 'rare_hunter', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Ava Wilson', 'buyer4@auctionsystem.com', 'BIDDER', 20000000, '8 Gallery Avenue, Seattle');
 
 INSERT IGNORE INTO users (id, created_at, username, password_hash, full_name, email, role, balance, shipping_address)
-VALUES ('bidder-005', CURRENT_TIMESTAMP, 'svngheo', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Student Nguyen', 'mua5@gmail.com', 'BIDDER', 2000000, 'VNU Dormitory');
+VALUES ('bidder-005', CURRENT_TIMESTAMP, 'student_collector', '$2a$10$ys5UkKJhmgmxsGRgjwYgIu/SMjPvJjG0gCqbSY3vwBNIpYn32Wic2', 'Emma Taylor', 'buyer5@auctionsystem.com', 'BIDDER', 2000000, 'Campus Residence, Boston');
 
 
 -- =========================================================================

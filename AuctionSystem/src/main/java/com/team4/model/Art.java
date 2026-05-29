@@ -103,7 +103,7 @@ public class Art extends Item {
 
     // Validate
     private static final Pattern DIMENSION_PATTERN = Pattern.compile(
-            "^\\s*\\d{1,4}(?:\\.\\d{1,3})?\\s*[x×]\\s*\\d{1,4}(?:\\.\\d{1,3})?(?:\\s*[x×]\\s*\\d{1,4}(?:\\.\\d{1,3})?)?\\s*(?i)(cm|mm|m|in|inch|inches)?\\s*$"
+            "^\\s*\\d{1,4}(?:\\.\\d{1,3})?\\s*[xX]\\s*\\d{1,4}(?:\\.\\d{1,3})?(?:\\s*[xX]\\s*\\d{1,4}(?:\\.\\d{1,3})?)?\\s*(?i)(cm|mm|m|in|inch|inches)?\\s*$"
     );
     private static void validateArtist(String artist) {
         if (artist == null) return; // optional
