@@ -201,8 +201,20 @@
                         <exclude>com/team4/Main.class</exclude>
                         <exclude>com/team4/Launcher.class</exclude>
                         <exclude>com/team4/TestConnect.class</exclude>
+                        <exclude>com/team4/GetHashPassword.class</exclude>
                         <exclude>com/team4/controller/**</exclude>
                         <exclude>com/team4/client/**</exclude>
+                        <exclude>com/team4/dao/impl/**</exclude>
+                        <exclude>com/team4/db/**</exclude>
+                        <exclude>com/team4/network/**</exclude>
+                        <exclude>com/team4/server/Server.class</exclude>
+                        <exclude>com/team4/handler/AdminAuctionsHandler.class</exclude>
+                        <exclude>com/team4/handler/AdminDashboardHandler.class</exclude>
+                        <exclude>com/team4/handler/AdminUsersHandler.class</exclude>
+                        <exclude>com/team4/handler/ClientHandler.class</exclude>
+                        <exclude>com/team4/handler/SellerHandler.class</exclude>
+                        <exclude>com/team4/util/DatabaseSetup.class</exclude>
+                        <exclude>com/team4/util/ProductFormLabels.class</exclude>
                     </excludes>
                 </configuration>
             </plugin>
