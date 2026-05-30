@@ -11,7 +11,8 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 
 <VBox prefWidth="1100" spacing="18" style="-fx-background-color: transparent;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.SellerProductsController">
 
@@ -57,9 +58,14 @@
             <!-- BY CATEGORY -->
             <VBox spacing="8">
                 <Label text="BY CATEGORY" style="-fx-font-weight: bold; -fx-text-fill: #555555; -fx-font-size: 11px;"/>
-                <TilePane hgap="12" vgap="12" prefColumns="3" tileAlignment="TOP_LEFT">
+                <GridPane hgap="12" vgap="12">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="33.34"/>
+                        <ColumnConstraints percentWidth="33.33"/>
+                        <ColumnConstraints percentWidth="33.33"/>
+                    </columnConstraints>
                     <!-- Art -->
-                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8" maxWidth="Infinity" GridPane.columnIndex="0" GridPane.rowIndex="0">
                         <Label text="Art" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Medium" styleClass="rule-pill-required" />
@@ -70,7 +76,7 @@
                     </VBox>
                     
                     <!-- Collectible -->
-                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="0">
                         <Label text="Collectible" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Rarity" styleClass="rule-pill-required" />
@@ -82,7 +88,7 @@
                     </VBox>
                     
                     <!-- Electronics -->
-                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8" maxWidth="Infinity" GridPane.columnIndex="2" GridPane.rowIndex="0">
                         <Label text="Electronics" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Condition" styleClass="rule-pill-required" />
@@ -93,7 +99,7 @@
                     </VBox>
                     
                     <!-- Fashion -->
-                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8" maxWidth="Infinity" GridPane.columnIndex="0" GridPane.rowIndex="1">
                         <Label text="Fashion" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Size" styleClass="rule-pill-required" />
@@ -106,7 +112,7 @@
                     </VBox>
 
                     <!-- Vehicle -->
-                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1">
                         <Label text="Vehicle" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Engine" styleClass="rule-pill-required" />
@@ -117,7 +123,7 @@
                             <Label text="Model" styleClass="rule-pill-optional" />
                         </FlowPane>
                     </VBox>
-                </TilePane>
+                </GridPane>
             </VBox>
             
             <!-- Legend -->

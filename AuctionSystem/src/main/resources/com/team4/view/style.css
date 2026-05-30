@@ -870,10 +870,8 @@
 }
 
 .rules-category-panel {
-    -fx-min-width: 0;
-    -fx-pref-width: 0;
-    -fx-min-height: 104;
-    -fx-pref-height: 104;
+    -fx-min-height: 96;
+    -fx-pref-height: 96;
     -fx-padding: 10 12;
 }
 
