@@ -388,28 +388,36 @@
     -fx-border-color: #E5E5E5;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
+    -fx-padding: 0;
 }
 
 .products-table .column-header-background {
-    -fx-background-color: #FBF9F6;
+    -fx-background-color: #722F37;
     -fx-background-radius: 12 12 0 0;
+    -fx-border-color: transparent transparent rgba(114, 47, 55, 0.18) transparent;
 }
 
 .products-table .filler {
-    -fx-background-color: #FBF9F6;
+    -fx-background-color: #722F37;
+    -fx-background-radius: 0 12 0 0;
+}
+
+.products-table .nested-column-header,
+.products-table .column-header {
+    -fx-background-color: #722F37;
 }
 
 .admin-table .column-header {
-    -fx-background-color: #FBF9F6;
+    -fx-background-color: #722F37;
     -fx-padding: 12 14;
-    -fx-border-color: transparent transparent #E5E5E5 transparent;
+    -fx-border-color: transparent rgba(255, 255, 255, 0.18) transparent transparent;
 }
 
 .admin-table .column-header .label {
-    -fx-text-fill: #555555;
+    -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-family: "Lato";
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
 }
 
 .admin-table .table-row-cell {
@@ -709,7 +717,13 @@
 }
 
 .table-view .column-header-background {
-    -fx-background-color: transparent;
+    -fx-background-color: #722F37;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.table-view .filler {
+    -fx-background-color: #722F37;
+    -fx-background-radius: 0 12 0 0;
 }
 
 .table-row-cell {
@@ -845,9 +859,43 @@
     -fx-background-color: transparent;
 }
 
+.rules-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.04), 10, 0, 0, 2);
+}
+
 .rules-pane > .title {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 12 12 0 0;
+    -fx-border-color: transparent transparent #E8D9D9 transparent;
+    -fx-padding: 11 14;
+}
+
+.rules-pane > .title > .text {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #722F37;
+    -fx-fill: #722F37;
+}
+
+.rules-pane > .title .arrow-button {
+    -fx-background-color: rgba(114, 47, 55, 0.10);
+    -fx-background-radius: 8;
+    -fx-padding: 4 6;
+}
+
+.rules-pane > .title .arrow-button .arrow {
+    -fx-background-color: #722F37;
+}
+
+.rules-pane > *.content {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 0 0 12 12;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
 }
 
 .dialog-help {
