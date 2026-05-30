@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.TilePane?>
 
 <VBox prefWidth="1100" spacing="18" style="-fx-background-color: transparent;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.team4.controller.SellerProductsController">
 
@@ -41,7 +42,7 @@
     </HBox>
 
     <TitledPane expanded="true" text="Product Registration Rules" styleClass="rules-pane">
-        <VBox spacing="16" style="-fx-padding: 10;">
+        <VBox spacing="12" style="-fx-padding: 8 14 12 14;">
             <!-- COMMON -->
             <VBox spacing="8">
                 <Label text="COMMON (REQUIRED)" style="-fx-font-weight: bold; -fx-text-fill: #555555; -fx-font-size: 11px;"/>
@@ -56,9 +57,9 @@
             <!-- BY CATEGORY -->
             <VBox spacing="8">
                 <Label text="BY CATEGORY" style="-fx-font-weight: bold; -fx-text-fill: #555555; -fx-font-size: 11px;"/>
-                <FlowPane hgap="12" vgap="12">
+                <TilePane hgap="12" vgap="12" prefColumns="3" tileAlignment="TOP_LEFT">
                     <!-- Art -->
-                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
                         <Label text="Art" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Medium" styleClass="rule-pill-required" />
@@ -69,7 +70,7 @@
                     </VBox>
                     
                     <!-- Collectible -->
-                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
                         <Label text="Collectible" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Rarity" styleClass="rule-pill-required" />
@@ -81,7 +82,7 @@
                     </VBox>
                     
                     <!-- Electronics -->
-                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
                         <Label text="Electronics" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Condition" styleClass="rule-pill-required" />
@@ -92,7 +93,7 @@
                     </VBox>
                     
                     <!-- Fashion -->
-                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
                         <Label text="Fashion" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Size" styleClass="rule-pill-required" />
@@ -105,7 +106,7 @@
                     </VBox>
 
                     <!-- Vehicle -->
-                    <VBox styleClass="category-panel" spacing="8" minWidth="260" prefWidth="340">
+                    <VBox styleClass="category-panel rules-category-panel" spacing="8">
                         <Label text="Vehicle" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;"/>
                         <FlowPane hgap="8" vgap="8">
                             <Label text="Engine" styleClass="rule-pill-required" />
@@ -116,7 +117,7 @@
                             <Label text="Model" styleClass="rule-pill-optional" />
                         </FlowPane>
                     </VBox>
-                </FlowPane>
+                </TilePane>
             </VBox>
             
             <!-- Legend -->

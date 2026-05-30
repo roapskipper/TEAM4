@@ -869,6 +869,14 @@
     -fx-padding: 12;
 }
 
+.rules-category-panel {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-min-height: 104;
+    -fx-pref-height: 104;
+    -fx-padding: 10 12;
+}
+
 .dialog-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;
