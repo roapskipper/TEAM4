@@ -42,12 +42,14 @@ public class BiddingRoomController implements Initializable {
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating, itemDescription;
     @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
     @FXML private Label walletBalance;
+    @FXML private Label summaryStatus, summaryLeader, summaryBidCount, summaryBidStep, summaryStartTime;
+    @FXML private Label summaryEndTime, summarySellerStore, summarySellerRating;
     @FXML private AreaChart<Number, Number> priceChart;
     @FXML private ListView<String> bidHistoryList;
     @FXML private TextField bidAmountField;
     @FXML private Button quick100k, quick200k, quick500k, quick1m, placeBidBtn;
     @FXML private ToggleButton autoBidToggle;
-    @FXML private VBox bidControlsCard, autoBidPanel;
+    @FXML private VBox bidControlsCard, autoBidPanel, auctionSummaryCard;
     @FXML private TextField autoBidMax;
     @FXML private Button applyAutoBidBtn;
 
@@ -55,6 +57,7 @@ public class BiddingRoomController implements Initializable {
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
     private static final DateTimeFormatter HISTORY_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
+    private static final DateTimeFormatter SUMMARY_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private String auctionId;
     private String currentLeaderId;
@@ -119,6 +122,7 @@ public class BiddingRoomController implements Initializable {
         bidHistoryList.getItems().clear();
         priceChart.getData().clear();
         setBiddingControlsDisabled(true);
+        resetAuctionSummary();
     }
 
     private void applyAuctionData(JsonObject data) {
@@ -163,6 +167,7 @@ public class BiddingRoomController implements Initializable {
                 : new JsonArray();
 
         bidCount.setText(history.size() + " bids");
+        updateAuctionSummary(data, history.size());
         updateBidInfo();
         updateQuickBidButtons();
         renderBidHistory(history);
@@ -239,10 +244,53 @@ public class BiddingRoomController implements Initializable {
             bidControlsCard.setManaged(!seller);
             bidControlsCard.setVisible(!seller);
         }
+        if (auctionSummaryCard != null) {
+            auctionSummaryCard.setManaged(seller);
+            auctionSummaryCard.setVisible(seller);
+        }
         if (seller) {
             setBiddingControlsDisabled(true);
             hideBidError();
         }
+    }
+
+    private void resetAuctionSummary() {
+        setTextIfPresent(summaryStatus, "...");
+        setTextIfPresent(summaryLeader, "...");
+        setTextIfPresent(summaryBidCount, "...");
+        setTextIfPresent(summaryBidStep, "...");
+        setTextIfPresent(summaryStartTime, "...");
+        setTextIfPresent(summaryEndTime, "...");
+        setTextIfPresent(summarySellerStore, "...");
+        setTextIfPresent(summarySellerRating, "...");
+    }
+
+    private void updateAuctionSummary(JsonObject data, int historySize) {
+        setTextIfPresent(summaryStatus, formatStatus(auctionStatus));
+        String leader = stringValue(data, "currentHighestBidderName", "");
+        setTextIfPresent(summaryLeader, leader.isBlank() ? "No bids yet" : leader);
+        setTextIfPresent(summaryBidCount, historySize + " bids");
+        setTextIfPresent(summaryBidStep, formatPrice(bidIncrement));
+        setTextIfPresent(summaryStartTime, formatSummaryTime(parseTime(stringValue(data, "startTime", null))));
+        setTextIfPresent(summaryEndTime, formatSummaryTime(auctionEndTime));
+
+        String store = stringValue(data, "sellerStoreName", "");
+        setTextIfPresent(summarySellerStore, store.isBlank() ? "Not provided" : store);
+
+        double rating = doubleValue(data, "sellerRating", 0);
+        setTextIfPresent(summarySellerRating, rating > 0
+                ? String.format(Locale.US, "%.1f / 5.0", rating)
+                : "Not rated");
+    }
+
+    private void setTextIfPresent(Label label, String text) {
+        if (label != null) {
+            label.setText(text);
+        }
+    }
+
+    private String formatSummaryTime(LocalDateTime value) {
+        return value == null ? "Not scheduled" : value.format(SUMMARY_TIME_FORMAT);
     }
 
     private boolean isSellerRole() {

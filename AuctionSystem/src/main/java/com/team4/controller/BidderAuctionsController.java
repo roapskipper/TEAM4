@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Locale;
@@ -43,6 +44,7 @@ public class BidderAuctionsController implements Initializable {
     @FXML private HBox categoryPills, statusPills;
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
+    private static final DateTimeFormatter CARD_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
     private final ObservableList<AuctionCardData> auctions = FXCollections.observableArrayList();
 
     private String selectedCategory = "All";
@@ -202,8 +204,14 @@ public class BidderAuctionsController implements Initializable {
     private VBox createAuctionCard(AuctionCardData auction) {
         VBox card = new VBox(12);
         card.getStyleClass().add("auction-card");
-        card.setPrefWidth(255);
-        card.setMinWidth(255);
+        card.setPrefWidth(260);
+        card.setMinWidth(260);
+
+        StackPane visual = new StackPane();
+        visual.getStyleClass().add("auction-card-visual");
+        Label visualText = new Label(categoryCode(auction.category));
+        visualText.getStyleClass().add("auction-card-visual-text");
+        visual.getChildren().add(visualText);
 
         HBox topLine = new HBox(8);
         topLine.setAlignment(Pos.CENTER_LEFT);
@@ -224,6 +232,7 @@ public class BidderAuctionsController implements Initializable {
 
         Label seller = new Label("Seller: " + auction.sellerName);
         seller.getStyleClass().add("muted-text");
+        seller.setWrapText(true);
 
         VBox priceBox = new VBox(3);
         Label currentLabel = new Label("Current price");
@@ -231,6 +240,19 @@ public class BidderAuctionsController implements Initializable {
         Label currentPrice = new Label(formatMoney(auction.currentPrice));
         currentPrice.getStyleClass().add("auction-card-price");
         priceBox.getChildren().addAll(currentLabel, currentPrice);
+
+        VBox details = new VBox(5);
+        details.getStyleClass().add("auction-card-details");
+        details.getChildren().addAll(
+                createCardInfoRow("Start", formatMoney(auction.startingPrice)),
+                createCardInfoRow("Step", formatMoney(auction.bidIncrement)),
+                createCardInfoRow("Leader", auction.currentLeaderName.isBlank() ? "No bids yet" : auction.currentLeaderName),
+                createCardInfoRow("Store", auction.sellerStoreName.isBlank() ? "Not provided" : auction.sellerStoreName),
+                createCardInfoRow("Rating", auction.sellerRating > 0
+                        ? String.format(Locale.US, "%.1f / 5.0", auction.sellerRating)
+                        : "Not rated"),
+                createCardInfoRow("Ends", formatCardTime(auction.endTime))
+        );
 
         HBox meta = new HBox(10);
         meta.setAlignment(Pos.CENTER_LEFT);
@@ -246,8 +268,23 @@ public class BidderAuctionsController implements Initializable {
         joinBtn.setMouseTransparent(true);
 
         card.setOnMouseClicked(e -> openBiddingRoom(auction.id));
-        card.getChildren().addAll(topLine, title, desc, seller, priceBox, meta, joinBtn);
+        card.getChildren().addAll(visual, topLine, title, desc, seller, priceBox, details, meta, joinBtn);
         return card;
+    }
+
+    private HBox createCardInfoRow(String labelText, String valueText) {
+        HBox row = new HBox(8);
+        row.setAlignment(Pos.CENTER_LEFT);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("auction-card-info-label");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+        Label value = new Label(valueText);
+        value.getStyleClass().add("auction-card-info-value");
+        value.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+        value.setMaxWidth(138);
+        row.getChildren().addAll(label, spacer, value);
+        return row;
     }
 
     private void openBiddingRoom(String auctionId) {
@@ -420,6 +457,21 @@ public class BidderAuctionsController implements Initializable {
         return MONEY_FORMAT.format(value) + " VND";
     }
 
+    private String formatCardTime(LocalDateTime value) {
+        return value == null ? "Not scheduled" : value.format(CARD_TIME_FORMAT);
+    }
+
+    private String categoryCode(String category) {
+        if (category == null || category.isBlank()) {
+            return "ITEM";
+        }
+        String normalized = category.replace("_", " ").trim().toUpperCase(Locale.ROOT);
+        if (normalized.length() <= 4) {
+            return normalized;
+        }
+        return normalized.substring(0, Math.min(normalized.length(), 7));
+    }
+
     private String timeLeftText(LocalDateTime endTime) {
         if (endTime == null) {
             return "No end time";
@@ -443,9 +495,14 @@ public class BidderAuctionsController implements Initializable {
         private final String description;
         private final String category;
         private final String sellerName;
+        private final String sellerStoreName;
+        private final double sellerRating;
         private final String sellerId;
         private final String status;
+        private final String currentLeaderName;
+        private final BigDecimal startingPrice;
         private final BigDecimal currentPrice;
+        private final BigDecimal bidIncrement;
         private final long bidCount;
         private final LocalDateTime startTime;
         private final LocalDateTime endTime;
@@ -456,9 +513,14 @@ public class BidderAuctionsController implements Initializable {
             this.description = fallback(stringValue(obj, "itemDescription"), "No description provided.");
             this.category = stringValue(obj, "category");
             this.sellerName = fallback(stringValue(obj, "sellerName"), "Unknown Seller");
+            this.sellerStoreName = stringValue(obj, "sellerStoreName");
+            this.sellerRating = doubleValue(obj, "sellerRating");
             this.sellerId = stringValue(obj, "sellerId");
             this.status = fallback(stringValue(obj, "status"), "RUNNING");
+            this.currentLeaderName = stringValue(obj, "currentHighestBidderName");
+            this.startingPrice = moneyValue(obj, "startingPrice");
             this.currentPrice = moneyValue(obj, "currentPrice");
+            this.bidIncrement = moneyValue(obj, "bidIncrement");
             this.bidCount = longValue(obj, "bidCount");
             this.startTime = timeValue(obj, "startTime");
             this.endTime = timeValue(obj, "endTime");
@@ -480,6 +542,10 @@ public class BidderAuctionsController implements Initializable {
 
         private static long longValue(JsonObject obj, String key) {
             return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsLong() : 0;
+        }
+
+        private static double doubleValue(JsonObject obj, String key) {
+            return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : 0;
         }
 
         private static LocalDateTime timeValue(JsonObject obj, String key) {

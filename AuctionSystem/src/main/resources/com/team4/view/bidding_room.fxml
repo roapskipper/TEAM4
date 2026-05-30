@@ -136,6 +136,54 @@
                     </VBox>
                 </VBox>
             </VBox>
+
+            <VBox fx:id="auctionSummaryCard" styleClass="bidding-card" spacing="14" managed="false" visible="false">
+                <Label text="Auction Summary" styleClass="section-title"/>
+
+                <VBox spacing="0" styleClass="summary-list">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Status" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryStatus" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Current Leader" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryLeader" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Bid Count" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryBidCount" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Bid Step" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryBidStep" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Start Time" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryStartTime" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="End Time" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summaryEndTime" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                        <Label text="Store" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summarySellerStore" text="..." styleClass="summary-value"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row-last">
+                        <Label text="Seller Rating" styleClass="summary-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="summarySellerRating" text="..." styleClass="summary-value"/>
+                    </HBox>
+                </VBox>
+
+            </VBox>
         </VBox>
     </HBox>
 </VBox>
