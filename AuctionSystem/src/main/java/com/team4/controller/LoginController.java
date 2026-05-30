@@ -242,6 +242,7 @@ public class LoginController {
                     stage.setTitle("Dashboard - AuctionSpace");
                     stage.setWidth(1200);
                     stage.setHeight(800);
+                    stage.setMaximized(true);
                     stage.centerOnScreen();
                     stage.show();
 

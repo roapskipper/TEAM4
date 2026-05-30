@@ -359,9 +359,9 @@ public class MainController implements Initializable {
             scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
             stage.setScene(scene);
             stage.setTitle("AuctionSpace - Login");
-            stage.setMaximized(false);
             stage.setWidth(1200);
             stage.setHeight(800);
+            stage.setMaximized(true);
             stage.centerOnScreen();
         } catch (Exception ex) {
             ex.printStackTrace();
