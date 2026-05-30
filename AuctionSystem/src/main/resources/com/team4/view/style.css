@@ -283,6 +283,27 @@
     -fx-spacing: 12;
 }
 
+.bidding-item-visual {
+    -fx-background-color: #9A2F38;
+    -fx-background-radius: 12;
+    -fx-border-color: #7A2630;
+    -fx-border-radius: 12;
+}
+
+.bidding-item-initials {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FBF9F6;
+}
+
+.bidding-item-visual-category {
+    -fx-font-family: "Lato";
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F7E6C4;
+}
+
 .bidding-price-card {
     -fx-background-color: #FBF9F6;
     -fx-background-radius: 16;
@@ -568,10 +589,17 @@
 
 .auction-card-visual-text {
     -fx-font-family: "Playfair Display";
-    -fx-font-size: 18px;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
     -fx-text-fill: #722F37;
     -fx-text-alignment: CENTER;
+}
+
+.auction-card-visual-category {
+    -fx-font-family: "Lato";
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8A4D54;
 }
 
 .auction-card:hover {

@@ -210,13 +210,16 @@ public class BidderAuctionsController implements Initializable {
 
         StackPane visual = new StackPane();
         visual.getStyleClass().add("auction-card-visual");
-        Label visualText = new Label(categoryCode(auction.category));
+        VBox visualContent = new VBox(3);
+        visualContent.setAlignment(Pos.CENTER);
+        Label visualText = new Label(productInitials(auction.itemName));
         visualText.getStyleClass().add("auction-card-visual-text");
-        visualText.setMaxWidth(220);
-        visualText.setWrapText(true);
         visualText.setTextAlignment(TextAlignment.CENTER);
         visualText.setAlignment(Pos.CENTER);
-        visual.getChildren().add(visualText);
+        Label visualCategory = new Label(formatCategory(auction.category).toUpperCase(Locale.ROOT));
+        visualCategory.getStyleClass().add("auction-card-visual-category");
+        visualContent.getChildren().addAll(visualText, visualCategory);
+        visual.getChildren().add(visualContent);
 
         HBox topLine = new HBox(8);
         topLine.setAlignment(Pos.CENTER_LEFT);
@@ -476,11 +479,21 @@ public class BidderAuctionsController implements Initializable {
         return value == null ? "Not scheduled" : value.format(CARD_TIME_FORMAT);
     }
 
-    private String categoryCode(String category) {
-        if (category == null || category.isBlank()) {
-            return "ITEM";
+    private String productInitials(String itemName) {
+        if (itemName == null || itemName.isBlank()) {
+            return "IT";
         }
-        return formatCategory(category).toUpperCase(Locale.ROOT);
+        String[] parts = itemName.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                initials.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            }
+            if (initials.length() == 3) {
+                break;
+            }
+        }
+        return initials.length() == 0 ? "IT" : initials.toString();
     }
 
     private String timeLeftText(LocalDateTime endTime) {

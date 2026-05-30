@@ -40,6 +40,7 @@ public class BiddingRoomController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(BiddingRoomController.class);
 
     @FXML private Label itemName, itemCategory, itemCondition, sellerName, itemDescription;
+    @FXML private Label itemInitials, itemVisualCategory;
     @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
     @FXML private Label walletBalance;
     @FXML private Label summaryStatus, summaryLeader, summaryBidCount, summaryBidStep, summaryStartTime;
@@ -110,6 +111,7 @@ public class BiddingRoomController implements Initializable {
         auctionEndTime = null;
         auctionStatus = "";
         itemName.setText("Loading auction...");
+        updateItemVisual("Item", "Auction");
         applyRoleVisibility();
         if (itemDescription != null) {
             itemDescription.setText("");
@@ -138,9 +140,12 @@ public class BiddingRoomController implements Initializable {
         auctionEndTime = parseTime(stringValue(data, "endTime", null));
         auctionStatus = stringValue(data, "status", "");
 
-        itemName.setText(stringValue(data, "itemName", "Untitled item"));
+        String loadedItemName = stringValue(data, "itemName", "Untitled item");
+        String loadedCategory = stringValue(data, "category", "Other");
+        itemName.setText(loadedItemName);
+        updateItemVisual(loadedItemName, loadedCategory);
         applyRoleVisibility();
-        itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
+        itemCategory.setText(formatCategory(loadedCategory));
         itemCondition.setText(formatStatus(auctionStatus));
         sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
         if (itemDescription != null) {
@@ -746,6 +751,32 @@ public class BiddingRoomController implements Initializable {
         }
         String lower = value.replace("_", " ").toLowerCase(Locale.ROOT);
         return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+    }
+
+    private void updateItemVisual(String name, String category) {
+        if (itemInitials != null) {
+            itemInitials.setText(productInitials(name));
+        }
+        if (itemVisualCategory != null) {
+            itemVisualCategory.setText(formatCategory(category).toUpperCase(Locale.ROOT));
+        }
+    }
+
+    private String productInitials(String itemName) {
+        if (itemName == null || itemName.isBlank()) {
+            return "IT";
+        }
+        String[] parts = itemName.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                initials.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            }
+            if (initials.length() == 3) {
+                break;
+            }
+        }
+        return initials.length() == 0 ? "IT" : initials.toString();
     }
 
     private String formatStatus(String value) {

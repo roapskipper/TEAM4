@@ -15,9 +15,12 @@
     <HBox spacing="20" alignment="CENTER_LEFT">
         <VBox styleClass="bidding-card" HBox.hgrow="ALWAYS">
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <StackPane styleClass="brand-icon-bg"
+                <StackPane styleClass="bidding-item-visual"
                            prefWidth="80" prefHeight="80">
-                    <Label text="ITEM" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    <VBox alignment="CENTER" spacing="2">
+                        <Label fx:id="itemInitials" text="IT" styleClass="bidding-item-initials"/>
+                        <Label fx:id="itemVisualCategory" text="AUCTION" styleClass="bidding-item-visual-category"/>
+                    </VBox>
                 </StackPane>
                 <VBox spacing="4">
                     <Label fx:id="itemName" text="Loading auction..."
