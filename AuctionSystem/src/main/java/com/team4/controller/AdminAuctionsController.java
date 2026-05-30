@@ -35,6 +35,8 @@ public class AdminAuctionsController implements Initializable {
     }
 
     private void setupTable() {
+        auctionsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
         colItem.setCellValueFactory(new PropertyValueFactory<>("itemInfo"));
         colSeller.setCellValueFactory(new PropertyValueFactory<>("seller"));
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
@@ -47,7 +49,7 @@ public class AdminAuctionsController implements Initializable {
             private final HBox actionBox = new HBox(6);
 
             {
-                actionBox.setAlignment(Pos.CENTER_LEFT);
+                actionBox.setAlignment(Pos.CENTER);
                 styleActionButton(approveBtn, "admin-action-grant");
                 styleActionButton(rejectBtn, "admin-action-revoke");
             }
@@ -81,6 +83,7 @@ public class AdminAuctionsController implements Initializable {
     private void styleActionButton(Button button, String styleClass) {
         button.getStyleClass().setAll("admin-action-btn", styleClass);
         button.setMinWidth(Region.USE_PREF_SIZE);
+        button.setMaxWidth(Region.USE_PREF_SIZE);
     }
 
     private void loadDataFromServer() {

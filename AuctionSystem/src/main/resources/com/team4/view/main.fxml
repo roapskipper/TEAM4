@@ -50,12 +50,13 @@
             <VBox styleClass="user-footer" spacing="12">
                 <HBox spacing="10" alignment="CENTER_LEFT" styleClass="user-summary">
                     <StackPane fx:id="userAvatarBg"
-                               styleClass="brand-icon-bg-circle"
-                               minWidth="38" prefWidth="38" maxWidth="38"
-                               minHeight="38" prefHeight="38" maxHeight="38">
-                        <Label fx:id="userAvatarText" text="U"
-                               styleClass="brand-icon-text"
-                               style="-fx-font-size: 14;"/>
+                               styleClass="sidebar-identity-tile"
+                               minWidth="42" prefWidth="42" maxWidth="42"
+                               minHeight="42" prefHeight="42" maxHeight="42">
+                        <VBox alignment="CENTER" spacing="1">
+                            <Label fx:id="userAvatarText" text="US" styleClass="sidebar-identity-initials"/>
+                            <Label fx:id="userAvatarRoleText" text="USR" styleClass="sidebar-identity-role"/>
+                        </VBox>
                     </StackPane>
 
                     <VBox spacing="4" HBox.hgrow="ALWAYS" minWidth="0">

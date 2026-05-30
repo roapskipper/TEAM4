@@ -9,65 +9,76 @@
       fx:controller="com.team4.controller.ProfileController"
       spacing="24"
       style="-fx-background-color: transparent;"
-      prefWidth="800" maxWidth="900" alignment="TOP_CENTER">
+      prefWidth="820" maxWidth="900" alignment="TOP_CENTER">
 
     <padding>
         <Insets top="20" right="40" bottom="40" left="40"/>
     </padding>
 
-    <VBox styleClass="profile-card" spacing="32">
+    <VBox styleClass="profile-card" spacing="32" maxWidth="820">
 
-        <HBox spacing="24" alignment="CENTER_LEFT">
-            <StackPane styleClass="brand-icon-bg-circle"
-                       prefWidth="88" prefHeight="88">
-                <Label fx:id="avatarText" text="U"
-                       styleClass="brand-icon-text"
-                       style="-fx-font-size: 36;"/>
-            </StackPane>
-            <VBox spacing="6" alignment="CENTER_LEFT">
-                <Label fx:id="displayName" text="User Name"
-                       styleClass="section-title-large"
-                       style="-fx-font-size: 28;"/>
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Label fx:id="roleBadge" text="BIDDER" styleClass="role-badge"/>
-                    <Label fx:id="statusBadge" text="Active" styleClass="status-active"/>
-                </HBox>
-                <Label fx:id="emailDisplay" text="user@email.com"
-                       styleClass="muted-text"
-                       style="-fx-font-size: 14;"/>
+        <HBox spacing="24" alignment="CENTER_LEFT" styleClass="profile-identity-band">
+            <HBox spacing="24" alignment="CENTER_LEFT" minWidth="0" HBox.hgrow="ALWAYS">
+                <StackPane styleClass="profile-identity-tile"
+                           minWidth="104" prefWidth="104" maxWidth="104"
+                           minHeight="104" prefHeight="104" maxHeight="104">
+                    <VBox alignment="CENTER" spacing="3">
+                        <Label fx:id="avatarText" text="USR" styleClass="profile-identity-initials"/>
+                        <Label fx:id="avatarRoleText" text="USER" styleClass="profile-identity-role"/>
+                    </VBox>
+                </StackPane>
+                <VBox spacing="6" alignment="CENTER_LEFT" minWidth="0" HBox.hgrow="ALWAYS">
+                    <Label fx:id="displayName" text="User Name"
+                           maxWidth="Infinity"
+                           styleClass="section-title-large"
+                           style="-fx-font-size: 28;"/>
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label fx:id="roleBadge" text="BIDDER" styleClass="role-badge"/>
+                        <Label fx:id="statusBadge" text="Active" styleClass="status-active"/>
+                    </HBox>
+                    <Label fx:id="emailDisplay" text="user@email.com"
+                           maxWidth="Infinity"
+                           styleClass="muted-text"
+                           style="-fx-font-size: 14;"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="10"
+                  minWidth="240" prefWidth="260" maxWidth="280"
+                  styleClass="profile-snapshot-panel">
+                <Label fx:id="snapshotTitle" text="Account Snapshot" styleClass="profile-snapshot-title"/>
+                <GridPane hgap="12" vgap="7">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="64"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label fx:id="snapshotPrimaryLabel" text="Access"
+                           styleClass="profile-snapshot-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label fx:id="snapshotPrimaryValue" text="Standard"
+                           maxWidth="Infinity"
+                           styleClass="profile-snapshot-value"
+                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                    <Label fx:id="snapshotJoinedLabel" text="Joined"
+                           styleClass="profile-snapshot-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="snapshotJoinedValue" text="Not available"
+                           maxWidth="Infinity"
+                           styleClass="profile-snapshot-value"
+                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                    <Label fx:id="snapshotStatusLabel" text="Status"
+                           styleClass="profile-snapshot-label"
+                           GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <Label fx:id="snapshotStatusValue" text="Active"
+                           maxWidth="Infinity"
+                           styleClass="profile-snapshot-status-value"
+                           GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                </GridPane>
             </VBox>
         </HBox>
-
-        <GridPane hgap="12" vgap="12" styleClass="account-summary-grid">
-            <columnConstraints>
-                <ColumnConstraints percentWidth="25"/>
-                <ColumnConstraints percentWidth="25"/>
-                <ColumnConstraints percentWidth="25"/>
-                <ColumnConstraints percentWidth="25"/>
-            </columnConstraints>
-
-            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                <Label text="Role" styleClass="account-summary-label"/>
-                <Label fx:id="summaryRole" maxWidth="Infinity" text="Bidder" styleClass="account-summary-value" wrapText="true"/>
-            </VBox>
-            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                <Label text="Balance" styleClass="account-summary-label"/>
-                <Label fx:id="summaryBalance" maxWidth="Infinity" text="0 VND" styleClass="account-summary-money" style="-fx-text-fill: #722F37;" wrapText="true"/>
-            </VBox>
-            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                <Label text="Member Since" styleClass="account-summary-label"/>
-                <Label fx:id="summaryJoined" maxWidth="Infinity" text="Not available" styleClass="account-summary-value" wrapText="true"/>
-            </VBox>
-            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
-                <Label text="Contact" styleClass="account-summary-label"/>
-                <Label fx:id="summaryContact" maxWidth="Infinity" text="Not provided" styleClass="account-summary-value" wrapText="true"/>
-            </VBox>
-
-            <VBox spacing="4" styleClass="account-summary-note" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="1">
-                <Label text="Account Detail" styleClass="account-summary-label"/>
-                <Label fx:id="summaryRoleDetail" maxWidth="Infinity" text="Account details" styleClass="account-summary-detail" wrapText="true"/>
-            </VBox>
-        </GridPane>
 
         <Separator styleClass="profile-sep"/>
 
@@ -76,7 +87,7 @@
 
             <HBox spacing="16">
                 <VBox spacing="6" HBox.hgrow="ALWAYS">
-                    <Label text="Username" styleClass="form-label"/>
+                    <Label text="Full Name" styleClass="form-label"/>
                     <TextField fx:id="editName" styleClass="input-field"/>
                 </VBox>
                 <VBox spacing="6" HBox.hgrow="ALWAYS">

@@ -32,6 +32,7 @@ public class MainController implements Initializable {
     @FXML private Label pageTitle, pageSubtitle;
     @FXML private Label userNameLabel, userRoleBadge;
     @FXML private Label userAvatarText;
+    @FXML private Label userAvatarRoleText;
     @FXML private Label balanceValueLabel;
     @FXML private StackPane userAvatarBg;
     @FXML private Button notiBtn;
@@ -137,6 +138,7 @@ public class MainController implements Initializable {
         userNameLabel.setText(name);
         userRoleBadge.setText(roleText);
         updateAvatarInitial(name);
+        updateAvatarRoleCode();
     }
 
     private void refreshUserDisplayName() {
@@ -162,6 +164,7 @@ public class MainController implements Initializable {
                 session.setFullName(fullName);
                 userNameLabel.setText(firstPresent(fullName, session.getUsername(), "User"));
                 updateAvatarInitial(fullName);
+                updateAvatarRoleCode();
             }
         });
 
@@ -302,8 +305,39 @@ public class MainController implements Initializable {
         if (userAvatarText == null) {
             return;
         }
-        String value = name == null || name.isBlank() ? "U" : name.trim().substring(0, 1).toUpperCase(Locale.ROOT);
-        userAvatarText.setText(value);
+        userAvatarText.setText(initialsFromName(name, "US", 2));
+    }
+
+    private void updateAvatarRoleCode() {
+        if (userAvatarRoleText == null) {
+            return;
+        }
+        if (userRole != null && userRole.startsWith("admin")) {
+            userAvatarRoleText.setText("ADM");
+        } else if ("seller".equals(userRole)) {
+            userAvatarRoleText.setText("SEL");
+        } else if ("bidder".equals(userRole)) {
+            userAvatarRoleText.setText("BID");
+        } else {
+            userAvatarRoleText.setText("USR");
+        }
+    }
+
+    private String initialsFromName(String name, String fallback, int maxLength) {
+        if (name == null || name.isBlank()) {
+            return fallback;
+        }
+        String[] parts = name.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                initials.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            }
+            if (initials.length() == maxLength) {
+                break;
+            }
+        }
+        return initials.length() == 0 ? fallback : initials.toString();
     }
 
     /** Navigate to an already-loaded page (used by child controllers). */

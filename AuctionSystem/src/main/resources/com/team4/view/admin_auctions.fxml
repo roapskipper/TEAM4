@@ -32,12 +32,12 @@
     <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="auctionsTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
-                <TableColumn fx:id="colItem" text="Item" minWidth="260" prefWidth="300"/>
-                <TableColumn fx:id="colSeller" text="Seller" minWidth="140" prefWidth="160"/>
-                <TableColumn fx:id="colStartPrice" text="Start Price" minWidth="130" prefWidth="150"/>
-                <TableColumn fx:id="colStatus" text="Status" minWidth="120" prefWidth="130"/>
-                <TableColumn fx:id="colReports" text="Reports" minWidth="80" prefWidth="90"/>
-                <TableColumn fx:id="colAction" text="Action" minWidth="150" prefWidth="170"/>
+                <TableColumn fx:id="colItem" text="Item" minWidth="210" prefWidth="260"/>
+                <TableColumn fx:id="colSeller" text="Seller" minWidth="130" prefWidth="155"/>
+                <TableColumn fx:id="colStartPrice" text="Start Price" minWidth="115" prefWidth="130"/>
+                <TableColumn fx:id="colStatus" text="Status" minWidth="95" prefWidth="110"/>
+                <TableColumn fx:id="colReports" text="Reports" minWidth="70" prefWidth="80"/>
+                <TableColumn fx:id="colAction" text="Action" minWidth="135" prefWidth="150"/>
             </columns>
         </TableView>
     </VBox>

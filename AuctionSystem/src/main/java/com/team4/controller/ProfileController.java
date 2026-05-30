@@ -19,8 +19,9 @@ import java.util.ResourceBundle;
 
 public class ProfileController implements Initializable {
 
-    @FXML private Label avatarText, displayName, roleBadge, statusBadge, emailDisplay;
-    @FXML private Label summaryRole, summaryBalance, summaryJoined, summaryContact, summaryRoleDetail;
+    @FXML private Label avatarText, avatarRoleText, displayName, roleBadge, statusBadge, emailDisplay;
+    @FXML private Label snapshotTitle, snapshotPrimaryLabel, snapshotPrimaryValue;
+    @FXML private Label snapshotJoinedLabel, snapshotJoinedValue, snapshotStatusLabel, snapshotStatusValue;
     @FXML private TextField editName, editEmail, editPhone;
     @FXML private PasswordField currentPassword, newPassword, confirmPassword;
     @FXML private Button saveBtn, cancelBtn, loginBtn, regBtn;
@@ -66,13 +67,13 @@ public class ProfileController implements Initializable {
                 String role = jsonString(profile, "role", "BIDDER");
                 String phone = jsonString(profile, "phoneNumber", "");
                 
-                String initial = name.isEmpty() ? "U" : name.substring(0, 1).toUpperCase();
                 UserSession session = UserSession.getInstance();
                 if (session != null) {
                     session.setFullName(name);
                 }
                 
-                avatarText.setText(initial);
+                avatarText.setText(initialsFromName(name));
+                setText(avatarRoleText, roleCode(role));
                 displayName.setText(name);
                 roleBadge.setText(formatRole(role));
                 if (statusBadge != null) {
@@ -83,7 +84,7 @@ public class ProfileController implements Initializable {
                 editName.setText(name);
                 editEmail.setText(email);
                 editPhone.setText(phone);
-                updateAccountSummary(profile, role, email, phone);
+                updateProfileSnapshot(profile, role);
             }
         });
 
@@ -194,11 +195,8 @@ public class ProfileController implements Initializable {
             if (regBtn != null) regBtn.setDisable(false);
 
             Throwable ex = task.getException();
-            if (ex instanceof com.team4.util.BusinessException) {
-                showAlert(Alert.AlertType.ERROR, "Update Failed", ex.getMessage());
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Network Error", "Could not connect to server: " + (ex != null ? ex.getMessage() : "Unknown"));
-            }
+            String message = ApiClient.toDisplayMessage(ex);
+            showAlert(Alert.AlertType.ERROR, "Update Failed", message);
         });
 
         new Thread(task).start();
@@ -219,40 +217,52 @@ public class ProfileController implements Initializable {
         alert.showAndWait();
     }
 
-    private void updateAccountSummary(JsonObject profile, String role, String email, String phone) {
-        setText(summaryRole, formatRole(role));
-
+    private void updateProfileSnapshot(JsonObject profile, String role) {
         BigDecimal balance = jsonMoney(profile, "balance", sessionBalance());
         UserSession session = UserSession.getInstance();
         if (session != null) {
             session.setBalance(balance);
         }
-        setText(summaryBalance, formatMoney(balance));
-        if (summaryBalance != null) {
-            summaryBalance.setStyle("-fx-text-fill: #722F37; -fx-font-weight: bold;");
+
+        setText(snapshotTitle, "Account Snapshot");
+        setText(snapshotJoinedLabel, "Joined");
+        setText(snapshotJoinedValue, formatDateTime(jsonString(profile, "createdAt", "")));
+        setText(snapshotStatusLabel, "Status");
+        setText(snapshotStatusValue, "Active");
+
+        String normalized = role == null ? "" : role.trim().toUpperCase(Locale.ROOT);
+        if ("ADMIN".equals(normalized)) {
+            setText(snapshotPrimaryLabel, "Access");
+            setText(snapshotPrimaryValue, roleDetail(profile, role));
+        } else if ("SELLER".equals(normalized)) {
+            setText(snapshotPrimaryLabel, "Store");
+            setText(snapshotPrimaryValue, roleDetail(profile, role));
+        } else if ("BIDDER".equals(normalized)) {
+            setText(snapshotPrimaryLabel, "Balance");
+            setText(snapshotPrimaryValue, formatMoney(balance));
+        } else {
+            setText(snapshotPrimaryLabel, "Role");
+            setText(snapshotPrimaryValue, formatRole(role));
         }
-        setText(summaryJoined, formatDateTime(jsonString(profile, "createdAt", "")));
-        setText(summaryContact, fallback(phone, email));
-        setText(summaryRoleDetail, roleDetail(profile, role));
     }
 
     private String roleDetail(JsonObject profile, String role) {
         String normalized = role == null ? "" : role.trim().toUpperCase(Locale.ROOT);
         if ("SELLER".equals(normalized)) {
-            return "Store: " + fallback(jsonString(profile, "storeName", ""), "Not provided");
+            return fallback(jsonString(profile, "storeName", ""), "Not provided");
         }
         if ("BIDDER".equals(normalized)) {
-            return "Shipping: " + fallback(jsonString(profile, "shippingAddress", ""), "Not provided");
+            return fallback(jsonString(profile, "shippingAddress", ""), "Not provided");
         }
         if ("ADMIN".equals(normalized)) {
             int level = jsonInt(profile, "accessLevelCode", 0);
             if (level == 2) {
-                return "Access: Super Admin";
+                return "Super Admin";
             }
             if (level == 1) {
-                return "Access: Admin";
+                return "Admin";
             }
-            return "Access: Standard";
+            return "Standard";
         }
         return "Account details";
     }
@@ -272,6 +282,37 @@ public class ProfileController implements Initializable {
             }
         }
         return result.toString();
+    }
+
+    private String roleCode(String role) {
+        String normalized = role == null ? "" : role.trim().toUpperCase(Locale.ROOT);
+        if ("ADMIN".equals(normalized)) {
+            return "ADMIN";
+        }
+        if ("SELLER".equals(normalized)) {
+            return "SELLER";
+        }
+        if ("BIDDER".equals(normalized)) {
+            return "BIDDER";
+        }
+        return "USER";
+    }
+
+    private String initialsFromName(String name) {
+        if (name == null || name.isBlank()) {
+            return "USR";
+        }
+        String[] parts = name.trim().split("\\s+");
+        StringBuilder initials = new StringBuilder();
+        for (String part : parts) {
+            if (!part.isBlank()) {
+                initials.append(part.substring(0, 1).toUpperCase(Locale.ROOT));
+            }
+            if (initials.length() == 3) {
+                break;
+            }
+        }
+        return initials.length() == 0 ? "USR" : initials.toString();
     }
 
     private String formatMoney(BigDecimal amount) {

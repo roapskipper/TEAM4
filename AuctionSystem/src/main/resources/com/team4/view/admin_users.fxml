@@ -27,12 +27,12 @@
     <VBox styleClass="admin-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" styleClass="admin-table">
             <columns>
-                <TableColumn fx:id="colUsername" text="Username" minWidth="140" prefWidth="160"/>
-                <TableColumn fx:id="colFullName" text="Full Name" minWidth="180" prefWidth="210"/>
-                <TableColumn fx:id="colRole" text="Role" minWidth="100" prefWidth="110"/>
-                <TableColumn fx:id="colEmail" text="Email" minWidth="220" prefWidth="260"/>
-                <TableColumn fx:id="colJoinDate" text="Join Date" minWidth="140" prefWidth="150"/>
-                <TableColumn fx:id="colAction" text="Action" minWidth="300" prefWidth="360"/>
+                <TableColumn fx:id="colUsername" text="Username" minWidth="105" prefWidth="130"/>
+                <TableColumn fx:id="colFullName" text="Full Name" minWidth="150" prefWidth="190"/>
+                <TableColumn fx:id="colRole" text="Role" minWidth="120" prefWidth="130"/>
+                <TableColumn fx:id="colEmail" text="Email" minWidth="200" prefWidth="250"/>
+                <TableColumn fx:id="colJoinDate" text="Join Date" minWidth="155" prefWidth="170"/>
+                <TableColumn fx:id="colAction" text="Action" minWidth="130" prefWidth="150"/>
             </columns>
         </TableView>
     </VBox>

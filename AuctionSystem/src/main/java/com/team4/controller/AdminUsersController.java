@@ -1,6 +1,8 @@
 package com.team4.controller;
 
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 
@@ -43,6 +45,7 @@ public class AdminUsersController implements Initializable {
     @FXML private TableColumn<UserRow, Void> colAction;
 
     private ObservableList<UserRow> allUsers = FXCollections.observableArrayList();
+    private static final DateTimeFormatter JOIN_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -52,6 +55,11 @@ public class AdminUsersController implements Initializable {
     }
 
     private void setupTable() {
+        usersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        if (!canGrantAdmin()) {
+            colAction.setVisible(false);
+        }
+
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
         colFullName.setCellValueFactory(new PropertyValueFactory<>("fullName"));
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
@@ -64,7 +72,7 @@ public class AdminUsersController implements Initializable {
             private final HBox actionBox = new HBox(6);
 
             {
-                actionBox.setAlignment(Pos.CENTER_LEFT);
+                actionBox.setAlignment(Pos.CENTER);
                 styleActionButton(grantBtn, "admin-action-grant");
                 styleActionButton(revokeBtn, "admin-action-revoke");
             }
@@ -104,6 +112,7 @@ public class AdminUsersController implements Initializable {
     private void styleActionButton(Button button, String styleClass) {
         button.getStyleClass().setAll("admin-action-btn", styleClass);
         button.setMinWidth(Region.USE_PREF_SIZE);
+        button.setMaxWidth(Region.USE_PREF_SIZE);
     }
 
     private void loadRealData() {
@@ -127,7 +136,7 @@ public class AdminUsersController implements Initializable {
                 String fullName = obj.has("fullName") ? obj.get("fullName").getAsString() : "";
                 String role = obj.has("role") ? obj.get("role").getAsString() : "BIDDER";
                 String email = obj.has("email") ? obj.get("email").getAsString() : "";
-                String joinDate = obj.has("createdAt") ? obj.get("createdAt").getAsString() : "";
+                String joinDate = formatJoinDate(obj.has("createdAt") ? obj.get("createdAt").getAsString() : "");
                 int accessLevelCode = obj.has("accessLevelCode") ? obj.get("accessLevelCode").getAsInt() : 0;
                 
                 if ("ADMIN".equalsIgnoreCase(role)) {
@@ -198,6 +207,17 @@ public class AdminUsersController implements Initializable {
                             : "Adjust the search keyword or role filter."));
         }
         resultCount.setText(filtered.size() + " users");
+    }
+
+    private String formatJoinDate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        try {
+            return LocalDateTime.parse(raw).format(JOIN_DATE_FORMATTER);
+        } catch (Exception ignored) {
+            return raw.replace('T', ' ');
+        }
     }
 
     private VBox createTableEmptyState(String title, String message) {

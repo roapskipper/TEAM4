@@ -426,7 +426,70 @@
 
 .profile-card {
     -fx-padding: 32;
-    -fx-max-width: 700;
+}
+
+.profile-identity-tile {
+    -fx-background-color: #9A2F38;
+    -fx-background-radius: 14;
+    -fx-border-color: #7A2630;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(three-pass-box, rgba(114, 47, 55, 0.18), 12, 0, 0, 3);
+}
+
+.profile-identity-initials {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FBF9F6;
+    -fx-text-alignment: CENTER;
+}
+
+.profile-identity-role {
+    -fx-font-family: "Lato";
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F7E6C4;
+}
+
+.profile-identity-band {
+    -fx-padding: 0 0 4 0;
+}
+
+.profile-snapshot-panel {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 14;
+    -fx-padding: 14 16;
+}
+
+.profile-snapshot-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
+}
+
+.profile-snapshot-label {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-text-fill: #6B7280;
+}
+
+.profile-snapshot-value {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+    -fx-text-overrun: ellipsis;
+}
+
+.profile-snapshot-status-value {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0E7A2F;
+    -fx-text-overrun: ellipsis;
 }
 
 .profile-sep {
@@ -1256,6 +1319,27 @@
     -fx-font-weight: bold;
 }
 
+.sidebar-identity-tile {
+    -fx-background-color: #9A2F38;
+    -fx-background-radius: 10;
+    -fx-border-color: #7A2630;
+    -fx-border-radius: 10;
+}
+
+.sidebar-identity-initials {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FBF9F6;
+}
+
+.sidebar-identity-role {
+    -fx-font-family: "Lato";
+    -fx-font-size: 7px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F7E6C4;
+}
+
 .role-badge {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
@@ -1734,6 +1818,7 @@
     -fx-border-color: #E8D9D9;
     -fx-border-radius: 12;
     -fx-padding: 12;
+    -fx-min-height: 74;
 }
 
 .account-summary-note {
@@ -1753,6 +1838,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #2C2C2C;
+    -fx-text-overrun: ellipsis;
 }
 
 .account-summary-money {
@@ -1760,6 +1846,7 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #722F37;
+    -fx-text-overrun: ellipsis;
 }
 
 .account-summary-detail {
