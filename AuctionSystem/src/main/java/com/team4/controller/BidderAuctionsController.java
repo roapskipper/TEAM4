@@ -248,9 +248,6 @@ public class BidderAuctionsController implements Initializable {
                 createCardInfoRow("Step", formatMoney(auction.bidIncrement)),
                 createCardInfoRow("Leader", auction.currentLeaderName.isBlank() ? "No bids yet" : auction.currentLeaderName),
                 createCardInfoRow("Store", auction.sellerStoreName.isBlank() ? "Not provided" : auction.sellerStoreName),
-                createCardInfoRow("Rating", auction.sellerRating > 0
-                        ? String.format(Locale.US, "%.1f / 5.0", auction.sellerRating)
-                        : "Not rated"),
                 createCardInfoRow("Ends", formatCardTime(auction.endTime))
         );
 
@@ -496,7 +493,6 @@ public class BidderAuctionsController implements Initializable {
         private final String category;
         private final String sellerName;
         private final String sellerStoreName;
-        private final double sellerRating;
         private final String sellerId;
         private final String status;
         private final String currentLeaderName;
@@ -514,7 +510,6 @@ public class BidderAuctionsController implements Initializable {
             this.category = stringValue(obj, "category");
             this.sellerName = fallback(stringValue(obj, "sellerName"), "Unknown Seller");
             this.sellerStoreName = stringValue(obj, "sellerStoreName");
-            this.sellerRating = doubleValue(obj, "sellerRating");
             this.sellerId = stringValue(obj, "sellerId");
             this.status = fallback(stringValue(obj, "status"), "RUNNING");
             this.currentLeaderName = stringValue(obj, "currentHighestBidderName");
@@ -542,10 +537,6 @@ public class BidderAuctionsController implements Initializable {
 
         private static long longValue(JsonObject obj, String key) {
             return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsLong() : 0;
-        }
-
-        private static double doubleValue(JsonObject obj, String key) {
-            return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : 0;
         }
 
         private static LocalDateTime timeValue(JsonObject obj, String key) {

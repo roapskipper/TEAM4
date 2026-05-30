@@ -31,7 +31,6 @@
                         <Label fx:id="sellerName" text=""
                                styleClass="muted-text"
                                style="-fx-font-size: 13;"/>
-                        <Label fx:id="sellerRating" text="" styleClass="rating-star"/>
                         <Label text="Verified" styleClass="verified-mark"/>
                     </HBox>
                     <Label fx:id="itemDescription"
@@ -171,15 +170,10 @@
                         <Region HBox.hgrow="ALWAYS"/>
                         <Label fx:id="summaryEndTime" text="..." styleClass="summary-value"/>
                     </HBox>
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row-last">
                         <Label text="Store" styleClass="summary-label"/>
                         <Region HBox.hgrow="ALWAYS"/>
                         <Label fx:id="summarySellerStore" text="..." styleClass="summary-value"/>
-                    </HBox>
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="summary-row-last">
-                        <Label text="Seller Rating" styleClass="summary-label"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Label fx:id="summarySellerRating" text="..." styleClass="summary-value"/>
                     </HBox>
                 </VBox>
 

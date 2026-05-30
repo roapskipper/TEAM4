@@ -39,11 +39,11 @@ import org.slf4j.LoggerFactory;
 public class BiddingRoomController implements Initializable {
     private static final Logger logger = LoggerFactory.getLogger(BiddingRoomController.class);
 
-    @FXML private Label itemName, itemCategory, itemCondition, sellerName, sellerRating, itemDescription;
+    @FXML private Label itemName, itemCategory, itemCondition, sellerName, itemDescription;
     @FXML private Label currentPrice, startingPriceLabel, bidIncrementLabel, bidCount, timeLeft, minBidLabel, bidStepLabel, bidError;
     @FXML private Label walletBalance;
     @FXML private Label summaryStatus, summaryLeader, summaryBidCount, summaryBidStep, summaryStartTime;
-    @FXML private Label summaryEndTime, summarySellerStore, summarySellerRating;
+    @FXML private Label summaryEndTime, summarySellerStore;
     @FXML private AreaChart<Number, Number> priceChart;
     @FXML private ListView<String> bidHistoryList;
     @FXML private TextField bidAmountField;
@@ -143,10 +143,6 @@ public class BiddingRoomController implements Initializable {
         itemCategory.setText(formatCategory(stringValue(data, "category", "Other")));
         itemCondition.setText(formatStatus(auctionStatus));
         sellerName.setText("Seller: " + stringValue(data, "sellerName", "Unknown Seller"));
-        if (sellerRating != null) {
-            double rating = doubleValue(data, "sellerRating", 0);
-            sellerRating.setText(rating > 0 ? String.format(Locale.US, "%.1f Rating", rating) : "");
-        }
         if (itemDescription != null) {
             itemDescription.setText(stringValue(data, "itemDescription", ""));
         }
@@ -262,7 +258,6 @@ public class BiddingRoomController implements Initializable {
         setTextIfPresent(summaryStartTime, "...");
         setTextIfPresent(summaryEndTime, "...");
         setTextIfPresent(summarySellerStore, "...");
-        setTextIfPresent(summarySellerRating, "...");
     }
 
     private void updateAuctionSummary(JsonObject data, int historySize) {
@@ -276,11 +271,6 @@ public class BiddingRoomController implements Initializable {
 
         String store = stringValue(data, "sellerStoreName", "");
         setTextIfPresent(summarySellerStore, store.isBlank() ? "Not provided" : store);
-
-        double rating = doubleValue(data, "sellerRating", 0);
-        setTextIfPresent(summarySellerRating, rating > 0
-                ? String.format(Locale.US, "%.1f / 5.0", rating)
-                : "Not rated");
     }
 
     private void setTextIfPresent(Label label, String text) {
