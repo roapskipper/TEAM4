@@ -1,5 +1,7 @@
 package com.team4.controller;
 
+import com.team4.client.ApiClient;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Hyperlink;
@@ -10,7 +12,6 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
-import com.team4.client.ApiClient;
 
 public class LoginController {
 
@@ -37,6 +38,8 @@ public class LoginController {
     @FXML private Label regError;
     @FXML private javafx.scene.control.Button loginBtn;
     @FXML private javafx.scene.control.Button regBtn;
+    @FXML private Label previewInitials, previewCategory, previewTag, previewTitle, previewSubtitle;
+    @FXML private Label previewMetaLeftLabel, previewMetaLeftValue, previewMetaRightLabel, previewMetaRightValue;
 
     private ToggleGroup roleGroup;
 
@@ -66,6 +69,7 @@ public class LoginController {
         });
 
         updateRoleStyle();
+        showStaticProductPreview();
     }
 
     @FXML
@@ -265,6 +269,24 @@ public class LoginController {
             return "This account is not registered as a Seller or Bidder.";
         }
         return message;
+    }
+
+    private void showStaticProductPreview() {
+        setText(previewInitials, "HCP");
+        setText(previewCategory, "ART");
+        setText(previewTag, "Featured Preview");
+        setText(previewTitle, "Heritage Clock Painting");
+        setText(previewSubtitle, "A curated heritage artwork prepared for the auction room.");
+        setText(previewMetaLeftLabel, "Category");
+        setText(previewMetaLeftValue, "Art");
+        setText(previewMetaRightLabel, "Opening Bid");
+        setText(previewMetaRightValue, "3,000,000 VND");
+    }
+
+    private void setText(Label label, String value) {
+        if (label != null) {
+            label.setText(value);
+        }
     }
 
     @FXML

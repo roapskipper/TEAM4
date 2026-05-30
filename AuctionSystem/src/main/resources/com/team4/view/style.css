@@ -82,25 +82,39 @@
     -fx-text-fill: #722F37;
 }
 
-.login-stat-strip {
-    -fx-background-color: rgba(255, 255, 255, 0.72);
-    -fx-background-radius: 16;
-    -fx-border-color: rgba(114, 47, 55, 0.10);
-    -fx-border-radius: 16;
-    -fx-padding: 14 18;
+.login-workflow-strip {
+    -fx-background-color: transparent;
+}
+
+.login-workflow-step {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(114, 47, 55, 0.12);
+    -fx-border-radius: 14;
+    -fx-padding: 12;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.04), 10, 0, 0, 2);
 }
 
-.login-stat-number {
-    -fx-font-size: 27px;
+.login-workflow-index {
+    -fx-background-color: rgba(114, 47, 55, 0.10);
+    -fx-background-radius: 9;
+    -fx-padding: 3 7;
+    -fx-font-family: "Lato";
+    -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #722F37;
+}
+
+.login-workflow-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
     -fx-text-fill: #2C2C2C;
 }
 
-.login-stat-label {
-    -fx-font-size: 12px;
+.login-workflow-desc {
     -fx-font-family: "Lato";
+    -fx-font-size: 10px;
     -fx-text-fill: #555555;
 }
 

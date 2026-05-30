@@ -66,47 +66,48 @@
                                minHeight="72" prefHeight="72" maxHeight="72"
                                styleClass="login-preview-mark">
                         <VBox alignment="CENTER" spacing="1">
-                            <Label text="AS" styleClass="login-preview-initials"/>
-                            <Label text="ART" styleClass="login-preview-type"/>
+                            <Label fx:id="previewInitials" text="HCP" styleClass="login-preview-initials"/>
+                            <Label fx:id="previewCategory" text="ART" styleClass="login-preview-type"/>
                         </VBox>
                     </StackPane>
                     <VBox spacing="5" HBox.hgrow="ALWAYS">
                         <HBox spacing="8" alignment="CENTER_LEFT">
-                            <Label text="Featured Lot" styleClass="badge badge-purple"/>
+                            <Label fx:id="previewTag" text="Featured Preview" styleClass="badge badge-purple"/>
                             <Label text="Verified" styleClass="verified-mark"/>
                         </HBox>
-                        <Label text="Heritage Clock Painting" styleClass="login-preview-title" wrapText="true"/>
-                        <Label text="Opening bid starts at 3,000,000 VND" styleClass="login-preview-subtitle" wrapText="true"/>
+                        <Label fx:id="previewTitle" text="Heritage Clock Painting" styleClass="login-preview-title" wrapText="true"/>
+                        <Label fx:id="previewSubtitle" text="A curated heritage artwork prepared for the auction room." styleClass="login-preview-subtitle" wrapText="true"/>
                     </VBox>
                 </HBox>
                 <HBox spacing="10">
                     <VBox spacing="2" HBox.hgrow="ALWAYS">
-                        <Label text="Current Mood" styleClass="login-preview-label"/>
-                        <Label text="Curated" styleClass="login-preview-value"/>
+                        <Label fx:id="previewMetaLeftLabel" text="Category" styleClass="login-preview-label"/>
+                        <Label fx:id="previewMetaLeftValue" text="Art" styleClass="login-preview-value"/>
                     </VBox>
                     <VBox spacing="2" HBox.hgrow="ALWAYS">
-                        <Label text="Next Room" styleClass="login-preview-label"/>
-                        <Label text="Live Soon" styleClass="login-preview-value"/>
+                        <Label fx:id="previewMetaRightLabel" text="Opening Bid" styleClass="login-preview-label"/>
+                        <Label fx:id="previewMetaRightValue" text="3,000,000 VND" styleClass="login-preview-value"/>
                     </VBox>
                 </HBox>
             </VBox>
 
             <Region VBox.vgrow="ALWAYS" />
 
-            <HBox spacing="0" alignment="CENTER_LEFT" maxWidth="430" styleClass="login-stat-strip">
-                <VBox spacing="3" HBox.hgrow="ALWAYS">
-                    <Label text="50K+" styleClass="login-stat-number"/>
-                    <Label text="Users" styleClass="login-stat-label"/>
+            <HBox spacing="10" alignment="CENTER_LEFT" maxWidth="430" styleClass="login-workflow-strip">
+                <VBox spacing="4" styleClass="login-workflow-step" HBox.hgrow="ALWAYS">
+                    <Label text="01" styleClass="login-workflow-index"/>
+                    <Label text="Seller Lists" styleClass="login-workflow-title"/>
+                    <Label text="Products enter review" styleClass="login-workflow-desc" wrapText="true"/>
                 </VBox>
-                <Separator orientation="VERTICAL" styleClass="stat-sep"/>
-                <VBox spacing="3" HBox.hgrow="ALWAYS">
-                    <Label text="10K+" styleClass="login-stat-number"/>
-                    <Label text="Items" styleClass="login-stat-label"/>
+                <VBox spacing="4" styleClass="login-workflow-step" HBox.hgrow="ALWAYS">
+                    <Label text="02" styleClass="login-workflow-index"/>
+                    <Label text="Admin Reviews" styleClass="login-workflow-title"/>
+                    <Label text="Approved auctions go live" styleClass="login-workflow-desc" wrapText="true"/>
                 </VBox>
-                <Separator orientation="VERTICAL" styleClass="stat-sep"/>
-                <VBox spacing="3" HBox.hgrow="ALWAYS">
-                    <Label text="99%" styleClass="login-stat-number"/>
-                    <Label text="Trust Rate" styleClass="login-stat-label"/>
+                <VBox spacing="4" styleClass="login-workflow-step" HBox.hgrow="ALWAYS">
+                    <Label text="03" styleClass="login-workflow-index"/>
+                    <Label text="Bidder Joins" styleClass="login-workflow-title"/>
+                    <Label text="Live bids decide winners" styleClass="login-workflow-desc" wrapText="true"/>
                 </VBox>
             </HBox>
 
@@ -145,7 +146,7 @@
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>
 
-            <VBox spacing="16" maxWidth="440" translateY="-36" styleClass="login-auth-card">
+            <VBox spacing="16" maxWidth="440" styleClass="login-auth-card">
                 <VBox spacing="4">
                     <Label text="Access your auction account" styleClass="login-card-title"/>
                     <Label text="Bid, sell, and manage verified auction activity."
