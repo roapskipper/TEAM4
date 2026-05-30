@@ -165,7 +165,10 @@ public class SellerProductsController implements Initializable {
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         productsTable.getSelectionModel().selectedItemProperty()
                 .addListener((obs, oldItem, newItem) -> showProductDetails(newItem));
-        Platform.runLater(this::styleProductTableHeader);
+        productsTable.skinProperty().addListener((obs, oldSkin, newSkin) -> scheduleProductTableHeaderStyle());
+        productsTable.sceneProperty().addListener((obs, oldScene, newScene) -> scheduleProductTableHeaderStyle());
+        productsTable.widthProperty().addListener((obs, oldWidth, newWidth) -> scheduleProductTableHeaderStyle());
+        scheduleProductTableHeaderStyle();
 
         colProduct.setCellValueFactory(param -> new SimpleStringProperty(nullSafe(param.getValue().getName())));
         colCategory.setCellValueFactory(param -> new SimpleStringProperty(formatCategory(param.getValue().getCategory())));
@@ -180,9 +183,23 @@ public class SellerProductsController implements Initializable {
         setupActionColumn();
     }
 
+    private void scheduleProductTableHeaderStyle() {
+        Platform.runLater(() -> {
+            styleProductTableHeader();
+            Platform.runLater(this::styleProductTableHeader);
+        });
+    }
+
     private void styleProductTableHeader() {
+        if (productsTable == null) {
+            return;
+        }
+        productsTable.applyCss();
         styleLookup(".column-header-background",
                 "-fx-background-color: #722F37; -fx-background-radius: 12 12 0 0;");
+        styleLookup(".column-header-background .column-header",
+                "-fx-background-color: #722F37; -fx-background-insets: 0; "
+                        + "-fx-border-color: transparent rgba(255,255,255,0.18) transparent transparent;");
         styleLookup(".nested-column-header",
                 "-fx-background-color: #722F37; -fx-background-insets: 0;");
         styleLookup(".column-header",
@@ -468,6 +485,7 @@ public class SellerProductsController implements Initializable {
             productSource.setAll(items);
             applyFilters();
             showProductDetails(null);
+            scheduleProductTableHeaderStyle();
         });
 
         task.setOnFailed(e -> {

@@ -24,6 +24,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 
 import java.math.BigDecimal;
 import java.net.URL;
@@ -211,6 +212,10 @@ public class BidderAuctionsController implements Initializable {
         visual.getStyleClass().add("auction-card-visual");
         Label visualText = new Label(categoryCode(auction.category));
         visualText.getStyleClass().add("auction-card-visual-text");
+        visualText.setMaxWidth(220);
+        visualText.setWrapText(true);
+        visualText.setTextAlignment(TextAlignment.CENTER);
+        visualText.setAlignment(Pos.CENTER);
         visual.getChildren().add(visualText);
 
         HBox topLine = new HBox(8);
@@ -475,11 +480,7 @@ public class BidderAuctionsController implements Initializable {
         if (category == null || category.isBlank()) {
             return "ITEM";
         }
-        String normalized = category.replace("_", " ").trim().toUpperCase(Locale.ROOT);
-        if (normalized.length() <= 4) {
-            return normalized;
-        }
-        return normalized.substring(0, Math.min(normalized.length(), 7));
+        return formatCategory(category).toUpperCase(Locale.ROOT);
     }
 
     private String timeLeftText(LocalDateTime endTime) {
