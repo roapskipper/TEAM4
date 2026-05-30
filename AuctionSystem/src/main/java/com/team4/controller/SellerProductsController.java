@@ -5,7 +5,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
 import com.team4.factory.ItemRequest;
+import com.team4.model.Art;
+import com.team4.model.Collectible;
+import com.team4.model.Electronics;
+import com.team4.model.Fashion;
 import com.team4.model.Item;
+import com.team4.model.Vehicle;
 import com.team4.util.UserSession;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -30,7 +35,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -59,6 +66,16 @@ public class SellerProductsController implements Initializable {
     @FXML private TableColumn<Item, String> colStatus;
     @FXML private TableColumn<Item, String> colDate;
     @FXML private TableColumn<Item, Void> colAction;
+    @FXML private VBox productDetailPanel;
+    @FXML private Label detailTitle;
+    @FXML private Label detailSubtitle;
+    @FXML private Label detailStatus;
+    @FXML private Label detailCategory;
+    @FXML private Label detailStartPrice;
+    @FXML private Label detailCurrentPrice;
+    @FXML private Label detailCreatedAt;
+    @FXML private Label detailDescription;
+    @FXML private FlowPane detailAttributes;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance(Locale.US);
@@ -141,8 +158,13 @@ public class SellerProductsController implements Initializable {
     }
 
     private void setupTable() {
-        productsTable.setPlaceholder(new Label("No products found"));
+        productsTable.setPlaceholder(createProductsEmptyState(
+                "Loading products",
+                "Fetching your product list from the server.",
+                false));
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        productsTable.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldItem, newItem) -> showProductDetails(newItem));
         Platform.runLater(this::styleProductTableHeader);
 
         colProduct.setCellValueFactory(param -> new SimpleStringProperty(nullSafe(param.getValue().getName())));
@@ -278,6 +300,7 @@ public class SellerProductsController implements Initializable {
 
             return matchesKeyword && matchesCategory;
         });
+        updateProductPlaceholder();
     }
 
     @FXML
@@ -444,6 +467,7 @@ public class SellerProductsController implements Initializable {
             }
             productSource.setAll(items);
             applyFilters();
+            showProductDetails(null);
         });
 
         task.setOnFailed(e -> {
@@ -473,12 +497,141 @@ public class SellerProductsController implements Initializable {
             addProductBtn.setDisable(true);
         }
         if (productsTable != null) {
-            productsTable.setPlaceholder(new Label("Only sellers can manage products."));
+            productsTable.setPlaceholder(createProductsEmptyState(
+                    "Seller account required",
+                    "Only sellers can manage registered products.",
+                    false));
         }
+        showProductDetails(null);
         if (totalProducts != null) totalProducts.setText("N/A");
         if (activeAuctions != null) activeAuctions.setText("N/A");
         if (pendingProducts != null) pendingProducts.setText("N/A");
         if (soldProducts != null) soldProducts.setText("N/A");
+    }
+
+    private void showProductDetails(Item item) {
+        if (productDetailPanel == null) {
+            return;
+        }
+
+        boolean visible = item != null;
+        productDetailPanel.setVisible(visible);
+        productDetailPanel.setManaged(visible);
+        if (!visible) {
+            return;
+        }
+
+        String status = readStatus(item);
+        detailTitle.setText(nullSafe(item.getName()));
+        detailSubtitle.setText(formatCategory(item.getCategory()) + " product");
+        detailStatus.setText(status);
+        detailStatus.getStyleClass().setAll("badge", statusClass(status));
+        detailCategory.setText(formatCategory(item.getCategory()));
+        detailStartPrice.setText(formatPrice(item.getStartingPrice()));
+        detailCurrentPrice.setText(formatPrice(item.getStartingPrice()));
+        detailCreatedAt.setText(formatDate(item.getCreatedAt()));
+        detailDescription.setText(nullSafe(item.getDescription()).isBlank()
+                ? "No description provided."
+                : item.getDescription());
+
+        detailAttributes.getChildren().clear();
+        populateAttributePills(item);
+        if (detailAttributes.getChildren().isEmpty()) {
+            Label fallback = new Label("No category-specific attributes.");
+            fallback.getStyleClass().add("detail-pill-muted");
+            detailAttributes.getChildren().add(fallback);
+        }
+    }
+
+    private void populateAttributePills(Item item) {
+        if (item instanceof Art art) {
+            addAttribute("Medium", formatEnum(art.getMedium()));
+            addAttribute("Artist", art.getArtist());
+            addAttribute("Year", formatYear(art.getCreationYear()));
+            addAttribute("Dimensions", art.getDimensions());
+            return;
+        }
+        if (item instanceof Collectible collectible) {
+            addAttribute("Rarity", formatEnum(collectible.getRarityLevel()));
+            addAttribute("Condition", formatEnum(collectible.getConditionGrade()));
+            addAttribute("Year", formatYear(collectible.getYearOfOrigin()));
+            addAttribute("Origin", collectible.getOrigin());
+            addAttribute("Certificate", collectible.isHasCertificate() ? "Yes" : "No");
+            return;
+        }
+        if (item instanceof Electronics electronics) {
+            addAttribute("Condition", formatEnum(electronics.getItemCondition()));
+            addAttribute("Warranty", electronics.getWarrantyMonths() + " months");
+            addAttribute("Brand", electronics.getBrand());
+            addAttribute("Model", electronics.getModel());
+            addAttribute("Functional", electronics.isFullyFunctional() ? "Yes" : "No");
+            return;
+        }
+        if (item instanceof Fashion fashion) {
+            addAttribute("Size", formatEnum(fashion.getSize()));
+            addAttribute("Condition", formatEnum(fashion.getCondition()));
+            addAttribute("Gender", formatEnum(fashion.getGender()));
+            addAttribute("Brand", fashion.getBrand());
+            addAttribute("Material", fashion.getMaterial());
+            addAttribute("Color", fashion.getColor());
+            addAttribute("Authentic", fashion.isAuthentic() ? "Yes" : "No");
+            return;
+        }
+        if (item instanceof Vehicle vehicle) {
+            addAttribute("Engine", formatEnum(vehicle.getEngineType()));
+            addAttribute("Transmission", formatEnum(vehicle.getTransmission()));
+            addAttribute("Odometer", NUMBER_FORMAT.format(vehicle.getOdo()) + " km");
+            addAttribute("Year", formatYear(vehicle.getManufacturingYear()));
+            addAttribute("Brand", vehicle.getBrand());
+            addAttribute("Model", vehicle.getModel());
+            addAttribute("Color", vehicle.getColor());
+            addAttribute("Legal papers", vehicle.hasLegalPapers() ? "Yes" : "No");
+        }
+    }
+
+    private void addAttribute(String label, String value) {
+        String displayValue = value == null || value.isBlank() ? "Not provided" : value;
+        Label pill = new Label(label + ": " + displayValue);
+        pill.getStyleClass().add("detail-pill");
+        detailAttributes.getChildren().add(pill);
+    }
+
+    private void updateProductPlaceholder() {
+        if (productsTable == null || filteredProducts == null) {
+            return;
+        }
+        boolean hasProducts = !productSource.isEmpty();
+        productsTable.setPlaceholder(createProductsEmptyState(
+                hasProducts ? "No matching products" : "No products yet",
+                hasProducts
+                        ? "Adjust the search keyword or category filter to find a product."
+                        : "Registered products will appear here after they are created.",
+                !hasProducts && isSellerSession()));
+    }
+
+    private VBox createProductsEmptyState(String title, String message, boolean showAction) {
+        VBox empty = new VBox(10);
+        empty.setAlignment(Pos.CENTER);
+        empty.setPrefHeight(220);
+        empty.getStyleClass().add("empty-state");
+
+        Label mark = new Label(title.toLowerCase(Locale.ROOT).contains("loading") ? "..." : "No Data");
+        mark.getStyleClass().add("empty-state-mark");
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("empty-state-title");
+        Label messageLabel = new Label(message);
+        messageLabel.getStyleClass().add("empty-state-text");
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(360);
+
+        empty.getChildren().addAll(mark, titleLabel, messageLabel);
+        if (showAction) {
+            Button action = new Button("Add Product");
+            action.getStyleClass().add("empty-state-action");
+            action.setOnAction(e -> onAddProduct());
+            empty.getChildren().add(action);
+        }
+        return empty;
     }
 
     private String formatPrice(BigDecimal amount) {
@@ -498,6 +651,27 @@ public class SellerProductsController implements Initializable {
         }
         String value = category.name().replace("_", " ").toLowerCase(Locale.ROOT);
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private String formatEnum(Object value) {
+        if (value == null) {
+            return "Not provided";
+        }
+        String raw = value.toString().replace("_", " ").toLowerCase(Locale.ROOT);
+        StringBuilder result = new StringBuilder();
+        for (String part : raw.split(" ")) {
+            if (!part.isBlank()) {
+                if (result.length() > 0) {
+                    result.append(' ');
+                }
+                result.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+            }
+        }
+        return result.toString();
+    }
+
+    private String formatYear(int year) {
+        return year == 0 ? "Unknown" : NUMBER_FORMAT.format(year);
     }
 
     private String readStatus(Item item) {

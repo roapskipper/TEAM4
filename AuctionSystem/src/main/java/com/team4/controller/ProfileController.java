@@ -1,19 +1,39 @@
 package com.team4.controller;
 
+import com.google.gson.JsonObject;
+import com.team4.client.ApiClient;
+import com.team4.util.UserSession;
+
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URL;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class ProfileController implements Initializable {
 
     @FXML private Label avatarText, displayName, roleBadge, statusBadge, emailDisplay;
+    @FXML private Label summaryRole, summaryBalance, summaryJoined, summaryContact, summaryRoleDetail;
     @FXML private TextField editName, editEmail, editPhone;
     @FXML private PasswordField currentPassword, newPassword, confirmPassword;
     @FXML private Button saveBtn, cancelBtn, loginBtn, regBtn;
     @FXML private Label errorLabel, loginError, regError;
+
+    private static final DateTimeFormatter PROFILE_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
+
+    static {
+        MONEY_FORMAT.setMaximumFractionDigits(0);
+        MONEY_FORMAT.setMinimumFractionDigits(0);
+        MONEY_FORMAT.setRoundingMode(RoundingMode.HALF_UP);
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -22,40 +42,44 @@ public class ProfileController implements Initializable {
 
     private void loadProfile() {
         String userId = null;
-        if (com.team4.util.UserSession.getInstance() != null) {
-            userId = com.team4.util.UserSession.getInstance().getUserId();
+        if (UserSession.getInstance() != null) {
+            userId = UserSession.getInstance().getUserId();
         }
         if (userId == null) {
             return;
         }
 
         final String finalUserId = userId;
-        javafx.concurrent.Task<com.google.gson.JsonObject> task = new javafx.concurrent.Task<>() {
+        javafx.concurrent.Task<JsonObject> task = new javafx.concurrent.Task<>() {
             @Override
-            protected com.google.gson.JsonObject call() throws Exception {
-                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+            protected JsonObject call() throws Exception {
+                ApiClient apiClient = new ApiClient();
                 return apiClient.getUserProfile(finalUserId);
             }
         };
 
         task.setOnSucceeded(e -> {
-            com.google.gson.JsonObject profile = task.getValue();
+            JsonObject profile = task.getValue();
             if (profile != null && profile.has("id")) {
-                String name = profile.has("fullName") && !profile.get("fullName").isJsonNull() ? profile.get("fullName").getAsString() : "User Name";
-                String email = profile.has("email") && !profile.get("email").isJsonNull() ? profile.get("email").getAsString() : "user@email.com";
-                String role = profile.has("role") && !profile.get("role").isJsonNull() ? profile.get("role").getAsString() : "BIDDER";
-                String phone = profile.has("phoneNumber") && !profile.get("phoneNumber").isJsonNull() ? profile.get("phoneNumber").getAsString() : "";
+                String name = jsonString(profile, "fullName", "User Name");
+                String email = jsonString(profile, "email", "user@email.com");
+                String role = jsonString(profile, "role", "BIDDER");
+                String phone = jsonString(profile, "phoneNumber", "");
                 
                 String initial = name.isEmpty() ? "U" : name.substring(0, 1).toUpperCase();
                 
                 avatarText.setText(initial);
                 displayName.setText(name);
-                roleBadge.setText(role);
+                roleBadge.setText(formatRole(role));
+                if (statusBadge != null) {
+                    statusBadge.setText("Active");
+                }
                 emailDisplay.setText(email);
 
                 editName.setText(name);
                 editEmail.setText(email);
                 editPhone.setText(phone);
+                updateAccountSummary(profile, role, email, phone);
             }
         });
 
@@ -111,15 +135,15 @@ public class ProfileController implements Initializable {
             @Override
             protected Void call() throws Exception {
                 String userId = null;
-                if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUserId() != null) {
-                    userId = com.team4.util.UserSession.getInstance().getUserId();
+                if (UserSession.getInstance() != null && UserSession.getInstance().getUserId() != null) {
+                    userId = UserSession.getInstance().getUserId();
                 }
 
                 if (userId == null) {
                     throw new Exception("User not logged in or invalid session.");
                 }
 
-                com.team4.client.ApiClient apiClient = new com.team4.client.ApiClient();
+                ApiClient apiClient = new ApiClient();
                 
                 apiClient.updateProfile(userId, name, email, phone);
 
@@ -189,5 +213,105 @@ public class ProfileController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();
+    }
+
+    private void updateAccountSummary(JsonObject profile, String role, String email, String phone) {
+        setText(summaryRole, formatRole(role));
+
+        BigDecimal balance = jsonMoney(profile, "balance", sessionBalance());
+        UserSession session = UserSession.getInstance();
+        if (session != null) {
+            session.setBalance(balance);
+        }
+        setText(summaryBalance, formatMoney(balance));
+        setText(summaryJoined, formatDateTime(jsonString(profile, "createdAt", "")));
+        setText(summaryContact, fallback(phone, email));
+        setText(summaryRoleDetail, roleDetail(profile, role));
+    }
+
+    private String roleDetail(JsonObject profile, String role) {
+        String normalized = role == null ? "" : role.trim().toUpperCase(Locale.ROOT);
+        if ("SELLER".equals(normalized)) {
+            return "Store: " + fallback(jsonString(profile, "storeName", ""), "Not provided");
+        }
+        if ("BIDDER".equals(normalized)) {
+            return "Shipping: " + fallback(jsonString(profile, "shippingAddress", ""), "Not provided");
+        }
+        if ("ADMIN".equals(normalized)) {
+            int level = jsonInt(profile, "accessLevelCode", 0);
+            if (level == 2) {
+                return "Access: Super Admin";
+            }
+            if (level == 1) {
+                return "Access: Admin";
+            }
+            return "Access: Standard";
+        }
+        return "Account details";
+    }
+
+    private String formatRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "User";
+        }
+        String raw = role.replace("_", " ").toLowerCase(Locale.ROOT);
+        StringBuilder result = new StringBuilder();
+        for (String part : raw.split(" ")) {
+            if (!part.isBlank()) {
+                if (result.length() > 0) {
+                    result.append(' ');
+                }
+                result.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+            }
+        }
+        return result.toString();
+    }
+
+    private String formatMoney(BigDecimal amount) {
+        return MONEY_FORMAT.format(amount != null ? amount : BigDecimal.ZERO) + " VND";
+    }
+
+    private String formatDateTime(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "Not available";
+        }
+        try {
+            return LocalDateTime.parse(raw).format(PROFILE_DATE_FORMAT);
+        } catch (Exception ignored) {
+            return raw.replace('T', ' ');
+        }
+    }
+
+    private BigDecimal sessionBalance() {
+        UserSession session = UserSession.getInstance();
+        return session != null && session.getBalance() != null ? session.getBalance() : BigDecimal.ZERO;
+    }
+
+    private String jsonString(JsonObject obj, String key, String fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsString()
+                : fallback;
+    }
+
+    private BigDecimal jsonMoney(JsonObject obj, String key, BigDecimal fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsBigDecimal()
+                : fallback;
+    }
+
+    private int jsonInt(JsonObject obj, String key, int fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsInt()
+                : fallback;
+    }
+
+    private String fallback(String primary, String fallback) {
+        return primary == null || primary.isBlank() ? fallback : primary;
+    }
+
+    private void setText(Label label, String value) {
+        if (label != null) {
+            label.setText(value);
+        }
     }
 }

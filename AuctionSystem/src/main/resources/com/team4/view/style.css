@@ -1480,3 +1480,149 @@
     -fx-background-radius: 12;
     -fx-font-weight: bold;
 }
+
+.product-detail-panel {
+    -fx-padding: 16;
+    -fx-border-color: rgba(114, 47, 55, 0.14);
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+}
+
+.detail-label {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+.detail-value {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.detail-price {
+    -fx-text-fill: #722F37;
+}
+
+.detail-description {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 10;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 10;
+    -fx-padding: 10;
+}
+
+.detail-pill,
+.detail-pill-muted {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 4 9;
+}
+
+.detail-pill {
+    -fx-background-color: rgba(114, 47, 55, 0.07);
+    -fx-border-color: rgba(114, 47, 55, 0.18);
+    -fx-text-fill: #722F37;
+}
+
+.detail-pill-muted {
+    -fx-background-color: rgba(156, 163, 175, 0.15);
+    -fx-border-color: rgba(156, 163, 175, 0.35);
+    -fx-text-fill: #555555;
+}
+
+.account-summary-grid {
+    -fx-background-color: transparent;
+}
+
+.account-summary-card,
+.account-summary-note {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 12;
+    -fx-padding: 12;
+}
+
+.account-summary-note {
+    -fx-background-color: rgba(114, 47, 55, 0.05);
+    -fx-border-color: rgba(114, 47, 55, 0.14);
+}
+
+.account-summary-label {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+.account-summary-value {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.account-summary-money,
+.account-summary-detail {
+    -fx-text-fill: #722F37;
+}
+
+.empty-state {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 14;
+    -fx-padding: 20;
+}
+
+.empty-state-mark {
+    -fx-background-color: rgba(114, 47, 55, 0.10);
+    -fx-border-color: rgba(114, 47, 55, 0.16);
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-text-fill: #722F37;
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 7 12;
+}
+
+.empty-state-title {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.empty-state-text {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+    -fx-text-alignment: CENTER;
+}
+
+.empty-state-action {
+    -fx-background-color: #722F37;
+    -fx-background-radius: 10;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 9 14;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.empty-state-action:hover {
+    -fx-background-color: #5F2630;
+}

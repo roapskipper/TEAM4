@@ -107,7 +107,7 @@ public class AdminUsersController implements Initializable {
     }
 
     private void loadRealData() {
-        usersTable.setPlaceholder(new Label("Loading users..."));
+        usersTable.setPlaceholder(createTableEmptyState("Loading users", "Fetching account data."));
         Task<JsonArray> task = new Task<>() {
             @Override
             protected JsonArray call() throws Exception {
@@ -142,15 +142,18 @@ public class AdminUsersController implements Initializable {
             }
             
             if (allUsers.isEmpty()) {
-                usersTable.setPlaceholder(new Label("No users found."));
+                usersTable.setPlaceholder(createTableEmptyState("No users found", "User accounts will appear here."));
             }
             applyFilter();
         });
 
         task.setOnFailed(e -> {
             allUsers.clear();
-            usersTable.setPlaceholder(new Label("Failed to load: " + task.getException().getMessage()));
-            applyFilter();
+            usersTable.setItems(FXCollections.observableArrayList());
+            usersTable.setPlaceholder(createTableEmptyState(
+                    "Users unavailable",
+                    "Could not load users. " + task.getException().getMessage()));
+            resultCount.setText("0 users");
         });
 
         new Thread(task).start();
@@ -187,7 +190,33 @@ public class AdminUsersController implements Initializable {
             return matchSearch && matchFilter;
         });
         usersTable.setItems(filtered);
+        if (filtered.isEmpty()) {
+            usersTable.setPlaceholder(createTableEmptyState(
+                    allUsers.isEmpty() ? "No users found" : "No matching users",
+                    allUsers.isEmpty()
+                            ? "User accounts will appear here."
+                            : "Adjust the search keyword or role filter."));
+        }
         resultCount.setText(filtered.size() + " users");
+    }
+
+    private VBox createTableEmptyState(String title, String message) {
+        VBox empty = new VBox(10);
+        empty.setAlignment(Pos.CENTER);
+        empty.setPrefHeight(220);
+        empty.getStyleClass().add("empty-state");
+
+        Label mark = new Label(title.toLowerCase().contains("loading") ? "..." : "No Data");
+        mark.getStyleClass().add("empty-state-mark");
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("empty-state-title");
+        Label messageLabel = new Label(message);
+        messageLabel.getStyleClass().add("empty-state-text");
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(380);
+
+        empty.getChildren().addAll(mark, titleLabel, messageLabel);
+        return empty;
     }
 
 

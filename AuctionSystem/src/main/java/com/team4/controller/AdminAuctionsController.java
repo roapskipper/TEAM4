@@ -9,6 +9,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import com.team4.util.UserSession;
 import com.team4.client.ApiClient;
 
@@ -83,7 +84,7 @@ public class AdminAuctionsController implements Initializable {
     }
 
     private void loadDataFromServer() {
-        auctionsTable.setPlaceholder(new Label("Loading..."));
+        auctionsTable.setPlaceholder(createTableEmptyState("Loading auctions", "Fetching auction review data."));
         javafx.concurrent.Task<com.google.gson.JsonArray> task = new javafx.concurrent.Task<>() {
             @Override
             protected com.google.gson.JsonArray call() throws Exception {
@@ -116,15 +117,18 @@ public class AdminAuctionsController implements Initializable {
             }
             
             if (allAuctions.isEmpty()) {
-                auctionsTable.setPlaceholder(new Label("No auctions found."));
+                auctionsTable.setPlaceholder(createTableEmptyState("No auctions found", "Auctions awaiting review will appear here."));
             }
             applyFilter();
         });
 
         task.setOnFailed(e -> {
             allAuctions.clear();
-            auctionsTable.setPlaceholder(new Label("Failed to load: " + task.getException().getMessage()));
-            applyFilter();
+            auctionsTable.setItems(FXCollections.observableArrayList());
+            auctionsTable.setPlaceholder(createTableEmptyState(
+                    "Auctions unavailable",
+                    "Could not load auctions. " + task.getException().getMessage()));
+            resultCount.setText("0 auctions");
             Alert alert = new Alert(Alert.AlertType.ERROR, "API Failure: Could not load auctions. " + task.getException().getMessage());
             alert.show();
         });
@@ -164,7 +168,33 @@ public class AdminAuctionsController implements Initializable {
             return a.itemName.toLowerCase().contains(search);
         });
         auctionsTable.setItems(filtered);
+        if (filtered.isEmpty()) {
+            auctionsTable.setPlaceholder(createTableEmptyState(
+                    allAuctions.isEmpty() ? "No auctions found" : "No matching auctions",
+                    allAuctions.isEmpty()
+                            ? "Auctions awaiting review will appear here."
+                            : "Adjust the search keyword or status filter."));
+        }
         resultCount.setText(filtered.size() + " auctions");
+    }
+
+    private VBox createTableEmptyState(String title, String message) {
+        VBox empty = new VBox(10);
+        empty.setAlignment(Pos.CENTER);
+        empty.setPrefHeight(220);
+        empty.getStyleClass().add("empty-state");
+
+        Label mark = new Label(title.toLowerCase().contains("loading") ? "..." : "No Data");
+        mark.getStyleClass().add("empty-state-mark");
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("empty-state-title");
+        Label messageLabel = new Label(message);
+        messageLabel.getStyleClass().add("empty-state-text");
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(380);
+
+        empty.getChildren().addAll(mark, titleLabel, messageLabel);
+        return empty;
     }
 
     private void handleApprove(AuctionRow row) {

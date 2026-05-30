@@ -146,13 +146,26 @@ public class BidderOwnedItemsController implements Initializable {
 
     private void showMessage(String text) {
         ownedItemsGrid.getChildren().clear();
-        VBox empty = new VBox();
+        VBox empty = new VBox(10);
         empty.setAlignment(Pos.CENTER);
-        empty.setPrefHeight(220);
-        empty.setMaxWidth(Double.MAX_VALUE);
-        Label label = new Label(text);
-        label.getStyleClass().add("muted-text");
-        empty.getChildren().add(label);
+        empty.setPrefWidth(860);
+        empty.setPrefHeight(240);
+        empty.getStyleClass().add("empty-state");
+
+        boolean loading = text != null && text.toLowerCase(Locale.ROOT).contains("loading");
+        boolean error = text != null && text.toLowerCase(Locale.ROOT).contains("could not");
+        Label mark = new Label(loading ? "..." : "No Data");
+        mark.getStyleClass().add("empty-state-mark");
+        Label title = new Label(loading ? "Loading owned items" : error ? "Owned items unavailable" : "No owned items yet");
+        title.getStyleClass().add("empty-state-title");
+        Label message = new Label(loading
+                ? "Fetching the items you have won."
+                : error ? text : "Won auction items will appear here after completed auctions.");
+        message.getStyleClass().add("empty-state-text");
+        message.setWrapText(true);
+        message.setMaxWidth(420);
+
+        empty.getChildren().addAll(mark, title, message);
         ownedItemsGrid.getChildren().add(empty);
     }
 

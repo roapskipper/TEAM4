@@ -38,6 +38,37 @@
             </VBox>
         </HBox>
 
+        <GridPane hgap="12" vgap="12" styleClass="account-summary-grid">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+            </columnConstraints>
+
+            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                <Label text="Role" styleClass="account-summary-label"/>
+                <Label fx:id="summaryRole" maxWidth="Infinity" text="Bidder" styleClass="account-summary-value" wrapText="true"/>
+            </VBox>
+            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                <Label text="Balance" styleClass="account-summary-label"/>
+                <Label fx:id="summaryBalance" maxWidth="Infinity" text="0 VND" styleClass="account-summary-value account-summary-money" wrapText="true"/>
+            </VBox>
+            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                <Label text="Member Since" styleClass="account-summary-label"/>
+                <Label fx:id="summaryJoined" maxWidth="Infinity" text="Not available" styleClass="account-summary-value" wrapText="true"/>
+            </VBox>
+            <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                <Label text="Contact" styleClass="account-summary-label"/>
+                <Label fx:id="summaryContact" maxWidth="Infinity" text="Not provided" styleClass="account-summary-value" wrapText="true"/>
+            </VBox>
+
+            <VBox spacing="4" styleClass="account-summary-note" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="1">
+                <Label text="Account Detail" styleClass="account-summary-label"/>
+                <Label fx:id="summaryRoleDetail" maxWidth="Infinity" text="Account details" styleClass="account-summary-detail" wrapText="true"/>
+            </VBox>
+        </GridPane>
+
         <Separator styleClass="profile-sep"/>
 
         <VBox spacing="20">

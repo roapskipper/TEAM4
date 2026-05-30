@@ -142,6 +142,44 @@
         </VBox>
     </TitledPane>
 
+    <VBox fx:id="productDetailPanel" managed="false" spacing="14" styleClass="admin-card product-detail-panel" visible="false">
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                <Label fx:id="detailTitle" styleClass="section-title" text="Selected Product" />
+                <Label fx:id="detailSubtitle" styleClass="muted-text" text="Product details" />
+            </VBox>
+            <Label fx:id="detailStatus" styleClass="badge badge-yellow" text="Pending" />
+        </HBox>
+
+        <GridPane hgap="22" vgap="8">
+            <columnConstraints>
+                <ColumnConstraints minWidth="84" />
+                <ColumnConstraints percentWidth="28" />
+                <ColumnConstraints minWidth="92" />
+                <ColumnConstraints percentWidth="28" />
+            </columnConstraints>
+            <Label styleClass="detail-label" text="Category" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label fx:id="detailCategory" styleClass="detail-value" text="--" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+            <Label styleClass="detail-label" text="Created" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+            <Label fx:id="detailCreatedAt" styleClass="detail-value" text="--" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+
+            <Label styleClass="detail-label" text="Start Price" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <Label fx:id="detailStartPrice" styleClass="detail-value detail-price" text="--" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label styleClass="detail-label" text="Current Price" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <Label fx:id="detailCurrentPrice" styleClass="detail-value detail-price" text="--" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+        </GridPane>
+
+        <VBox spacing="5">
+            <Label styleClass="detail-label" text="Description" />
+            <Label fx:id="detailDescription" maxWidth="Infinity" styleClass="detail-description" text="No description provided." wrapText="true" />
+        </VBox>
+
+        <VBox spacing="7">
+            <Label styleClass="detail-label" text="Category Attributes" />
+            <FlowPane fx:id="detailAttributes" hgap="8" vgap="8" />
+        </VBox>
+    </VBox>
+
     <VBox minHeight="420" styleClass="admin-card table-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="productsTable" fixedCellSize="44" minHeight="360" styleClass="admin-table products-table" VBox.vgrow="ALWAYS">
             <columns>
