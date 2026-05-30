@@ -67,6 +67,10 @@ public class ProfileController implements Initializable {
                 String phone = jsonString(profile, "phoneNumber", "");
                 
                 String initial = name.isEmpty() ? "U" : name.substring(0, 1).toUpperCase();
+                UserSession session = UserSession.getInstance();
+                if (session != null) {
+                    session.setFullName(name);
+                }
                 
                 avatarText.setText(initial);
                 displayName.setText(name);

@@ -31,6 +31,7 @@ public class MainController implements Initializable {
     @FXML private StackPane contentArea;
     @FXML private Label pageTitle, pageSubtitle;
     @FXML private Label userNameLabel, userRoleBadge;
+    @FXML private Label userAvatarText;
     @FXML private Label balanceValueLabel;
     @FXML private StackPane userAvatarBg;
     @FXML private Button notiBtn;
@@ -52,6 +53,7 @@ public class MainController implements Initializable {
         updateUserInfo();
         updateBalanceVisibility();
         updateDepositVisibility();
+        refreshUserDisplayName();
         refreshUserBalance();
 
         if (role != null && role.startsWith("admin")) {
@@ -127,12 +129,45 @@ public class MainController implements Initializable {
             roleText = "BIDDER";
         }
 
-        if (com.team4.util.UserSession.getInstance() != null && com.team4.util.UserSession.getInstance().getUsername() != null) {
-            name = com.team4.util.UserSession.getInstance().getUsername();
+        UserSession session = UserSession.getInstance();
+        if (session != null) {
+            name = firstPresent(session.getFullName(), session.getUsername(), name);
         }
 
         userNameLabel.setText(name);
         userRoleBadge.setText(roleText);
+        updateAvatarInitial(name);
+    }
+
+    private void refreshUserDisplayName() {
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+            return;
+        }
+
+        javafx.concurrent.Task<JsonObject> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected JsonObject call() throws Exception {
+                return new ApiClient().getUserProfile(session.getUserId());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            JsonObject profile = task.getValue();
+            if (profile == null) {
+                return;
+            }
+            if (profile.has("fullName") && !profile.get("fullName").isJsonNull()) {
+                String fullName = profile.get("fullName").getAsString();
+                session.setFullName(fullName);
+                userNameLabel.setText(firstPresent(fullName, session.getUsername(), "User"));
+                updateAvatarInitial(fullName);
+            }
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     public Object loadPage(String pageId, String title, String subtitle) {
@@ -251,6 +286,24 @@ public class MainController implements Initializable {
             return "0 VND";
         }
         return MONEY_FORMAT.format(value) + " VND";
+    }
+
+    private String firstPresent(String first, String second, String fallback) {
+        if (first != null && !first.isBlank()) {
+            return first;
+        }
+        if (second != null && !second.isBlank()) {
+            return second;
+        }
+        return fallback;
+    }
+
+    private void updateAvatarInitial(String name) {
+        if (userAvatarText == null) {
+            return;
+        }
+        String value = name == null || name.isBlank() ? "U" : name.trim().substring(0, 1).toUpperCase(Locale.ROOT);
+        userAvatarText.setText(value);
     }
 
     /** Navigate to an already-loaded page (used by child controllers). */
