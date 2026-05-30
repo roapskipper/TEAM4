@@ -138,13 +138,13 @@
     <VBox minHeight="420" styleClass="admin-card table-card" VBox.vgrow="ALWAYS">
         <TableView fx:id="productsTable" fixedCellSize="44" minHeight="360" styleClass="admin-table products-table" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="colProduct" minWidth="220" prefWidth="280" text="Product" />
-                <TableColumn fx:id="colCategory" minWidth="110" prefWidth="130" text="Category" />
-                <TableColumn fx:id="colStartPrice" minWidth="145" prefWidth="160" text="Start Price" />
-                <TableColumn fx:id="colCurrentPrice" minWidth="145" prefWidth="160" text="Current Price" />
-                <TableColumn fx:id="colStatus" minWidth="110" prefWidth="120" text="Status" />
-                <TableColumn fx:id="colDate" minWidth="105" prefWidth="120" text="Date" />
-                <TableColumn fx:id="colAction" minWidth="85" prefWidth="95" text="Action" />
+                <TableColumn fx:id="colProduct" minWidth="190" prefWidth="270" text="Product" />
+                <TableColumn fx:id="colCategory" minWidth="100" prefWidth="125" text="Category" />
+                <TableColumn fx:id="colStartPrice" minWidth="130" prefWidth="150" text="Start Price" />
+                <TableColumn fx:id="colCurrentPrice" minWidth="130" prefWidth="150" text="Current Price" />
+                <TableColumn fx:id="colStatus" minWidth="95" prefWidth="115" text="Status" />
+                <TableColumn fx:id="colDate" minWidth="95" prefWidth="115" text="Date" />
+                <TableColumn fx:id="colAction" minWidth="150" prefWidth="170" text="Action" />
             </columns>
         </TableView>
     </VBox>

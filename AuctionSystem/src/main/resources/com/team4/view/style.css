@@ -391,24 +391,31 @@
     -fx-padding: 0;
 }
 
-.products-table .column-header-background {
+.products-table .column-header-background,
+.products-table .column-header-background .nested-column-header,
+.products-table .column-header-background .column-header,
+.products-table .column-header-background .filler,
+.products-table .nested-column-header,
+.products-table .column-header,
+.products-table .filler,
+.products-table .show-hide-columns-button {
     -fx-background-color: #722F37;
+    -fx-background-insets: 0;
+}
+
+.products-table .column-header-background {
     -fx-background-radius: 12 12 0 0;
     -fx-border-color: transparent transparent rgba(114, 47, 55, 0.18) transparent;
 }
 
-.products-table .filler {
-    -fx-background-color: #722F37;
+.products-table .filler,
+.products-table .show-hide-columns-button {
     -fx-background-radius: 0 12 0 0;
-}
-
-.products-table .nested-column-header,
-.products-table .column-header {
-    -fx-background-color: #722F37;
 }
 
 .admin-table .column-header {
     -fx-background-color: #722F37;
+    -fx-background-insets: 0;
     -fx-padding: 12 14;
     -fx-border-color: transparent rgba(255, 255, 255, 0.18) transparent transparent;
 }
@@ -445,21 +452,33 @@
 }
 
 .table-action-btn {
-    -fx-background-color: #F3F4F6;
-    -fx-text-fill: #2C2C2C;
+    -fx-background-color: #FBF9F6;
+    -fx-text-fill: #722F37;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
-    -fx-padding: 5 12;
+    -fx-border-color: rgba(114, 47, 55, 0.22);
+    -fx-padding: 6 10;
     -fx-font-family: "Lato";
     -fx-font-size: 12px;
+    -fx-font-weight: bold;
     -fx-cursor: hand;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
 
 .table-action-btn:hover {
-    -fx-background-color: rgba(114, 47, 55, 0.12);
+    -fx-background-color: rgba(114, 47, 55, 0.10);
     -fx-text-fill: #722F37;
+}
+
+.table-action-delete {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-border-color: rgba(114, 47, 55, 0.20);
+}
+
+.table-action-delete:hover {
+    -fx-background-color: #722F37;
+    -fx-text-fill: #FFFFFF;
 }
 
 .admin-action-btn {

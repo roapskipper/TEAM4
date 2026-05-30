@@ -27,6 +27,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -139,6 +140,7 @@ public class SellerProductsController implements Initializable {
 
     private void setupTable() {
         productsTable.setPlaceholder(new Label("No products found"));
+        productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         colProduct.setCellValueFactory(param -> new SimpleStringProperty(nullSafe(param.getValue().getName())));
         colCategory.setCellValueFactory(param -> new SimpleStringProperty(formatCategory(param.getValue().getCategory())));
@@ -188,18 +190,24 @@ public class SellerProductsController implements Initializable {
         colAction.setCellFactory(param -> new TableCell<Item, Void>() {
             private final Button editBtn = new Button("Edit");
             private final Button deleteBtn = new Button("Delete");
-            private final HBox actions = new HBox(6, editBtn, deleteBtn);
+            private final HBox actions = new HBox(8, editBtn, deleteBtn);
 
             {
-                editBtn.getStyleClass().add("table-action-btn");
+                actions.setAlignment(Pos.CENTER);
+
+                editBtn.getStyleClass().addAll("table-action-btn", "table-action-edit");
                 editBtn.setFocusTraversable(false);
+                editBtn.setMinWidth(56);
+                editBtn.setPrefWidth(56);
                 editBtn.setOnAction(event -> {
                     Item selected = getTableView().getItems().get(getIndex());
                     onEditProduct(selected);
                 });
 
-                deleteBtn.getStyleClass().add("table-action-btn");
+                deleteBtn.getStyleClass().addAll("table-action-btn", "table-action-delete");
                 deleteBtn.setFocusTraversable(false);
+                deleteBtn.setMinWidth(64);
+                deleteBtn.setPrefWidth(64);
                 deleteBtn.setOnAction(event -> {
                     Item selected = getTableView().getItems().get(getIndex());
                     onDeleteProduct(selected);
