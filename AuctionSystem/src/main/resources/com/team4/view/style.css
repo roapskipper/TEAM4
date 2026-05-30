@@ -1364,6 +1364,52 @@
     -fx-text-fill: #9CA3AF;
 }
 
+.owned-stat-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: transparent;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 15, 0, 0, 4);
+    -fx-min-height: 96;
+    -fx-pref-height: 96;
+    -fx-padding: 18 24;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.owned-stat-label {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+.owned-stat-value-accent,
+.owned-stat-value,
+.owned-stat-value-muted {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.owned-stat-value-accent {
+    -fx-text-fill: #722F37;
+}
+
+.owned-stat-value {
+    -fx-text-fill: #2C2C2C;
+}
+
+.owned-stat-value-muted {
+    -fx-text-fill: #9CA3AF;
+}
+
+.owned-collection-panel {
+    -fx-padding: 22 26;
+}
+
+.owned-grid {
+    -fx-alignment: TOP_CENTER;
+}
+
 .price-display {
     -fx-font-size: 36px;
     -fx-font-weight: bold;
@@ -1639,12 +1685,15 @@
     -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #2C2C2C;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
 }
 
 .empty-state-text {
     -fx-font-family: "Lato";
     -fx-font-size: 12px;
     -fx-text-fill: #555555;
+    -fx-alignment: CENTER;
     -fx-text-alignment: CENTER;
 }
 

@@ -252,10 +252,19 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            showError(loginError, "Login failed. " + ApiClient.toDisplayMessage(e));
+            showError(loginError, "Login failed. " + toLoginDisplayMessage(e));
             loginError.setStyle("-fx-text-fill: #ef4444;");
             e.printStackTrace();
         }
+    }
+
+    private String toLoginDisplayMessage(Exception exception) {
+        String message = ApiClient.toDisplayMessage(exception);
+        if ("This account is not registered as a Seller.".equals(message)
+                || "This account is not registered as a Bidder.".equals(message)) {
+            return "This account is not registered as a Seller or Bidder.";
+        }
+        return message;
     }
 
     @FXML

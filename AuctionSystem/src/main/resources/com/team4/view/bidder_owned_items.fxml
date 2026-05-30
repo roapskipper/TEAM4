@@ -12,28 +12,30 @@
       prefWidth="1200">
 
     <HBox spacing="16">
-        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label text="Owned Items" styleClass="muted-text"/>
-            <Label fx:id="ownedCount" text="0" styleClass="stat-number-accent"/>
+        <VBox alignment="CENTER_LEFT" spacing="8" styleClass="owned-stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Owned Items" styleClass="owned-stat-label"/>
+            <Label fx:id="ownedCount" text="0" styleClass="owned-stat-value-accent"/>
         </VBox>
-        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label text="Total Winning Value" styleClass="muted-text"/>
-            <Label fx:id="totalValue" text="0 VND" styleClass="stat-number-neutral" style="-fx-font-size: 24;"/>
+        <VBox alignment="CENTER_LEFT" spacing="8" styleClass="owned-stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Total Winning Value" styleClass="owned-stat-label"/>
+            <Label fx:id="totalValue" text="0 VND" styleClass="owned-stat-value"/>
         </VBox>
-        <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
-            <Label text="Latest Win" styleClass="muted-text"/>
-            <Label fx:id="latestItem" text="--" styleClass="stat-number-muted" style="-fx-font-size: 24;" wrapText="true"/>
+        <VBox alignment="CENTER_LEFT" spacing="8" styleClass="owned-stat-card" HBox.hgrow="ALWAYS">
+            <Label text="Latest Win" styleClass="owned-stat-label"/>
+            <Label fx:id="latestItem" maxWidth="Infinity" text="--" styleClass="owned-stat-value-muted" wrapText="true"/>
         </VBox>
     </HBox>
 
-    <VBox styleClass="filter-panel" spacing="14">
+    <VBox styleClass="filter-panel owned-collection-panel" spacing="14">
         <HBox alignment="CENTER_LEFT">
             <Label text="Collection" styleClass="section-title"/>
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
         <FlowPane fx:id="ownedItemsGrid"
+                  alignment="TOP_CENTER"
                   hgap="16"
                   vgap="16"
+                  styleClass="owned-grid"
                   prefWrapLength="900"/>
     </VBox>
 </VBox>

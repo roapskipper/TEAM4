@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.team4.client.ApiClient;
 import com.team4.util.UserSession;
 
+import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -36,6 +37,9 @@ public class BidderOwnedItemsController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        if (ownedItemsGrid != null) {
+            ownedItemsGrid.setAlignment(Pos.TOP_CENTER);
+        }
         loadOwnedItems();
     }
 
@@ -148,8 +152,11 @@ public class BidderOwnedItemsController implements Initializable {
         ownedItemsGrid.getChildren().clear();
         VBox empty = new VBox(10);
         empty.setAlignment(Pos.CENTER);
-        empty.setPrefWidth(860);
+        empty.prefWidthProperty().bind(Bindings.createDoubleBinding(
+                () -> Math.max(420, ownedItemsGrid.getWidth() - 8),
+                ownedItemsGrid.widthProperty()));
         empty.setPrefHeight(240);
+        empty.setMaxWidth(Double.MAX_VALUE);
         empty.getStyleClass().add("empty-state");
 
         boolean loading = text != null && text.toLowerCase(Locale.ROOT).contains("loading");
@@ -158,12 +165,15 @@ public class BidderOwnedItemsController implements Initializable {
         mark.getStyleClass().add("empty-state-mark");
         Label title = new Label(loading ? "Loading owned items" : error ? "Owned items unavailable" : "No owned items yet");
         title.getStyleClass().add("empty-state-title");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
         Label message = new Label(loading
                 ? "Fetching the items you have won."
                 : error ? text : "Won auction items will appear here after completed auctions.");
         message.getStyleClass().add("empty-state-text");
         message.setWrapText(true);
-        message.setMaxWidth(420);
+        message.setMaxWidth(Double.MAX_VALUE);
+        message.setAlignment(Pos.CENTER);
 
         empty.getChildren().addAll(mark, title, message);
         ownedItemsGrid.getChildren().add(empty);
