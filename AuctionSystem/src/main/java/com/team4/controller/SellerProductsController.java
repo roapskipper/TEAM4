@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -28,6 +29,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -141,6 +143,7 @@ public class SellerProductsController implements Initializable {
     private void setupTable() {
         productsTable.setPlaceholder(new Label("No products found"));
         productsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        Platform.runLater(this::styleProductTableHeader);
 
         colProduct.setCellValueFactory(param -> new SimpleStringProperty(nullSafe(param.getValue().getName())));
         colCategory.setCellValueFactory(param -> new SimpleStringProperty(formatCategory(param.getValue().getCategory())));
@@ -153,6 +156,31 @@ public class SellerProductsController implements Initializable {
         colCurrentPrice.setCellFactory(column -> priceCell());
         colStatus.setCellFactory(column -> statusCell());
         setupActionColumn();
+    }
+
+    private void styleProductTableHeader() {
+        styleLookup(".column-header-background",
+                "-fx-background-color: #722F37; -fx-background-radius: 12 12 0 0;");
+        styleLookup(".nested-column-header",
+                "-fx-background-color: #722F37; -fx-background-insets: 0;");
+        styleLookup(".column-header",
+                "-fx-background-color: #722F37; -fx-background-insets: 0; "
+                        + "-fx-border-color: transparent rgba(255,255,255,0.18) transparent transparent;");
+        styleLookup(".filler",
+                "-fx-background-color: #722F37; -fx-background-radius: 0 12 0 0;");
+        styleLookup(".show-hide-columns-button",
+                "-fx-background-color: #722F37; -fx-background-radius: 0 12 0 0;");
+
+        for (Node label : productsTable.lookupAll(".column-header .label")) {
+            label.setStyle("-fx-text-fill: #FFFFFF; -fx-font-family: 'Lato'; "
+                    + "-fx-font-weight: bold; -fx-font-size: 13px;");
+        }
+    }
+
+    private void styleLookup(String selector, String style) {
+        for (Node node : productsTable.lookupAll(selector)) {
+            node.setStyle(style);
+        }
     }
 
     private TableCell<Item, String> priceCell() {
