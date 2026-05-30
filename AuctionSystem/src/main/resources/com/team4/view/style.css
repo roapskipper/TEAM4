@@ -1571,8 +1571,17 @@
     -fx-text-fill: #2C2C2C;
 }
 
-.account-summary-money,
+.account-summary-money {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
+}
+
 .account-summary-detail {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-text-fill: #722F37;
 }
 

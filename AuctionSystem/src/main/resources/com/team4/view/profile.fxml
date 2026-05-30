@@ -52,7 +52,7 @@
             </VBox>
             <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
                 <Label text="Balance" styleClass="account-summary-label"/>
-                <Label fx:id="summaryBalance" maxWidth="Infinity" text="0 VND" styleClass="account-summary-value account-summary-money" wrapText="true"/>
+                <Label fx:id="summaryBalance" maxWidth="Infinity" text="0 VND" styleClass="account-summary-money" style="-fx-text-fill: #722F37;" wrapText="true"/>
             </VBox>
             <VBox spacing="4" styleClass="account-summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
                 <Label text="Member Since" styleClass="account-summary-label"/>

@@ -224,6 +224,9 @@ public class ProfileController implements Initializable {
             session.setBalance(balance);
         }
         setText(summaryBalance, formatMoney(balance));
+        if (summaryBalance != null) {
+            summaryBalance.setStyle("-fx-text-fill: #722F37; -fx-font-weight: bold;");
+        }
         setText(summaryJoined, formatDateTime(jsonString(profile, "createdAt", "")));
         setText(summaryContact, fallback(phone, email));
         setText(summaryRoleDetail, roleDetail(profile, role));
