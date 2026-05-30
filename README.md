@@ -55,7 +55,7 @@ SERVER_PORT=18368
 API_BASE_URL=http://localhost:8080/api/
 ```
 
-Server sẽ tự tạo database và seed dữ liệu mẫu từ `schema.sql` và `data.sql` khi khởi động.
+Server sẽ tự tạo database và seed dữ liệu mẫu từ `schema.sql` khi khởi động.
 
 ---
 
