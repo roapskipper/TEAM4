@@ -9,6 +9,101 @@
     -fx-background-color: #FBF9F6;
 }
 
+.login-auth-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(114, 47, 55, 0.12);
+    -fx-border-radius: 18;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.10), 22, 0, 0, 8);
+}
+
+.login-card-title {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.login-card-subtitle {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+.login-auction-preview {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(114, 47, 55, 0.12);
+    -fx-border-radius: 16;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.06), 14, 0, 0, 4);
+}
+
+.login-preview-mark {
+    -fx-background-color: #9A2F38;
+    -fx-background-radius: 14;
+    -fx-border-color: #7A2630;
+    -fx-border-radius: 14;
+}
+
+.login-preview-initials {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FBF9F6;
+}
+
+.login-preview-type {
+    -fx-font-family: "Lato";
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F7E6C4;
+}
+
+.login-preview-title {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.login-preview-subtitle,
+.login-preview-label {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-text-fill: #555555;
+}
+
+.login-preview-value {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
+}
+
+.login-stat-strip {
+    -fx-background-color: rgba(255, 255, 255, 0.72);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(114, 47, 55, 0.10);
+    -fx-border-radius: 16;
+    -fx-padding: 14 18;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.04), 10, 0, 0, 2);
+}
+
+.login-stat-number {
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Playfair Display";
+    -fx-text-fill: #2C2C2C;
+}
+
+.login-stat-label {
+    -fx-font-size: 12px;
+    -fx-font-family: "Lato";
+    -fx-text-fill: #555555;
+}
+
 .brand-title {
     -fx-font-size: 24px;
     -fx-font-weight: bold;

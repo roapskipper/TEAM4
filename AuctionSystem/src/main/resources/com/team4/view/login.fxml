@@ -51,7 +51,7 @@
                 </VBox>
             </HBox>
 
-            <Region prefHeight="40" />
+            <Region prefHeight="24" />
 
             <VBox spacing="8">
                 <Label text="Welcome" styleClass="hero-title"/>
@@ -60,22 +60,53 @@
                        wrapText="true" maxWidth="420" style="-fx-font-size: 16; -fx-text-fill: #555555; -fx-line-spacing: 4;"/>
             </VBox>
 
+            <VBox spacing="12" maxWidth="430" styleClass="login-auction-preview">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <StackPane minWidth="72" prefWidth="72" maxWidth="72"
+                               minHeight="72" prefHeight="72" maxHeight="72"
+                               styleClass="login-preview-mark">
+                        <VBox alignment="CENTER" spacing="1">
+                            <Label text="AS" styleClass="login-preview-initials"/>
+                            <Label text="ART" styleClass="login-preview-type"/>
+                        </VBox>
+                    </StackPane>
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Featured Lot" styleClass="badge badge-purple"/>
+                            <Label text="Verified" styleClass="verified-mark"/>
+                        </HBox>
+                        <Label text="Heritage Clock Painting" styleClass="login-preview-title" wrapText="true"/>
+                        <Label text="Opening bid starts at 3,000,000 VND" styleClass="login-preview-subtitle" wrapText="true"/>
+                    </VBox>
+                </HBox>
+                <HBox spacing="10">
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Current Mood" styleClass="login-preview-label"/>
+                        <Label text="Curated" styleClass="login-preview-value"/>
+                    </VBox>
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Next Room" styleClass="login-preview-label"/>
+                        <Label text="Live Soon" styleClass="login-preview-value"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
             <Region VBox.vgrow="ALWAYS" />
 
-            <HBox spacing="32" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="50K+" styleClass="stat-number"/>
-                    <Label text="Users" styleClass="stat-label"/>
+            <HBox spacing="0" alignment="CENTER_LEFT" maxWidth="430" styleClass="login-stat-strip">
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <Label text="50K+" styleClass="login-stat-number"/>
+                    <Label text="Users" styleClass="login-stat-label"/>
                 </VBox>
                 <Separator orientation="VERTICAL" styleClass="stat-sep"/>
-                <VBox spacing="4">
-                    <Label text="10K+" styleClass="stat-number"/>
-                    <Label text="Items" styleClass="stat-label"/>
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <Label text="10K+" styleClass="login-stat-number"/>
+                    <Label text="Items" styleClass="login-stat-label"/>
                 </VBox>
                 <Separator orientation="VERTICAL" styleClass="stat-sep"/>
-                <VBox spacing="4">
-                    <Label text="99%" styleClass="stat-number"/>
-                    <Label text="Trust Rate" styleClass="stat-label"/>
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <Label text="99%" styleClass="login-stat-number"/>
+                    <Label text="Trust Rate" styleClass="login-stat-label"/>
                 </VBox>
             </HBox>
 
@@ -113,6 +144,14 @@
                 </StackPane>
                 <Label text="AuctionSpace" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
             </HBox>
+
+            <VBox spacing="16" maxWidth="440" translateY="-36" styleClass="login-auth-card">
+                <VBox spacing="4">
+                    <Label text="Access your auction account" styleClass="login-card-title"/>
+                    <Label text="Bid, sell, and manage verified auction activity."
+                           wrapText="true"
+                           styleClass="login-card-subtitle"/>
+                </VBox>
 
             <HBox id="tabSwitcher" spacing="6"
                   style="-fx-background-color: #F3F4F6; -fx-background-radius: 14; -fx-padding: 5;">
@@ -250,6 +289,7 @@
                       -fx-border-color: transparent; -fx-padding: 0;
                       -fx-underline: true;"/>
                 </TextFlow>
+            </VBox>
             </VBox>
         </VBox>
     </HBox>
