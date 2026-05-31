@@ -722,7 +722,7 @@ public class BiddingRoomController implements Initializable {
         bidHistoryList.getItems().clear();
         for (int i = history.size() - 1; i >= 0; i--) {
             JsonObject bid = history.get(i).getAsJsonObject();
-            String bidder = stringValue(bid, "bidderName", "Unknown Bidder");
+            String bidder = displayNameForBid(bid);
             double amount = doubleValue(bid, "bidAmount", 0);
             LocalDateTime bidTime = parseTime(stringValue(bid, "bidTime", null));
             String time = bidTime == null ? "" : " - " + bidTime.format(HISTORY_TIME_FORMAT);
@@ -818,6 +818,25 @@ public class BiddingRoomController implements Initializable {
 
     private String formatPrice(double price) {
         return MONEY_FORMAT.format(BigDecimal.valueOf(price)) + " VND";
+    }
+
+    private String displayNameForBid(JsonObject bid) {
+        String fallbackName = stringValue(bid, "bidderName", "Unknown Bidder");
+        String bidderId = stringValue(bid, "bidderId", "");
+        UserSession session = UserSession.getInstance();
+        if (session != null && bidderId.equals(session.getUserId())) {
+            return firstPresent(session.getFullName(), session.getUsername(), fallbackName);
+        }
+        return fallbackName;
+    }
+
+    private String firstPresent(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     private String compactMoney(double value) {

@@ -207,6 +207,8 @@ public class MainController implements Initializable {
                 ((BiddingRoomController) controller).setMainController(this);
             } else if (controller instanceof AdminDashboardController) {
                 ((AdminDashboardController) controller).setMainController(this);
+            } else if (controller instanceof ProfileController) {
+                ((ProfileController) controller).setMainController(this);
             }
 
             contentArea.getChildren().clear();
@@ -273,6 +275,11 @@ public class MainController implements Initializable {
         Thread thread = new Thread(task);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public void refreshUserIdentityFromSession() {
+        updateUserInfo();
+        refreshUserBalance();
     }
 
     private void updateBalanceVisibility() {

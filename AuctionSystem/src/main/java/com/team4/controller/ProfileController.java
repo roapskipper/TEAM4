@@ -29,6 +29,7 @@ public class ProfileController implements Initializable {
 
     private static final DateTimeFormatter PROFILE_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
+    private MainController mainController;
 
     static {
         MONEY_FORMAT.setMaximumFractionDigits(0);
@@ -39,6 +40,10 @@ public class ProfileController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         loadProfile();
+    }
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
     }
 
     private void loadProfile() {
@@ -70,6 +75,9 @@ public class ProfileController implements Initializable {
                 UserSession session = UserSession.getInstance();
                 if (session != null) {
                     session.setFullName(name);
+                }
+                if (mainController != null) {
+                    mainController.refreshUserIdentityFromSession();
                 }
                 
                 avatarText.setText(initialsFromName(name));
