@@ -39,7 +39,7 @@ jobs:
       # 3. Build và chạy unit tests (exclude @Tag("integration"))
       - name: Run unit tests
         working-directory: AuctionSystem
-        run: mvn test --batch-mode --no-transfer-progress
+        run: xvfb-run mvn test --batch-mode --no-transfer-progress
 
       # 4. Upload JaCoCo coverage report (luôn chạy, kể cả khi test fail)
       - name: Upload coverage report
@@ -115,4 +115,4 @@ jobs:
       # Chạy CHỈ integration tests
       - name: Run integration tests
         working-directory: AuctionSystem
-        run: mvn test --batch-mode --no-transfer-progress -Dgroups=integration
+        run: xvfb-run mvn test --batch-mode --no-transfer-progress -Dgroups=integration
