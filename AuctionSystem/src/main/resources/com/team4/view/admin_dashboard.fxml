@@ -6,6 +6,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.Region?>
@@ -18,7 +20,7 @@
         <Button fx:id="refreshButton" text="Refresh" onAction="#onRefresh" styleClass="admin-button-primary" />
     </HBox>
 
-    <HBox spacing="16">
+    <HBox spacing="16" styleClass="dashboard-stat-row">
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
@@ -46,37 +48,23 @@
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-warning">
-                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="L" />
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="activeAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="Active Auctions" />
-                </VBox>
-            </HBox>
-        </VBox>
-
-        <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-success">
                     <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="R" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="totalRevenueLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="Total Revenue" />
+                    <Label fx:id="activeAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
+                    <Label styleClass="muted-text" text="Running Auctions" />
                 </VBox>
             </HBox>
         </VBox>
-    </HBox>
 
-    <HBox spacing="16">
         <VBox styleClass="admin-stat-card" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="12">
-                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-primary">
-                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="T" />
+                <StackPane prefHeight="44" prefWidth="44" styleClass="stat-icon-danger">
+                    <Label style="-fx-font-size: 14; -fx-font-weight: bold;" text="P" />
                 </StackPane>
                 <VBox spacing="2">
-                    <Label fx:id="totalTransactionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
-                    <Label styleClass="muted-text" text="Total Transactions" />
+                    <Label fx:id="pendingAuctionsLabel" styleClass="stat-number-neutral" style="-fx-font-size: 24;" text="0" />
+                    <Label styleClass="muted-text" text="Pending Auctions" />
                 </VBox>
             </HBox>
         </VBox>
@@ -91,20 +79,47 @@
             </BarChart>
         </VBox>
 
-        <VBox prefWidth="500" spacing="12" styleClass="admin-card" HBox.hgrow="ALWAYS">
-            <Label styleClass="section-title" text="Quick Actions" />
-            <VBox spacing="8">
-                <HBox spacing="10">
-                    <Button text="Pending Auctions" onAction="#onViewPendingAuctions" styleClass="admin-button-primary" prefWidth="200"/>
-                    <Button text="Manage Users" onAction="#onManageUsers" styleClass="admin-button-secondary" prefWidth="200"/>
-                </HBox>
-                <HBox spacing="10">
-                    <Button text="System Settings" onAction="#onSystemSettings" styleClass="admin-button-secondary" prefWidth="200"/>
-                </HBox>
+        <VBox prefWidth="500" spacing="16" styleClass="admin-card dashboard-command-card" HBox.hgrow="ALWAYS">
+            <VBox spacing="4">
+                <Label styleClass="section-title" text="Review Center" />
+                <Label styleClass="muted-text" text="Live work queue based on current users and auctions." />
             </VBox>
 
-            <Label styleClass="section-title" text="System Alerts" style="-fx-padding: 16 0 0 0;"/>
-            <VBox fx:id="alertsContainer" spacing="8" VBox.vgrow="ALWAYS">
+            <HBox spacing="12">
+                <VBox spacing="4" styleClass="dashboard-insight-card dashboard-insight-primary" HBox.hgrow="ALWAYS">
+                    <Label fx:id="pendingReviewCount" text="0" styleClass="dashboard-insight-number" />
+                    <Label text="Pending Review" styleClass="dashboard-insight-title" />
+                    <Label text="Auctions waiting for approval" styleClass="dashboard-insight-desc" wrapText="true" />
+                </VBox>
+
+                <VBox spacing="4" styleClass="dashboard-insight-card" HBox.hgrow="ALWAYS">
+                    <Label fx:id="liveAuctionCount" text="0" styleClass="dashboard-insight-number" />
+                    <Label text="Running Now" styleClass="dashboard-insight-title" />
+                    <Label text="Auctions currently live" styleClass="dashboard-insight-desc" wrapText="true" />
+                </VBox>
+            </HBox>
+
+            <VBox spacing="10" styleClass="dashboard-action-panel">
+                <Label text="Actions" styleClass="dashboard-action-heading" />
+                <GridPane hgap="10" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50" />
+                        <ColumnConstraints percentWidth="50" />
+                    </columnConstraints>
+
+                    <Button text="Review Pending" onAction="#onViewPendingAuctions"
+                            maxWidth="Infinity" styleClass="admin-button-primary"
+                            GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                    <Button text="Manage Users" onAction="#onManageUsers"
+                            maxWidth="Infinity" styleClass="admin-button-secondary"
+                            GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                    <Button text="View Auctions" onAction="#onManageAuctions"
+                            maxWidth="Infinity" styleClass="admin-button-secondary"
+                            GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                    <Button text="Refresh Data" onAction="#onRefresh"
+                            maxWidth="Infinity" styleClass="admin-button-secondary"
+                            GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                </GridPane>
             </VBox>
         </VBox>
     </HBox>
