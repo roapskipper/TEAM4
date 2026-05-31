@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import com.team4.util.StageUtils;
 
 public class Main extends Application {
 
@@ -65,8 +66,7 @@ public class Main extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(1000);
         primaryStage.setMinHeight(850);
-        primaryStage.centerOnScreen();
-        primaryStage.show();
+        StageUtils.showMaximized(primaryStage);
     }
 
     @Override

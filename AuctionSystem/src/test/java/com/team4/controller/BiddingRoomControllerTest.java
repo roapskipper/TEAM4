@@ -94,6 +94,9 @@ public class BiddingRoomControllerTest {
         mockedClientStatic = mockStatic(Client.class);
         mockedClientStatic.when(Client::getInstance).thenReturn(mockClient);
 
+        // Initialize real UserSession singleton for other threads (e.g. JavaFX thread)
+        UserSession.createSession("user-1", "test_user", "BIDDER");
+
         mockSession = mock(UserSession.class);
         mockedSessionStatic = mockStatic(UserSession.class);
         mockedSessionStatic.when(UserSession::getInstance).thenReturn(mockSession);
@@ -103,6 +106,7 @@ public class BiddingRoomControllerTest {
     public void tearDown() {
         mockedClientStatic.close();
         mockedSessionStatic.close();
+        UserSession.clearSession();
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
@@ -159,6 +163,7 @@ public class BiddingRoomControllerTest {
         setField(controller, "auctionId", "auction-123");
         setField(controller, "currentBid", 100000.0);
         setField(controller, "bidIncrement", 50000.0);
+        setField(controller, "availableBalance", BigDecimal.valueOf(500000.0));
 
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
@@ -188,6 +193,7 @@ public class BiddingRoomControllerTest {
         setField(controller, "auctionId", "auction-123");
         setField(controller, "currentBid", 100000.0);
         setField(controller, "bidIncrement", 50000.0);
+        setField(controller, "availableBalance", BigDecimal.valueOf(10000.0));
 
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
@@ -213,7 +219,6 @@ public class BiddingRoomControllerTest {
         setField(controller, "auctionId", "auction-123");
         setField(controller, "auctionStatus", "RUNNING");
         setField(controller, "auctionEndTime", java.time.LocalDateTime.now().plusDays(1));
-        when(mockSession.getRole()).thenReturn("BIDDER");
 
         JsonObject data = new JsonObject();
         data.addProperty("auctionId", "auction-123");

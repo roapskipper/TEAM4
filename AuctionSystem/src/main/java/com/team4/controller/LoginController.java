@@ -1,6 +1,7 @@
 package com.team4.controller;
 
 import com.team4.client.ApiClient;
+import com.team4.util.StageUtils;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -240,10 +241,7 @@ public class LoginController {
 
                     stage.setScene(scene);
                     stage.setTitle("Dashboard - AuctionSpace");
-                    stage.setWidth(1200);
-                    stage.setHeight(800);
-                    stage.centerOnScreen();
-                    stage.show();
+                    StageUtils.showMaximized(stage);
 
                 } catch (Exception ex) {
                     System.out.println("Scene transition error: " + ex.getMessage());

@@ -1,3 +1,4 @@
+package com.team4;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class TestBcrypt {

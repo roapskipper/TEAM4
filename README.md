@@ -160,5 +160,5 @@ Lưu ý: phải chạy Server trước Client để đăng nhập, tải dữ li
 
 ## 7. Link Báo Cáo PDF Và Video Demo
 
-- Báo cáo PDF: [link]
+- Báo cáo PDF: [link](https://drive.google.com/file/d/1c4JxOPbsrDUJ1ktARJrTAWva5ufelMSz/view?usp=sharing)
 - Video demo: [link]
