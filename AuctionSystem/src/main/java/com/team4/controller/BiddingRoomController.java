@@ -69,6 +69,7 @@ public class BiddingRoomController implements Initializable {
     private String auctionStatus = "";
     private Timeline countdownTimeline;
     private MainController mainController;
+    private final java.util.concurrent.atomic.AtomicInteger refreshVersion = new java.util.concurrent.atomic.AtomicInteger(0);
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -87,6 +88,7 @@ public class BiddingRoomController implements Initializable {
 
     public void loadAuction(String auctionId) {
         this.auctionId = auctionId;
+        int currentVersion = refreshVersion.incrementAndGet();
         setRoomLoadingState();
 
         Task<JsonObject> task = new Task<JsonObject>() {
@@ -96,8 +98,43 @@ public class BiddingRoomController implements Initializable {
             }
         };
 
-        task.setOnSucceeded(e -> applyAuctionData(task.getValue()));
-        task.setOnFailed(e -> showBidError("Could not load auction. " + ApiClient.toDisplayMessage(task.getException())));
+        task.setOnSucceeded(e -> {
+            if (currentVersion == refreshVersion.get()) {
+                applyAuctionData(task.getValue());
+            }
+        });
+        task.setOnFailed(e -> {
+            if (currentVersion == refreshVersion.get()) {
+                showBidError("Could not load auction. " + ApiClient.toDisplayMessage(task.getException()));
+            }
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    public void refreshAuctionData() {
+        if (this.auctionId == null) return;
+        int currentVersion = refreshVersion.incrementAndGet();
+
+        Task<JsonObject> task = new Task<JsonObject>() {
+            @Override
+            protected JsonObject call() throws Exception {
+                return new ApiClient().getAuctionDetail(auctionId);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            if (currentVersion == refreshVersion.get()) {
+                applyAuctionData(task.getValue());
+            }
+        });
+        task.setOnFailed(e -> {
+            if (currentVersion == refreshVersion.get()) {
+                showBidError("Could not refresh auction. " + ApiClient.toDisplayMessage(task.getException()));
+            }
+        });
 
         Thread thread = new Thread(task);
         thread.setDaemon(true);
@@ -383,7 +420,7 @@ public class BiddingRoomController implements Initializable {
                     startCountdown();
                 }
                 if (auctionId != null) {
-                    loadAuction(auctionId);
+                    refreshAuctionData();
                 }
             }
         } catch (Exception e) {
