@@ -396,10 +396,13 @@ public class BiddingRoomController implements Initializable {
             }
 
             if ("BID_SUCCESS".equals(action) || "BID_UPDATE".equals(action)) {
+                String previousLeaderId = currentLeaderId;
                 setBiddingControlsDisabled(!isAuctionOpenForBidding());
                 hideBidError();
+                String newLeaderId = currentLeaderId;
                 if (data.has("currentHighestBidderId")) {
-                    currentLeaderId = stringValue(data, "currentHighestBidderId", currentLeaderId);
+                    newLeaderId = stringValue(data, "currentHighestBidderId", currentLeaderId);
+                    currentLeaderId = newLeaderId;
                 }
                 if ("BID_SUCCESS".equals(action) && data.has("balance") && !data.get("balance").isJsonNull()) {
                     updateSessionBalance(data.get("balance").getAsBigDecimal());
@@ -419,12 +422,39 @@ public class BiddingRoomController implements Initializable {
                     auctionEndTime = parseTime(data.get("endTime").getAsString());
                     startCountdown();
                 }
+                notifyBidUpdate(previousLeaderId, newLeaderId);
                 if (auctionId != null) {
                     refreshAuctionData();
                 }
             }
         } catch (Exception e) {
             logger.warn("Failed to process socket message", e);
+        }
+    }
+
+    private void notifyBidUpdate(String previousLeaderId, String newLeaderId) {
+        if (mainController == null || newLeaderId == null || newLeaderId.isBlank()) {
+            return;
+        }
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+            return;
+        }
+
+        String userId = session.getUserId();
+        String name = itemName != null && itemName.getText() != null && !itemName.getText().isBlank()
+                ? itemName.getText()
+                : "this auction";
+        if (userId.equals(newLeaderId)) {
+            mainController.pushNotification(
+                    "Bid placed",
+                    "You are leading " + name + " at " + formatPrice(currentBid) + ".",
+                    "bid");
+        } else if (userId.equals(previousLeaderId)) {
+            mainController.pushNotification(
+                    "You have been outbid",
+                    "Another bidder is now leading " + name + " at " + formatPrice(currentBid) + ".",
+                    "warning");
         }
     }
 

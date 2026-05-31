@@ -1,15 +1,21 @@
 package com.team4.controller;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
+import com.team4.model.Item;
 import com.team4.util.StageUtils;
 import com.team4.util.UserSession;
 import javafx.animation.PauseTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -17,13 +23,18 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.stage.Popup;
 import javafx.util.Duration;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 public class MainController implements Initializable {
 
@@ -44,9 +55,13 @@ public class MainController implements Initializable {
 
     private String userRole = "bidder";
     private String currentPage = "";
+    private final ObservableList<AppNotification> notifications = FXCollections.observableArrayList();
+    private final Set<String> runtimeNotificationKeys = new HashSet<>();
+    private Popup notificationPopup;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        updateNotificationBadge();
     }
 
     public void setUserRole(String role) {
@@ -65,6 +80,7 @@ public class MainController implements Initializable {
         } else {
             loadPage("bidder_auctions", "Auctions", "Explore and join auctions");
         }
+        refreshNotifications();
     }
 
     private void setupSidebar() {
@@ -367,7 +383,341 @@ public class MainController implements Initializable {
     }
 
     @FXML private void onNotificationClick() {
-        showNotification("No new notifications.", false);
+        if (notificationPopup != null && notificationPopup.isShowing()) {
+            notificationPopup.hide();
+            return;
+        }
+        refreshNotifications();
+        showNotificationCenter();
+    }
+
+    public void pushNotification(String title, String message, String type) {
+        String key = "runtime:" + type + ":" + title + ":" + message;
+        if (runtimeNotificationKeys.add(key)) {
+            notifications.add(0, new AppNotification(key, title, message, type, "", false));
+            updateNotificationBadge();
+        }
+        showNotification(title + ": " + message, false);
+    }
+
+    public void pushNavigationNotification(String title, String message, String type, String targetPage) {
+        String key = "runtime:" + type + ":" + title + ":" + message + ":" + targetPage;
+        if (runtimeNotificationKeys.add(key)) {
+            notifications.add(0, new AppNotification(key, title, message, type, targetPage, false));
+            updateNotificationBadge();
+        }
+    }
+
+    private void refreshNotifications() {
+        UserSession session = UserSession.getInstance();
+        if (session == null || session.getUserId() == null || session.getUserId().isBlank()) {
+            notifications.clear();
+            updateNotificationBadge();
+            return;
+        }
+
+        javafx.concurrent.Task<List<AppNotification>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<AppNotification> call() throws Exception {
+                ApiClient apiClient = new ApiClient();
+                if (isAdminRole()) {
+                    return buildAdminNotifications(apiClient, session.getUserId());
+                }
+                if ("seller".equalsIgnoreCase(userRole)) {
+                    return buildSellerNotifications(apiClient, session.getUserId());
+                }
+                return buildBidderNotifications(apiClient, session.getUserId());
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            notifications.removeIf(AppNotification::generated);
+            notifications.addAll(0, task.getValue());
+            updateNotificationBadge();
+            if (notificationPopup != null && notificationPopup.isShowing()) {
+                notificationPopup.getContent().setAll(createNotificationPanel());
+            }
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private List<AppNotification> buildAdminNotifications(ApiClient apiClient, String userId) throws Exception {
+        List<AppNotification> result = new ArrayList<>();
+
+        JsonObject stats = apiClient.getDashboardStats(userId);
+        long pending = longValue(stats, "pendingAuctions", 0);
+        if (pending > 0) {
+            result.add(new AppNotification(
+                    "admin:pending:" + pending,
+                    "Auctions pending review",
+                    pending + " auction" + (pending == 1 ? " is" : "s are") + " waiting for approval.",
+                    "review",
+                    "admin_auctions",
+                    true));
+        }
+
+        JsonArray auctions = apiClient.getAuctions("all", userId);
+        int reportedCount = 0;
+        int violatedCount = 0;
+        for (JsonElement element : auctions) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject auction = element.getAsJsonObject();
+            int reports = (int) longValue(auction, "reportCount", 0);
+            String item = stringValue(auction, "itemName", "Auction item");
+            String auctionId = stringValue(auction, "id", item);
+            if (reports > 0) {
+                result.add(new AppNotification(
+                        "admin:reported:" + auctionId,
+                        "Reported auction",
+                        item + " has " + reports + " report" + (reports == 1 ? "." : "s."),
+                        "warning",
+                        "admin_auctions",
+                        true));
+                reportedCount++;
+            }
+            if (hasStatus(stringValue(auction, "status", ""), "CANCELLED", "REJECTED")) {
+                result.add(new AppNotification(
+                        "admin:violated:" + auctionId,
+                        "Auction requires attention",
+                        item + " is marked rejected or cancelled.",
+                        "warning",
+                        "admin_auctions",
+                        true));
+                violatedCount++;
+            }
+            if (reportedCount + violatedCount == 4) {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    private List<AppNotification> buildSellerNotifications(ApiClient apiClient, String sellerId) throws Exception {
+        List<AppNotification> result = new ArrayList<>();
+        List<Item> items = apiClient.getSellerItems(sellerId);
+
+        for (Item item : items) {
+            String status = item.getStatus();
+            String name = item.getName() == null || item.getName().isBlank() ? "Your product" : item.getName();
+            if (hasStatus(status, "RUNNING", "ACTIVE", "APPROVED", "ONGOING")) {
+                result.add(new AppNotification(
+                        "seller:running:" + item.getId(),
+                        "Auction started",
+                        name + " has been approved and is now live.",
+                        "success",
+                        "bidder_auctions",
+                        true));
+            } else if (hasStatus(status, "CANCELLED", "REJECTED")) {
+                result.add(new AppNotification(
+                        "seller:rejected:" + item.getId(),
+                        "Product rejected",
+                        name + " was not approved for auction.",
+                        "warning",
+                        "seller_products",
+                        true));
+            } else if (hasStatus(status, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD")) {
+                result.add(new AppNotification(
+                        "seller:ended:" + item.getId(),
+                        "Auction ended",
+                        name + " has finished.",
+                        "info",
+                        "bidder_auctions",
+                        true));
+            }
+
+            if (result.size() == 6) {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    private List<AppNotification> buildBidderNotifications(ApiClient apiClient, String bidderId) throws Exception {
+        List<AppNotification> result = new ArrayList<>();
+        JsonArray ownedItems = apiClient.getOwnedItems(bidderId);
+        for (JsonElement element : ownedItems) {
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            JsonObject item = element.getAsJsonObject();
+            String name = stringValue(item, "name", "Auction item");
+            String price = item.has("wonPrice") && !item.get("wonPrice").isJsonNull()
+                    ? formatMoney(item.get("wonPrice").getAsBigDecimal())
+                    : "final price";
+            result.add(new AppNotification(
+                    "bidder:won:" + stringValue(item, "auctionId", stringValue(item, "id", name)),
+                    "Auction won",
+                    "You won " + name + " at " + price + ".",
+                    "success",
+                    "bidder_owned_items",
+                    true));
+            if (result.size() == 3) {
+                break;
+            }
+        }
+
+        JsonArray bidHistory = apiClient.getBidHistoryByBidder(bidderId);
+        Set<String> seenAuctions = new HashSet<>();
+        for (int i = bidHistory.size() - 1; i >= 0 && seenAuctions.size() < 5; i--) {
+            JsonElement element = bidHistory.get(i);
+            if (!element.isJsonObject()) {
+                continue;
+            }
+            String auctionId = stringValue(element.getAsJsonObject(), "auctionId", "");
+            if (auctionId.isBlank() || !seenAuctions.add(auctionId)) {
+                continue;
+            }
+
+            JsonObject auction = apiClient.getAuctionDetail(auctionId);
+            String status = stringValue(auction, "status", "");
+            String itemName = stringValue(auction, "itemName", "Auction item");
+            String leaderId = stringValue(auction, "currentHighestBidderId", "");
+            String price = auction.has("currentPrice") && !auction.get("currentPrice").isJsonNull()
+                    ? formatMoney(auction.get("currentPrice").getAsBigDecimal())
+                    : "current price";
+
+            if (hasStatus(status, "RUNNING", "ACTIVE", "APPROVED", "ONGOING")) {
+                if (bidderId.equals(leaderId)) {
+                    result.add(new AppNotification(
+                            "bidder:leading:" + auctionId,
+                            "You are leading",
+                            "Your bid is currently leading " + itemName + " at " + price + ".",
+                            "success",
+                            "bidder_auctions",
+                            true));
+                } else {
+                    result.add(new AppNotification(
+                            "bidder:outbid:" + auctionId,
+                            "You have been outbid",
+                            "Another bidder is now leading " + itemName + " at " + price + ".",
+                            "warning",
+                            "bidder_auctions",
+                            true));
+                }
+            } else if (hasStatus(status, "FINISHED", "ENDED", "COMPLETED", "PAID", "SOLD", "CANCELLED")) {
+                if (bidderId.equals(leaderId)) {
+                    result.add(new AppNotification(
+                            "bidder:closed-won:" + auctionId,
+                            "Auction won",
+                            "You won " + itemName + " at " + price + ".",
+                            "success",
+                            "bidder_owned_items",
+                            true));
+                } else {
+                    result.add(new AppNotification(
+                            "bidder:lost:" + auctionId,
+                            "Auction ended",
+                            "You did not win " + itemName + ".",
+                            "info",
+                            "bidder_auctions",
+                            true));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private void showNotificationCenter() {
+        notificationPopup = new Popup();
+        notificationPopup.setAutoHide(true);
+        notificationPopup.getContent().add(createNotificationPanel());
+        notificationPopup.show(notiBtn, notiBtn.localToScreen(0, notiBtn.getHeight() + 8).getX() - 260,
+                notiBtn.localToScreen(0, notiBtn.getHeight() + 8).getY());
+    }
+
+    private VBox createNotificationPanel() {
+        VBox panel = new VBox(12);
+        panel.getStyleClass().add("notification-panel");
+
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label title = new Label("Notifications");
+        title.getStyleClass().add("notification-panel-title");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button refresh = new Button("Refresh");
+        refresh.getStyleClass().add("notification-refresh-btn");
+        refresh.setOnAction(e -> refreshNotifications());
+        header.getChildren().addAll(title, spacer, refresh);
+
+        VBox list = new VBox(8);
+        list.getStyleClass().add("notification-list");
+        if (notifications.isEmpty()) {
+            VBox empty = new VBox(4);
+            empty.setAlignment(Pos.CENTER);
+            empty.setPadding(new Insets(24, 12, 24, 12));
+            Label emptyTitle = new Label("No notifications");
+            emptyTitle.getStyleClass().add("notification-empty-title");
+            Label emptyText = new Label("Relevant auction activity will appear here.");
+            emptyText.getStyleClass().add("notification-empty-text");
+            empty.getChildren().addAll(emptyTitle, emptyText);
+            list.getChildren().add(empty);
+        } else {
+            for (AppNotification notification : notifications) {
+                list.getChildren().add(createNotificationRow(notification));
+            }
+        }
+
+        ScrollPane scroller = new ScrollPane(list);
+        scroller.setFitToWidth(true);
+        scroller.setPrefHeight(320);
+        scroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroller.getStyleClass().add("notification-scroll");
+
+        panel.getChildren().addAll(header, scroller);
+        return panel;
+    }
+
+    private HBox createNotificationRow(AppNotification notification) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("notification-row");
+        if (notification.targetPage() != null && !notification.targetPage().isBlank()) {
+            row.setOnMouseClicked(event -> {
+                if (notificationPopup != null) {
+                    notificationPopup.hide();
+                }
+                navigateByPageId(notification.targetPage());
+            });
+        }
+
+        Label dot = new Label(notification.typeSymbol());
+        dot.getStyleClass().addAll("notification-type", notification.typeStyle());
+
+        VBox text = new VBox(3);
+        text.setMinWidth(0);
+        HBox.setHgrow(text, Priority.ALWAYS);
+        Label title = new Label(notification.title());
+        title.getStyleClass().add("notification-title");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setTextOverrun(OverrunStyle.ELLIPSIS);
+        Label message = new Label(notification.message());
+        message.getStyleClass().add("notification-message");
+        message.setWrapText(true);
+        message.setMaxWidth(310);
+        text.getChildren().addAll(title, message);
+
+        row.getChildren().addAll(dot, text);
+        return row;
+    }
+
+    private void updateNotificationBadge() {
+        if (notiBadge == null) {
+            return;
+        }
+        int count = notifications.size();
+        notiBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+        notiBadge.setVisible(count > 0);
+        notiBadge.setManaged(count > 0);
     }
 
     @FXML private void onDeposit() {
@@ -399,7 +749,10 @@ public class MainController implements Initializable {
                 session.setBalance(newBalance);
                 balanceValueLabel.setText("Balance: " + formatMoney(newBalance));
                 depositBtn.setDisable(false);
-                showNotification("Deposit completed. Balance updated.", false);
+                pushNotification(
+                        "Deposit completed",
+                        formatMoney(amount) + " has been added to your balance.",
+                        "success");
             });
 
             task.setOnFailed(e -> {
@@ -483,6 +836,31 @@ public class MainController implements Initializable {
         }
     }
 
+    private long longValue(JsonObject obj, String key, long fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsLong()
+                : fallback;
+    }
+
+    private String stringValue(JsonObject obj, String key, String fallback) {
+        return obj != null && obj.has(key) && !obj.get(key).isJsonNull()
+                ? obj.get(key).getAsString()
+                : fallback;
+    }
+
+    private boolean hasStatus(String value, String... candidates) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        for (String candidate : candidates) {
+            if (candidate.equals(normalized)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void showNotification(String message, boolean error) {
         if (contentArea == null) {
             return;
@@ -512,5 +890,34 @@ public class MainController implements Initializable {
         } catch (Exception ignored) {
         }
         return raw.trim();
+    }
+
+    private record AppNotification(
+            String key,
+            String title,
+            String message,
+            String type,
+            String targetPage,
+            boolean generated
+    ) {
+        String typeSymbol() {
+            return switch (type == null ? "" : type) {
+                case "success" -> "OK";
+                case "warning" -> "!";
+                case "review" -> "R";
+                case "bid" -> "B";
+                default -> "i";
+            };
+        }
+
+        String typeStyle() {
+            return switch (type == null ? "" : type) {
+                case "success" -> "notification-type-success";
+                case "warning" -> "notification-type-warning";
+                case "review" -> "notification-type-review";
+                case "bid" -> "notification-type-bid";
+                default -> "notification-type-info";
+            };
+        }
     }
 }

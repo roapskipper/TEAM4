@@ -1514,6 +1514,122 @@
     -fx-background-radius: 10;
 }
 
+.notification-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(114, 47, 55, 0.18);
+    -fx-border-radius: 16;
+    -fx-padding: 14;
+    -fx-pref-width: 400;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.18), 22, 0, 0, 8);
+}
+
+.notification-panel-title {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.notification-refresh-btn {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-background-radius: 9;
+    -fx-text-fill: #722F37;
+    -fx-font-family: "Lato";
+    -fx-font-weight: bold;
+    -fx-padding: 7 10;
+    -fx-cursor: hand;
+}
+
+.notification-refresh-btn:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.16);
+}
+
+.notification-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.notification-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.notification-list {
+    -fx-background-color: transparent;
+}
+
+.notification-row {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 12;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 12;
+    -fx-padding: 11 12;
+    -fx-cursor: hand;
+}
+
+.notification-row:hover {
+    -fx-background-color: rgba(114, 47, 55, 0.07);
+}
+
+.notification-type {
+    -fx-min-width: 34;
+    -fx-pref-width: 34;
+    -fx-min-height: 34;
+    -fx-pref-height: 34;
+    -fx-alignment: CENTER;
+    -fx-background-radius: 10;
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.notification-type-success {
+    -fx-background-color: rgba(21, 128, 61, 0.14);
+    -fx-text-fill: #0E7A2F;
+}
+
+.notification-type-warning {
+    -fx-background-color: rgba(185, 28, 28, 0.13);
+    -fx-text-fill: #991B1B;
+}
+
+.notification-type-review,
+.notification-type-bid {
+    -fx-background-color: rgba(114, 47, 55, 0.13);
+    -fx-text-fill: #722F37;
+}
+
+.notification-type-info {
+    -fx-background-color: rgba(107, 114, 128, 0.13);
+    -fx-text-fill: #4B5563;
+}
+
+.notification-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.notification-message {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+.notification-empty-title {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.notification-empty-text {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
 .deposit-btn {
     -fx-background-color: #722F37;
     -fx-background-radius: 10;
