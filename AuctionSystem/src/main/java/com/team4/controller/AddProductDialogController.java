@@ -26,6 +26,10 @@ public class AddProductDialogController implements Initializable {
     @FXML private TextArea descArea;
     @FXML private Label errorLabel;
     @FXML private Label categoryHintLabel;
+    @FXML private DatePicker startDatePicker;
+    @FXML private TextField startTimeField;
+    @FXML private DatePicker endDatePicker;
+    @FXML private TextField endTimeField;
 
     // Panels
     @FXML private VBox artPanel;
@@ -112,6 +116,11 @@ public class AddProductDialogController implements Initializable {
         vehicleTransmissionBox.getSelectionModel().select(Vehicle.Transmission.OTHER);
 
         showCategoryPanel(categoryBox.getValue());
+
+        startDatePicker.setValue(java.time.LocalDate.now());
+        endDatePicker.setValue(java.time.LocalDate.now().plusDays(7));
+        startTimeField.setText("08:00");
+        endTimeField.setText("18:00");
     }
 
     private <E extends Enum<E>> void setupEnumCombo(ComboBox<E> combo, E[] values, java.util.function.Function<E, String> labelFn) {
@@ -223,11 +232,68 @@ public class AddProductDialogController implements Initializable {
             throw new IllegalArgumentException(be.getMessage());
         }
 
+        java.time.LocalDateTime startDateTime = null;
+        java.time.LocalDateTime endDateTime = null;
+
+        if (!editMode) {
+            java.time.LocalDate startDate = startDatePicker.getValue();
+            String startTimeStr = trim(startTimeField.getText());
+            java.time.LocalDate endDate = endDatePicker.getValue();
+            String endTimeStr = trim(endTimeField.getText());
+
+            if (startDate == null) {
+                throw new IllegalArgumentException("Start date is required.");
+            }
+            if (startTimeStr.isEmpty()) {
+                throw new IllegalArgumentException("Start time is required.");
+            }
+            if (endDate == null) {
+                throw new IllegalArgumentException("End date is required.");
+            }
+            if (endTimeStr.isEmpty()) {
+                throw new IllegalArgumentException("End time is required.");
+            }
+
+            java.time.LocalTime startTimeVal;
+            try {
+                startTimeVal = java.time.LocalTime.parse(startTimeStr);
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new IllegalArgumentException("Start time must be in HH:mm format (e.g. 08:30).");
+            }
+
+            java.time.LocalTime endTimeVal;
+            try {
+                endTimeVal = java.time.LocalTime.parse(endTimeStr);
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new IllegalArgumentException("End time must be in HH:mm format (e.g. 18:00).");
+            }
+
+            startDateTime = java.time.LocalDateTime.of(startDate, startTimeVal);
+            endDateTime = java.time.LocalDateTime.of(endDate, endTimeVal);
+
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            if (startDateTime.isBefore(now.minusMinutes(5))) {
+                throw new IllegalArgumentException("Start time cannot be in the past.");
+            }
+            if (!endDateTime.isAfter(startDateTime)) {
+                throw new IllegalArgumentException("End time must be after start time.");
+            }
+            if (java.time.Duration.between(startDateTime, endDateTime).toMinutes() < 60) {
+                throw new IllegalArgumentException("Auction duration must be at least 1 hour.");
+            }
+        }
+
         ItemRequest req = new ItemRequest();
         req.setName(name);
         req.setDescription(description);
         req.setStartingPrice(price);
         req.setCategory(category);
+        if (startDateTime != null) {
+            req.setStartTime(startDateTime);
+        }
+        if (endDateTime != null) {
+            req.setEndTime(endDateTime);
+        }
         if (ownerId != null) {
             req.setOwnerId(ownerId);
         }
@@ -401,6 +467,10 @@ public class AddProductDialogController implements Initializable {
                 descArea.setDisable(true);
             }
         }
+        startDatePicker.setDisable(true);
+        startTimeField.setDisable(true);
+        endDatePicker.setDisable(true);
+        endTimeField.setDisable(true);
         showCategoryPanel(categoryBox.getValue());
     }
 

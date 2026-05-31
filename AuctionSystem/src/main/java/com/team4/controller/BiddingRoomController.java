@@ -66,6 +66,7 @@ public class BiddingRoomController implements Initializable {
     private double bidIncrement = 100000;
     private BigDecimal availableBalance = BigDecimal.ZERO;
     private LocalDateTime auctionEndTime;
+    private LocalDateTime auctionStartTime;
     private String auctionStatus = "";
     private Timeline countdownTimeline;
     private MainController mainController;
@@ -146,6 +147,7 @@ public class BiddingRoomController implements Initializable {
             countdownTimeline.stop();
         }
         auctionEndTime = null;
+        auctionStartTime = null;
         auctionStatus = "";
         itemName.setText("Loading auction...");
         updateItemVisual("Item", "Auction");
@@ -175,6 +177,7 @@ public class BiddingRoomController implements Initializable {
         currentBid = doubleValue(data, "currentPrice", 0);
         bidIncrement = doubleValue(data, "bidIncrement", 100000);
         auctionEndTime = parseTime(stringValue(data, "endTime", null));
+        auctionStartTime = parseTime(stringValue(data, "startTime", null));
         auctionStatus = stringValue(data, "status", "");
 
         String loadedItemName = stringValue(data, "itemName", "Untitled item");
@@ -242,7 +245,24 @@ public class BiddingRoomController implements Initializable {
             setBiddingControlsDisabled(true);
             return;
         }
-        long secondsBetween = ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime);
+        LocalDateTime now = LocalDateTime.now();
+        if (auctionStartTime != null && now.isBefore(auctionStartTime)) {
+            long secondsToStart = ChronoUnit.SECONDS.between(now, auctionStartTime);
+            if (secondsToStart > 0) {
+                long days = secondsToStart / 86400;
+                long h = (secondsToStart % 86400) / 3600;
+                long m = (secondsToStart % 3600) / 60;
+                long s = secondsToStart % 60;
+                if (days > 0) {
+                    timeLeft.setText(String.format("Starts in: %dd %02d:%02d:%02d", days, h, m, s));
+                } else {
+                    timeLeft.setText(String.format("Starts in: %02d:%02d:%02d", h, m, s));
+                }
+                setBiddingControlsDisabled(true);
+                return;
+            }
+        }
+        long secondsBetween = ChronoUnit.SECONDS.between(now, auctionEndTime);
         if (secondsBetween <= 0) {
             timeLeft.setText("00:00:00 (Ended)");
             setBiddingControlsDisabled(true);
@@ -338,6 +358,7 @@ public class BiddingRoomController implements Initializable {
     private boolean isAuctionOpenForBidding() {
         return isBidderRole()
                 && isOngoingStatus(auctionStatus)
+                && (auctionStartTime == null || !LocalDateTime.now().isBefore(auctionStartTime))
                 && auctionEndTime != null
                 && ChronoUnit.SECONDS.between(LocalDateTime.now(), auctionEndTime) > 0;
     }

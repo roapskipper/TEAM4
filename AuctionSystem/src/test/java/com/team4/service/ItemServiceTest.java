@@ -211,7 +211,16 @@ public class ItemServiceTest {
         void testCreateItem_AutoCreatesAuction() {
             String sellerId = "seller-123";
             Seller seller = createRealSeller(sellerId);
-            CreateArtRequestDTO request = createArtRequest("Masterpiece");
+            CreateArtRequestDTO request = new CreateArtRequestDTO(
+                    "Masterpiece",
+                    new BigDecimal("20000000"), // At threshold to remain PENDING
+                    "Description for Masterpiece",
+                    Item.ItemCategory.ART,
+                    "Artist Name",
+                    2024,
+                    Art.Medium.OIL_PAINT,
+                    "100x100"
+            );
 
             ItemDAO mockItemDAO = mock(ItemDAO.class);
             UserDAO mockUserDAO = mock(UserDAO.class);
@@ -228,6 +237,39 @@ public class ItemServiceTest {
             ArgumentCaptor<Auction> auctionCaptor = ArgumentCaptor.forClass(Auction.class);
             verify(mockAuctionDAO).insert(auctionCaptor.capture());
             assertEquals(Auction.AuctionStatus.PENDING, auctionCaptor.getValue().getStatus());
+        }
+
+        @Test
+        @DisplayName("Tự động phê duyệt đấu giá cho các sản phẩm dưới 20 triệu VND")
+        void testCreateItem_AutoApprovesBelowThreshold() {
+            String sellerId = "seller-123";
+            Seller seller = createRealSeller(sellerId);
+            CreateArtRequestDTO request = new CreateArtRequestDTO(
+                    "Cheap Art",
+                    new BigDecimal("19999000"), // Under threshold (20M VND)
+                    "Description for Cheap Art",
+                    Item.ItemCategory.ART,
+                    "Artist Name",
+                    2024,
+                    Art.Medium.OIL_PAINT,
+                    "100x100"
+            );
+
+            ItemDAO mockItemDAO = mock(ItemDAO.class);
+            UserDAO mockUserDAO = mock(UserDAO.class);
+            AuctionDAO mockAuctionDAO = mock(AuctionDAO.class);
+            ItemService customItemService = new ItemService(mockItemDAO, mockUserDAO, mockAuctionDAO);
+
+            when(mockUserDAO.findById(sellerId)).thenReturn(seller);
+            when(mockItemDAO.insert(any(Item.class))).thenReturn(true);
+            when(mockAuctionDAO.insert(any(Auction.class))).thenReturn(true);
+
+            ItemResponseDTO result = customItemService.createItem(sellerId, request);
+
+            assertNotNull(result);
+            ArgumentCaptor<Auction> auctionCaptor = ArgumentCaptor.forClass(Auction.class);
+            verify(mockAuctionDAO).insert(auctionCaptor.capture());
+            assertEquals(Auction.AuctionStatus.RUNNING, auctionCaptor.getValue().getStatus());
         }
     }
 

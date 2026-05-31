@@ -133,6 +133,15 @@ public class ItemsHandler implements HttpHandler {
         request.setStartingPrice(parseBigDecimal(param(body, "startingPrice")));
         request.setCategory(parseEnum(Item.ItemCategory.class, param(body, "category")));
 
+        String startTimeStr = param(body, "startTime");
+        if (startTimeStr != null && !startTimeStr.isBlank()) {
+            request.setStartTime(java.time.LocalDateTime.parse(startTimeStr.trim()));
+        }
+        String endTimeStr = param(body, "endTime");
+        if (endTimeStr != null && !endTimeStr.isBlank()) {
+            request.setEndTime(java.time.LocalDateTime.parse(endTimeStr.trim()));
+        }
+
         Item.ItemCategory category = request.getCategory();
         if (category == null) {
             return request;

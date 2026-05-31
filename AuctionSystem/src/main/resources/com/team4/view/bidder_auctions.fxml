@@ -18,7 +18,7 @@
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="upcomingCount" text="0" styleClass="stat-number-neutral"/>
-            <Label text="Pending" styleClass="muted-text"/>
+            <Label text="Upcoming" styleClass="muted-text"/>
         </VBox>
         <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
             <Label fx:id="endedCount" text="0" styleClass="stat-number-muted"/>
@@ -48,7 +48,7 @@
 
         <HBox fx:id="statusPills" spacing="8">
             <Button text="All" styleClass="filter-pill-active"/>
-            <Button text="Pending" styleClass="filter-pill"/>
+            <Button text="Upcoming" styleClass="filter-pill"/>
             <Button text="Ongoing" styleClass="filter-pill"/>
             <Button text="Ended" styleClass="filter-pill"/>
         </HBox>

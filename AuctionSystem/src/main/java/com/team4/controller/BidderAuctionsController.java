@@ -145,13 +145,13 @@ public class BidderAuctionsController implements Initializable {
     }
 
     private void updateStats() {
-        long ongoing = auctions.stream().filter(a -> isOngoingStatus(a.status)).count();
-        long pending = auctions.stream().filter(a -> isPendingStatus(a.status)).count();
-        long ended = auctions.stream().filter(a -> isEndedStatus(a.status)).count();
+        long ongoing = auctions.stream().filter(this::isOngoing).count();
+        long upcoming = auctions.stream().filter(this::isUpcoming).count();
+        long ended = auctions.stream().filter(this::isEnded).count();
         long bids = auctions.stream().mapToLong(a -> a.bidCount).sum();
 
         liveCount.setText(String.valueOf(ongoing));
-        upcomingCount.setText(String.valueOf(pending));
+        upcomingCount.setText(String.valueOf(upcoming));
         endedCount.setText(String.valueOf(ended));
         totalBids.setText(String.valueOf(bids));
     }
@@ -182,8 +182,16 @@ public class BidderAuctionsController implements Initializable {
         boolean matchesCategory = "All".equals(selectedCategory)
                 || normalizeCategory(selectedCategory).equalsIgnoreCase(auction.category);
 
-        boolean matchesStatus = "All".equals(selectedStatus)
-                || normalizeStatus(selectedStatus).equalsIgnoreCase(canonicalStatus(auction.status));
+        boolean matchesStatus = true;
+        if (!"All".equals(selectedStatus)) {
+            if ("Ongoing".equalsIgnoreCase(selectedStatus)) {
+                matchesStatus = isOngoing(auction);
+            } else if ("Pending".equalsIgnoreCase(selectedStatus) || "Upcoming".equalsIgnoreCase(selectedStatus)) {
+                matchesStatus = isUpcoming(auction);
+            } else if ("Ended".equalsIgnoreCase(selectedStatus)) {
+                matchesStatus = isEnded(auction);
+            }
+        }
 
         return matchesKeyword && matchesCategory && matchesStatus;
     }
@@ -225,8 +233,8 @@ public class BidderAuctionsController implements Initializable {
         topLine.setAlignment(Pos.CENTER_LEFT);
         Label category = new Label(formatCategory(auction.category));
         category.getStyleClass().addAll("badge", categoryBadge(auction.category));
-        Label status = new Label(formatStatus(auction.status));
-        status.getStyleClass().addAll("badge", statusBadge(auction.status));
+        Label status = new Label(formatStatus(auction));
+        status.getStyleClass().addAll("badge", statusBadge(auction));
         topLine.getChildren().addAll(category, status);
 
         Label title = new Label(auction.itemName);
@@ -450,6 +458,44 @@ public class BidderAuctionsController implements Initializable {
             }
         }
         return false;
+    }
+
+    private boolean isOngoing(AuctionCardData a) {
+        return isOngoingStatus(a.status) && (a.startTime == null || !LocalDateTime.now().isBefore(a.startTime)) && !isEnded(a);
+    }
+
+    private boolean isUpcoming(AuctionCardData a) {
+        return isPendingStatus(a.status) || (isOngoingStatus(a.status) && a.startTime != null && LocalDateTime.now().isBefore(a.startTime));
+    }
+
+    private boolean isEnded(AuctionCardData a) {
+        return isEndedStatus(a.status) || (a.endTime != null && LocalDateTime.now().isAfter(a.endTime));
+    }
+
+    private String formatStatus(AuctionCardData a) {
+        if (isUpcoming(a)) {
+            return "Upcoming";
+        }
+        if (isOngoing(a)) {
+            return "Ongoing";
+        }
+        if (isEnded(a)) {
+            return "Ended";
+        }
+        return formatStatus(a.status);
+    }
+
+    private String statusBadge(AuctionCardData a) {
+        if (isUpcoming(a)) {
+            return "badge-yellow";
+        }
+        if (isOngoing(a)) {
+            return "badge-green";
+        }
+        if (isEnded(a)) {
+            return "badge-red";
+        }
+        return statusBadge(a.status);
     }
 
     private String categoryBadge(String category) {

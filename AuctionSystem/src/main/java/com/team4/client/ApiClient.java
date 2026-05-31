@@ -438,6 +438,8 @@ public class ApiClient {
         appendParam(body, "category", enumName(request.getCategory()));
         appendParam(body, "startingPrice", request.getStartingPrice());
         appendParam(body, "description", request.getDescription());
+        appendParam(body, "startTime", request.getStartTime());
+        appendParam(body, "endTime", request.getEndTime());
 
         if (request.getCategory() == null) {
             return;

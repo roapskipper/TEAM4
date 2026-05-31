@@ -24,15 +24,20 @@ public class Auction extends Entity {
 
     // Constructor khi tạo một cuộc đấu giá mới
     public Auction(String itemId, String sellerId, BigDecimal startingPrice,BigDecimal bidIncrement, LocalDateTime endTime) {
+        this(itemId, sellerId, startingPrice, bidIncrement, LocalDateTime.now(), endTime);
+    }
+
+    // Constructor khi tạo một cuộc đấu giá mới với thời gian bắt đầu tùy chọn
+    public Auction(String itemId, String sellerId, BigDecimal startingPrice, BigDecimal bidIncrement, LocalDateTime startTime, LocalDateTime endTime) {
         super();
         this.itemId = itemId;
         this.sellerId = sellerId;
         this.startingPrice = money(startingPrice);
         this.bidIncrement = money(bidIncrement);
         this.currentPrice = money(startingPrice);
-        this.startTime = LocalDateTime.now();
+        this.startTime = startTime != null ? startTime : LocalDateTime.now();
         this.endTime = endTime;
-        this.status = AuctionStatus.PENDING; // Mă định là "Pending approval"
+        this.status = AuctionStatus.PENDING; // Mặc định là "Pending approval"
         validateAuctionInfo();
     }
     // Constructor khi nạp cuộc đấu giá lên từ DB
@@ -87,7 +92,10 @@ public class Auction extends Entity {
     }
     // Kiểm tra có thể đặt giá không
     public boolean canBid() {
-        return status == AuctionStatus.RUNNING && !isExpired();
+        return status == AuctionStatus.RUNNING && !isExpired() && !isUpcoming();
+    }
+    public boolean isUpcoming() {
+        return startTime != null && LocalDateTime.now().isBefore(startTime);
     }
     // Cập nhật giá mới và người dẫn đầu
     public void applyBid(String bidderId, BigDecimal amount) {

@@ -39,6 +39,18 @@
             <TextArea fx:id="descArea" prefRowCount="3" wrapText="true"
                       promptText="Required, maximum 500 UI characters (DB: 2000)" styleClass="input-field"/>
 
+            <Label text="Start Time *" styleClass="form-label"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <DatePicker fx:id="startDatePicker" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="input-field" promptText="Select start date"/>
+                <TextField fx:id="startTimeField" promptText="HH:mm (e.g. 09:30)" prefWidth="150" styleClass="input-field"/>
+            </HBox>
+
+            <Label text="End Time *" styleClass="form-label"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <DatePicker fx:id="endDatePicker" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="input-field" promptText="Select end date"/>
+                <TextField fx:id="endTimeField" promptText="HH:mm (e.g. 18:00)" prefWidth="150" styleClass="input-field"/>
+            </HBox>
+
             <!-- Category-specific -->
             <Label text="2. Category-Specific Information" styleClass="form-section-title"/>
             <Label fx:id="categoryHintLabel" styleClass="dialog-help" wrapText="true"/>

@@ -122,9 +122,20 @@ public class ItemService {
             if (auctionDAO != null) {
                 java.math.BigDecimal startingPrice = item.getStartingPrice();
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
-                java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
-                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                java.time.LocalDateTime startTime = itemRequest.getStartTime() != null ? itemRequest.getStartTime() : java.time.LocalDateTime.now();
+                java.time.LocalDateTime endTime = itemRequest.getEndTime() != null ? itemRequest.getEndTime() : java.time.LocalDateTime.now().plusDays(7);
+                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, startTime, endTime);
                 
+                java.math.BigDecimal autoApproveThreshold = new java.math.BigDecimal("20000000");
+                if (startingPrice.compareTo(autoApproveThreshold) < 0) {
+                    auction.approve();
+                    item.setStatus("ACTIVE");
+                    logger.info("Auto-created and auto-approved auction for item: itemId={}, auctionId={}", item.getId(), auction.getId());
+                } else {
+                    item.setStatus("PENDING");
+                    logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                }
+
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
                         logger.error("System error: unable to auto-create auction for item. itemId={}", item.getId());
@@ -136,8 +147,6 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("PENDING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }
@@ -217,9 +226,20 @@ public class ItemService {
             if (auctionDAO != null) {
                 java.math.BigDecimal startingPrice = item.getStartingPrice();
                 java.math.BigDecimal bidIncrement = calculateDefaultBidIncrement(startingPrice);
-                java.time.LocalDateTime endTime = java.time.LocalDateTime.now().plusDays(7);
-                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, endTime);
+                java.time.LocalDateTime startTime = itemRequest.getStartTime() != null ? itemRequest.getStartTime() : java.time.LocalDateTime.now();
+                java.time.LocalDateTime endTime = itemRequest.getEndTime() != null ? itemRequest.getEndTime() : java.time.LocalDateTime.now().plusDays(7);
+                Auction auction = new Auction(item.getId(), sellerId, startingPrice, bidIncrement, startTime, endTime);
                 
+                java.math.BigDecimal autoApproveThreshold = new java.math.BigDecimal("20000000");
+                if (startingPrice.compareTo(autoApproveThreshold) < 0) {
+                    auction.approve();
+                    item.setStatus("ACTIVE");
+                    logger.info("Auto-created and auto-approved auction for item: itemId={}, auctionId={}", item.getId(), auction.getId());
+                } else {
+                    item.setStatus("PENDING");
+                    logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
+                }
+
                 if (isTx) {
                     if (!auctionDAO.insert(conn, auction)) {
                         logger.error("System error: unable to auto-create auction for item. itemId={}", item.getId());
@@ -231,8 +251,6 @@ public class ItemService {
                         throw new BusinessException("Unable to auto-create auction for this item.");
                     }
                 }
-                logger.info("Auto-created auction for item (PENDING): itemId={}, auctionId={}", item.getId(), auction.getId());
-                item.setStatus("PENDING");
             } else if (isTx) {
                 throw new BusinessException("AuctionDAO is required to create items in production.");
             }

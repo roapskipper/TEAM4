@@ -10,6 +10,8 @@ public class ItemRequest {
     private BigDecimal startingPrice;
     private Item.ItemCategory category;
     private String ownerId;
+    private java.time.LocalDateTime startTime;
+    private java.time.LocalDateTime endTime;
 
     // Art
     private String artist;
@@ -109,4 +111,9 @@ public class ItemRequest {
     public void setEngineType(Vehicle.EngineType engineType) { this.engineType = engineType; }
     public void setHasLegalPapers(boolean hasLegalPapers) { this.hasLegalPapers = hasLegalPapers; }
     public void setTransmission(Vehicle.Transmission transmission) { this.transmission = transmission; }
+
+    public java.time.LocalDateTime getStartTime() { return startTime; }
+    public java.time.LocalDateTime getEndTime() { return endTime; }
+    public void setStartTime(java.time.LocalDateTime startTime) { this.startTime = startTime; }
+    public void setEndTime(java.time.LocalDateTime endTime) { this.endTime = endTime; }
 }
