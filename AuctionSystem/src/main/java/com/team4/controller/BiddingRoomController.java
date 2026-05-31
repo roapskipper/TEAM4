@@ -352,7 +352,14 @@ public class BiddingRoomController implements Initializable {
 
     private boolean isBidderRole() {
         UserSession session = UserSession.getInstance();
-        return session != null && "bidder".equalsIgnoreCase(session.getRole());
+        if (session == null) {
+            return false;
+        }
+        String role = session.getRole();
+        if (role == null || role.isBlank()) {
+            return true;
+        }
+        return "bidder".equalsIgnoreCase(role);
     }
 
     private boolean isAuctionOpenForBidding() {
