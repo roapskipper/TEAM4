@@ -50,4 +50,10 @@ public interface AutoBiddingDAO {
      */
     boolean updateActive(String id, boolean isActive);
     boolean updateActive(Connection conn, String id, boolean isActive);
+
+    /**
+     * Tính tổng số dư đang bị đóng băng bởi các AutoBidding còn đang active
+     * trong các phiên đang chạy (ngoại trừ phiên đấu giá đang được kiểm tra).
+     */
+    java.math.BigDecimal calculateLockedBalance(Connection conn, String bidderId, String excludeAuctionId);
 }

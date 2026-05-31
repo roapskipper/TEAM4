@@ -1,19 +1,24 @@
 package com.team4.service;
 
 import com.team4.dao.UserDAO;
+import com.team4.db.DatabaseManager;
 import com.team4.dto.auth.UserResponseDTO;
 import com.team4.model.Bidder;
 import com.team4.model.User;
 import com.team4.util.BusinessException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,8 +35,24 @@ public class WalletServiceTest {
     @Mock
     private UserDAO userDAO;
 
+    @Mock
+    private Connection mockConn;
+
     @InjectMocks
     private WalletService walletService;
+
+    private MockedStatic<DatabaseManager> mockedDatabaseManager;
+
+    @BeforeEach
+    void setUp() {
+        mockedDatabaseManager = mockStatic(DatabaseManager.class);
+        mockedDatabaseManager.when(DatabaseManager::getConnection).thenReturn(mockConn);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockedDatabaseManager.close();
+    }
 
     // Helper tạo Bidder thật
     private Bidder createRealBidder(String id, String balance) {
@@ -50,23 +71,25 @@ public class WalletServiceTest {
             BigDecimal amount = new BigDecimal("500.00");
             User user = createRealBidder(userId, "1000.00");
 
-            when(userDAO.findById(userId)).thenReturn(user);
-            when(userDAO.updateBalance(eq(userId), any())).thenReturn(true);
+            when(userDAO.findById(mockConn, userId)).thenReturn(user);
+            when(userDAO.updateBalance(eq(mockConn), eq(userId), any())).thenReturn(true);
 
             // WHEN: Thực hiện nạp 500 đồng
             UserResponseDTO result = walletService.deposit(userId, amount);
 
             // THEN: Số dư mới là 1500
             assertEquals(new BigDecimal("1500.00"), result.getBalance());
-            verify(userDAO).updateBalance(userId, new BigDecimal("1500.00"));
+            verify(userDAO).updateBalance(mockConn, userId, new BigDecimal("1500.00"));
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn));
         }
 
         @Test
         @DisplayName("Thất bại khi nạp tiền cho người dùng không tồn tại")
         void testDeposit_UserNotFound() {
-            when(userDAO.findById("none")).thenReturn(null);
+            when(userDAO.findById(mockConn, "none")).thenReturn(null);
 
             assertThrows(BusinessException.class, () -> walletService.deposit("none", BigDecimal.TEN));
+            mockedDatabaseManager.verify(() -> DatabaseManager.rollbackTransaction(mockConn));
         }
     }
 
@@ -81,15 +104,16 @@ public class WalletServiceTest {
             String userId = "user-1";
             User user = createRealBidder(userId, "1000.00");
 
-            when(userDAO.findById(userId)).thenReturn(user);
-            when(userDAO.updateBalance(eq(userId), any())).thenReturn(true);
+            when(userDAO.findById(mockConn, userId)).thenReturn(user);
+            when(userDAO.updateBalance(eq(mockConn), eq(userId), any())).thenReturn(true);
 
             // WHEN
             UserResponseDTO result = walletService.withdraw(userId, new BigDecimal("200.00"));
 
             // THEN: Còn 800 đồng
             assertEquals(new BigDecimal("800.00"), result.getBalance());
-            verify(userDAO).updateBalance(userId, new BigDecimal("800.00"));
+            verify(userDAO).updateBalance(mockConn, userId, new BigDecimal("800.00"));
+            mockedDatabaseManager.verify(() -> DatabaseManager.commitTransaction(mockConn));
         }
 
         @Test
@@ -97,11 +121,12 @@ public class WalletServiceTest {
         void testWithdraw_InsufficientFunds() {
             String userId = "user-1";
             User user = createRealBidder(userId, "100.00");
-            when(userDAO.findById(userId)).thenReturn(user);
+            when(userDAO.findById(mockConn, userId)).thenReturn(user);
 
             // WHEN & THEN: Lỗi không đủ tiền
             assertThrows(BusinessException.class, () -> walletService.withdraw(userId, new BigDecimal("500.00")));
-            verify(userDAO, never()).updateBalance(anyString(), any());
+            verify(userDAO, never()).updateBalance(any(), anyString(), any());
+            mockedDatabaseManager.verify(() -> DatabaseManager.rollbackTransaction(mockConn));
         }
     }
 
