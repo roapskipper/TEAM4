@@ -3,6 +3,7 @@ package com.team4.controller;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.team4.client.ApiClient;
+import com.team4.util.StageUtils;
 import com.team4.util.UserSession;
 import javafx.animation.PauseTransition;
 import javafx.event.ActionEvent;
@@ -359,7 +360,7 @@ public class MainController implements Initializable {
             scene.getStylesheets().add(getClass().getResource("/com/team4/view/style.css").toExternalForm());
             stage.setScene(scene);
             stage.setTitle("AuctionSpace - Login");
-            stage.setMaximized(true);
+            StageUtils.maximize(stage);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
