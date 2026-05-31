@@ -61,7 +61,7 @@ jobs:
       - name: Package JavaFX Client
         working-directory: AuctionSystem
         run: |
-          mvn clean package -DskipTests
+          mvn clean package -DskipTests -Pcross-platform
           cd target
           zip -r ../../AuctionSpace-Client-${{ github.ref_name }}.zip AuctionSystem-1.0-SNAPSHOT.jar dependency/
 
@@ -78,7 +78,16 @@ jobs:
             1. **JavaFX Client**:
                - Tải tệp tin `AuctionSpace-Client-${{ github.ref_name }}.zip` bên dưới.
                - Giải nén tệp tin ra máy tính cá nhân.
-               - Chạy Client bằng lệnh: `java -cp "AuctionSystem-1.0-SNAPSHOT.jar:dependency/*" com.team4.Launcher` hoặc click chạy file JAR tương thích.
+               - Mở Terminal/Command Prompt tại thư mục giải nén và khởi chạy Client bằng lệnh tương ứng với hệ điều hành:
+                 - **Windows**:
+                   ```cmd
+                   java -cp "AuctionSystem-1.0-SNAPSHOT.jar;dependency/*" com.team4.Launcher
+                   ```
+                 - **macOS / Linux**:
+                   ```bash
+                   java -cp "AuctionSystem-1.0-SNAPSHOT.jar:dependency/*" com.team4.Launcher
+                   ```
+               - Hoặc click chạy file JAR tương thích.
             
             2. **Docker Server**:
                - Kéo Docker Image chính thức: `docker pull ghcr.io/${{ env.IMAGE_NAME }}/auction-server:latest`
