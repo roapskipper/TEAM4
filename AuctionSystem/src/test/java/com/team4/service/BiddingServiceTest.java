@@ -165,6 +165,7 @@ public class BiddingServiceTest {
 
             when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
             when(userDAO.findById(mockConn, bidderB)).thenReturn(userB);
+            when(autoBiddingDAO.calculateLockedBalance(mockConn, bidderB, auctionId)).thenReturn(BigDecimal.ZERO);
             when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, bidderB)).thenReturn(null);
             when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
 
@@ -283,5 +284,4 @@ public class BiddingServiceTest {
             assertNull(highest);
         }
     }
-}
 }
