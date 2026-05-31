@@ -240,11 +240,8 @@ public class LoginController {
 
                     stage.setScene(scene);
                     stage.setTitle("Dashboard - AuctionSpace");
-                    stage.setWidth(1200);
-                    stage.setHeight(800);
-                    stage.setMaximized(true);
-                    stage.centerOnScreen();
                     stage.show();
+                    stage.setMaximized(true);
 
                 } catch (Exception ex) {
                     System.out.println("Scene transition error: " + ex.getMessage());

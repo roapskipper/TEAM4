@@ -501,9 +501,68 @@
     -fx-background-radius: 16;
     -fx-border-color: transparent;
     -fx-border-radius: 16;
-    -fx-padding: 20;
+    -fx-padding: 16 18;
     -fx-spacing: 12;
+    -fx-min-width: 0;
+    -fx-min-height: 82;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 15, 0, 0, 4);
+}
+
+.dashboard-stat-row {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.dashboard-command-card {
+    -fx-padding: 24;
+}
+
+.dashboard-insight-card {
+    -fx-background-color: #FBF9F6;
+    -fx-background-radius: 14;
+    -fx-border-color: #E8D9D9;
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+    -fx-min-height: 116;
+}
+
+.dashboard-insight-primary {
+    -fx-background-color: rgba(114, 47, 55, 0.08);
+    -fx-border-color: rgba(114, 47, 55, 0.18);
+}
+
+.dashboard-insight-number {
+    -fx-font-family: "Playfair Display";
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
+}
+
+.dashboard-insight-title {
+    -fx-font-family: "Lato";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2C2C2C;
+}
+
+.dashboard-insight-desc {
+    -fx-font-family: "Lato";
+    -fx-font-size: 11px;
+    -fx-text-fill: #555555;
+}
+
+.dashboard-action-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(114, 47, 55, 0.10);
+    -fx-border-radius: 14;
+    -fx-padding: 14;
+}
+
+.dashboard-action-heading {
+    -fx-font-family: "Lato";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #722F37;
 }
 
 .admin-input {

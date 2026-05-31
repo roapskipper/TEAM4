@@ -10,9 +10,6 @@ import javafx.util.StringConverter;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
@@ -28,15 +25,16 @@ import com.team4.util.UserSession;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.function.Consumer;
 
 public class AdminDashboardController implements Initializable {
 
-    @FXML private Label totalUsersLabel, totalAuctionsLabel, activeAuctionsLabel, totalRevenueLabel;
-    @FXML private Label totalTransactionsLabel;
+    @FXML private Label totalUsersLabel, totalAuctionsLabel, activeAuctionsLabel, pendingAuctionsLabel;
+    @FXML private Label pendingReviewCount, liveAuctionCount;
     @FXML private BarChart<String, Number> regChart;
-    @FXML private VBox alertsContainer;
     @FXML private Button refreshButton;
 
     private Timeline autoRefresh;
@@ -111,15 +109,6 @@ public class AdminDashboardController implements Initializable {
         navigateTo("admin_users", null);
     }
 
-    @FXML
-    private void onSystemSettings() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("System Settings");
-        alert.setHeaderText("System Configuration");
-        alert.setContentText("Settings dialog (Stub). Future settings will be configured here.");
-        alert.show();
-    }
-
     private void navigateTo(String pageId, Consumer<Object> controllerAction) {
         if (mainController != null) {
             Object controller = mainController.navigateByPageId(pageId);
@@ -159,7 +148,7 @@ public class AdminDashboardController implements Initializable {
             JsonObject data = task.getValue();
             updateStats(data);
             updateChart(data);
-            updateAlerts(data);
+            updateReviewCenter(data);
             refreshButton.setDisable(false);
         });
 
@@ -176,16 +165,18 @@ public class AdminDashboardController implements Initializable {
         totalUsersLabel.setText("...");
         totalAuctionsLabel.setText("...");
         activeAuctionsLabel.setText("...");
-        totalRevenueLabel.setText("...");
-        totalTransactionsLabel.setText("...");
+        pendingAuctionsLabel.setText("...");
+        setText(pendingReviewCount, "...");
+        setText(liveAuctionCount, "...");
     }
 
     private void setDefaultState() {
         totalUsersLabel.setText("0");
         totalAuctionsLabel.setText("0");
         activeAuctionsLabel.setText("0");
-        totalRevenueLabel.setText("0 VND");
-        totalTransactionsLabel.setText("0");
+        pendingAuctionsLabel.setText("0");
+        setText(pendingReviewCount, "0");
+        setText(liveAuctionCount, "0");
     }
 
     private void updateStats(JsonObject data) {
@@ -194,14 +185,12 @@ public class AdminDashboardController implements Initializable {
         long totalUsers = data.has("totalUsers") ? data.get("totalUsers").getAsLong() : 0;
         long totalAuctions = data.has("totalAuctions") ? data.get("totalAuctions").getAsLong() : 0;
         long activeAuctions = data.has("activeAuctions") ? data.get("activeAuctions").getAsLong() : 0;
-        double totalRevenue = data.has("totalRevenue") ? data.get("totalRevenue").getAsDouble() : 0.0;
-        long totalTransactions = data.has("totalTransactions") ? data.get("totalTransactions").getAsLong() : 0;
+        long pendingAuctions = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 0;
 
         totalUsersLabel.setText(numberFormat.format(totalUsers));
         totalAuctionsLabel.setText(numberFormat.format(totalAuctions));
         activeAuctionsLabel.setText(numberFormat.format(activeAuctions));
-        totalRevenueLabel.setText(numberFormat.format(totalRevenue) + " VND");
-        totalTransactionsLabel.setText(numberFormat.format(totalTransactions));
+        pendingAuctionsLabel.setText(numberFormat.format(pendingAuctions));
     }
 
     private void updateChart(JsonObject data) {
@@ -216,10 +205,11 @@ public class AdminDashboardController implements Initializable {
                 newPoints.add(new XYChart.Data<>(month, count));
             }
         } else {
-            newPoints.add(new XYChart.Data<>("Jan", 120));
-            newPoints.add(new XYChart.Data<>("Feb", 180));
-            newPoints.add(new XYChart.Data<>("Mar", 240));
-            newPoints.add(new XYChart.Data<>("Apr", 310));
+            DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale.US);
+            LocalDate month = LocalDate.now().minusMonths(5).withDayOfMonth(1);
+            for (int i = 0; i < 6; i++) {
+                newPoints.add(new XYChart.Data<>(month.plusMonths(i).format(monthFormatter), 0));
+            }
         }
 
         // 2. Khóa cứng các nhãn trục X bằng cách thiết lập categories một cách tường minh (ngăn lỗi trùng lặp/sai thứ tự của JavaFX)
@@ -302,44 +292,18 @@ public class AdminDashboardController implements Initializable {
         }
     }
 
-    private void updateAlerts(JsonObject data) {
-        alertsContainer.getChildren().clear();
-        
-        long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 0;
-        
-        String pendingStyle = pending > 10 ? "alert-red" : (pending > 5 ? "alert-yellow" : "alert-green");
-        
-        HBox pendingAlert = createAlert(pending + " pending auctions", "Awaiting approval", pendingStyle);
-        pendingAlert.setOnMouseClicked(e -> onViewPendingAuctions());
-        
-        HBox sysAlert = createAlert("System Resources Normal", "CPU: 12%, RAM: 45%", "alert-green");
-        sysAlert.setOnMouseClicked(e -> onSystemSettings());
-        
-        alertsContainer.getChildren().addAll(pendingAlert, sysAlert);
+    @FXML
+    private void onManageAuctions() {
+        navigateTo("admin_auctions", null);
     }
 
-    private HBox createAlert(String title, String desc, String styleClass) {
-        HBox box = new HBox(12);
-        box.getStyleClass().add(styleClass);
-        
-        String bgColor = "#374151"; 
-        if (styleClass.equals("alert-red")) bgColor = "#7f1d1d";
-        else if (styleClass.equals("alert-yellow")) bgColor = "#78350f";
-        else if (styleClass.equals("alert-green")) bgColor = "#064e3b";
-        else if (styleClass.equals("alert-purple")) bgColor = "#4c1d95";
-        
-        box.setStyle("-fx-padding: 14; -fx-background-radius: 12; -fx-spacing: 12; -fx-background-color: " + bgColor + "; -fx-cursor: hand;");
+    private void updateReviewCenter(JsonObject data) {
+        NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
+        long pending = data.has("pendingAuctions") ? data.get("pendingAuctions").getAsLong() : 0;
+        long active = data.has("activeAuctions") ? data.get("activeAuctions").getAsLong() : 0;
 
-        VBox text = new VBox(4);
-        Label titleLbl = new Label(title);
-        titleLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: white;");
-        Label descLbl = new Label(desc);
-        descLbl.setStyle("-fx-font-size: 12; -fx-text-fill: #E5E7EB;");
-        
-        text.getChildren().addAll(titleLbl, descLbl);
-
-        box.getChildren().add(text);
-        return box;
+        setText(pendingReviewCount, numberFormat.format(pending));
+        setText(liveAuctionCount, numberFormat.format(active));
     }
 
     private void showError(String message) {
@@ -352,5 +316,11 @@ public class AdminDashboardController implements Initializable {
     private String currentUserId() {
         UserSession session = UserSession.getInstance();
         return session != null && session.getUserId() != null ? session.getUserId() : "";
+    }
+
+    private void setText(Label label, String value) {
+        if (label != null) {
+            label.setText(value);
+        }
     }
 }

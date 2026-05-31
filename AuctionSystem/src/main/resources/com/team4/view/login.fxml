@@ -13,17 +13,21 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<StackPane xmlns="http://javafx.com/javafx/17"
-           xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.team4.controller.LoginController"
-           stylesheets="@style.css"
-           id="loginRoot"
-           prefWidth="1000" prefHeight="720"
-           styleClass="login-bg">
+<AnchorPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.team4.controller.LoginController"
+            stylesheets="@style.css"
+            id="loginRoot"
+            prefWidth="1000" prefHeight="720"
+            styleClass="login-bg">
 
     <HBox alignment="CENTER" spacing="0"
+          fillHeight="true"
           maxWidth="Infinity" maxHeight="Infinity"
-          StackPane.alignment="CENTER">
+          AnchorPane.topAnchor="0.0"
+          AnchorPane.rightAnchor="0.0"
+          AnchorPane.bottomAnchor="0.0"
+          AnchorPane.leftAnchor="0.0">
 
         <VBox id="leftPanel"
               prefWidth="580" minWidth="420" maxWidth="Infinity"
@@ -298,4 +302,4 @@
             </VBox>
         </VBox>
     </HBox>
-</StackPane>
+</AnchorPane>
