@@ -167,6 +167,8 @@ public class BiddingRoomControllerTest {
 
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
+        // Giả lập số dư > số tiền đấu giá
+        setField(controller, "availableBalance", BigDecimal.valueOf(500000.0));
 
         when(mockClient.isConnected()).thenReturn(true);
 
@@ -195,6 +197,8 @@ public class BiddingRoomControllerTest {
 
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
+        // Giả lập số dư quá ít
+        setField(controller, "availableBalance", BigDecimal.valueOf(10000.0));
 
         bidAmountField.setText("200000");
 
