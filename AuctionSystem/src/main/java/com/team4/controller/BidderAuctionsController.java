@@ -8,6 +8,7 @@ import com.team4.util.UserSession;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -341,8 +342,11 @@ public class BidderAuctionsController implements Initializable {
         auctionsGrid.getChildren().clear();
         VBox empty = new VBox(10);
         empty.setAlignment(Pos.CENTER);
-        empty.setPrefWidth(860);
+        empty.prefWidthProperty().bind(Bindings.createDoubleBinding(
+                () -> Math.max(420, auctionsGrid.getWidth() - 8),
+                auctionsGrid.widthProperty()));
         empty.setPrefHeight(240);
+        empty.setMaxWidth(Double.MAX_VALUE);
         empty.getStyleClass().add("empty-state");
 
         boolean loading = text != null && text.toLowerCase(Locale.ROOT).contains("loading");
@@ -351,12 +355,15 @@ public class BidderAuctionsController implements Initializable {
         mark.getStyleClass().add("empty-state-mark");
         Label title = new Label(loading ? "Loading auctions" : error ? "Auctions unavailable" : "No auctions found");
         title.getStyleClass().add("empty-state-title");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
         Label message = new Label(loading
                 ? "Fetching the latest auction list."
                 : error ? text : "Try another keyword, category, or status filter.");
         message.getStyleClass().add("empty-state-text");
         message.setWrapText(true);
-        message.setMaxWidth(420);
+        message.setMaxWidth(Double.MAX_VALUE);
+        message.setAlignment(Pos.CENTER);
 
         empty.getChildren().addAll(mark, title, message);
         auctionsGrid.getChildren().add(empty);
