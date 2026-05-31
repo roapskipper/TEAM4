@@ -163,7 +163,7 @@ public class BiddingRoomControllerTest {
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
         // Giả lập số dư > số tiền đấu giá
-        when(mockSession.getBalance()).thenReturn(BigDecimal.valueOf(500000.0));
+        setField(controller, "availableBalance", BigDecimal.valueOf(500000.0));
 
         when(mockClient.isConnected()).thenReturn(true);
 
@@ -192,7 +192,7 @@ public class BiddingRoomControllerTest {
         when(mockSession.getUserId()).thenReturn("user-1");
         when(mockSession.getRole()).thenReturn("BIDDER");
         // Giả lập số dư quá ít
-        when(mockSession.getBalance()).thenReturn(BigDecimal.valueOf(10000.0));
+        setField(controller, "availableBalance", BigDecimal.valueOf(10000.0));
 
         bidAmountField.setText("200000");
 
@@ -236,7 +236,7 @@ public class BiddingRoomControllerTest {
         Thread.sleep(200);
 
         // Giá hiện tại phải được cập nhật trên giao diện
-        assertEquals("300,000", currentPrice.getText());
+        assertEquals("300,000 VND", currentPrice.getText());
         assertFalse(bidError.isVisible());
         assertFalse(placeBidBtn.isDisabled());
     }
