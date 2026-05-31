@@ -278,8 +278,8 @@ public class AddProductDialogController implements Initializable {
             if (!endDateTime.isAfter(startDateTime)) {
                 throw new IllegalArgumentException("End time must be after start time.");
             }
-            if (java.time.Duration.between(startDateTime, endDateTime).toMinutes() < 60) {
-                throw new IllegalArgumentException("Auction duration must be at least 1 hour.");
+            if (java.time.Duration.between(startDateTime, endDateTime).toMinutes() < 15) {
+                throw new IllegalArgumentException("Auction duration must be at least 15 minutes.");
             }
         }
 
