@@ -109,9 +109,10 @@ public class BiddingServiceTest {
             BidRequestDTO request = new BidRequestDTO("auc-1", "bidder-1", new BigDecimal("500"));
             when(auctionDAO.findById(mockConn, "auc-1")).thenReturn(auction);
             when(userDAO.findById(mockConn, "bidder-1")).thenReturn(bidder);
+            when(autoBiddingDAO.calculateLockedBalance(mockConn, "bidder-1", "auc-1")).thenReturn(BigDecimal.ZERO);
 
             BusinessException ex = assertThrows(BusinessException.class, () -> biddingService.placeBid(request));
-            assertEquals("Insufficient balance to cover this bid.", ex.getMessage());
+            assertEquals("Insufficient balance. You have funds locked in other active auctions.", ex.getMessage());
         }
     }
 
@@ -131,6 +132,7 @@ public class BiddingServiceTest {
 
             when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
             when(userDAO.findById(mockConn, bidderId)).thenReturn(bidder);
+            when(autoBiddingDAO.calculateLockedBalance(mockConn, bidderId, auctionId)).thenReturn(BigDecimal.ZERO);
             when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, bidderId)).thenReturn(null);
             when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
 
@@ -199,6 +201,7 @@ public class BiddingServiceTest {
 
             when(auctionDAO.findById(mockConn, auctionId)).thenReturn(auction);
             when(userDAO.findById(mockConn, "b1")).thenReturn(bidder);
+            when(autoBiddingDAO.calculateLockedBalance(mockConn, "b1", auctionId)).thenReturn(BigDecimal.ZERO);
             when(autoBiddingDAO.findByAuctionAndBidder(mockConn, auctionId, "b1")).thenReturn(null);
             when(autoBiddingDAO.insert(eq(mockConn), any(AutoBidding.class))).thenReturn(true);
 
@@ -280,4 +283,5 @@ public class BiddingServiceTest {
             assertNull(highest);
         }
     }
+}
 }

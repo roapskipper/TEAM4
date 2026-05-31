@@ -201,4 +201,24 @@ public class AutoBiddingDAOImpl implements AutoBiddingDAO {
             return false;
         }
     }
+
+    @Override
+    public BigDecimal calculateLockedBalance(Connection conn, String bidderId, String excludeAuctionId) {
+        String sql = "SELECT COALESCE(SUM(ab.max_limit), 0) FROM auto_biddings ab " +
+                     "JOIN auctions a ON ab.auction_id = a.id " +
+                     "WHERE ab.bidder_id = ? AND ab.is_active = TRUE AND a.status = 'RUNNING' " +
+                     "AND ab.auction_id != ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, bidderId);
+            stmt.setString(2, excludeAuctionId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBigDecimal(1);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Unable to calculate locked balance for bidderId={}", bidderId, e);
+        }
+        return BigDecimal.ZERO;
+    }
 }

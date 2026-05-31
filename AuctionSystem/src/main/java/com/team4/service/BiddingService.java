@@ -89,10 +89,13 @@ public class BiddingService {
                     throw new BusinessException("Bid exceeds the maximum allowed limit for this price range.");
                 }
 
-                if (!bidder.hasEnoughBalance(maxAmount)) {
-                    logger.warn("Bid rejected: insufficient balance. bidderId={}, balance={}, required={}",
-                            bidderId, bidder.getBalance(), maxAmount);
-                    throw new BusinessException("Insufficient balance to cover this bid.");
+                BigDecimal lockedInOtherAuctions = autoBiddingDAO.calculateLockedBalance(conn, bidderId, auctionId);
+                BigDecimal spendableBalance = bidder.getBalance().subtract(lockedInOtherAuctions);
+
+                if (spendableBalance.compareTo(maxAmount) < 0) {
+                    logger.warn("Bid rejected: insufficient balance due to locked funds. bidderId={}, balance={}, locked={}, required={}",
+                            bidderId, bidder.getBalance(), lockedInOtherAuctions, maxAmount);
+                    throw new BusinessException("Insufficient balance. You have funds locked in other active auctions.");
                 }
 
                 // 4. Cập nhật cấu hình Proxy Bidding (AutoBidding)
@@ -189,6 +192,10 @@ public class BiddingService {
         if (validContenders.size() >= 2) {
             AutoBidding runnerUp = validContenders.get(1);
             displayPrice = runnerUp.getMaxLimit().add(increment).min(winner.getMaxLimit());
+        } else {
+            if (currentLeaderId != null && !winner.getBidderId().equals(currentLeaderId)) {
+                displayPrice = currentPrice.add(increment).min(winner.getMaxLimit());
+            }
         }
 
         return new ProxyBidResult(winner.getBidderId(), displayPrice);

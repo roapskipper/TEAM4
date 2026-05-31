@@ -188,33 +188,83 @@ public class AuctionService {
 
         for (Auction auction : activeAuctions) {
             if (!auction.getEndTime().isAfter(now)) {
-                try {
-                    auction.close();
-                    if (auctionDAO.updateStatus(auction.getId(), Auction.AuctionStatus.FINISHED)) {
-                        closedCount++;
-                        logger.info("Auction closed: auctionId={}, endTime={}, closedAt={}",
-                                auction.getId(), auction.getEndTime(), now);
+                try (Connection conn = DatabaseManager.getConnection()) {
+                    DatabaseManager.beginTransaction(conn);
+                    try {
+                        // Khóa (lock) phiên đấu giá hiện tại để tránh race condition
+                        Auction lockedAuction = auctionDAO.findById(conn, auction.getId());
+                        if (lockedAuction == null || lockedAuction.getStatus() != Auction.AuctionStatus.RUNNING) {
+                            DatabaseManager.rollbackTransaction(conn);
+                            continue;
+                        }
 
-                        // Tự động xử lý chuyển giao item và thanh toán tiền đấu giá
-                        String winnerId = auction.getCurrentHighestBidderId();
+                        // Đóng phiên đấu giá
+                        lockedAuction.close();
+                        if (!auctionDAO.updateStatus(conn, lockedAuction.getId(), Auction.AuctionStatus.FINISHED)) {
+                            throw new BusinessException("Failed to update status to FINISHED.");
+                        }
+
+                        String winnerId = lockedAuction.getCurrentHighestBidderId();
                         if (winnerId != null && !winnerId.isBlank()) {
-                            BigDecimal finalPrice = auction.getCurrentPrice();
-                            User winner = userDAO.findById(winnerId);
+                            BigDecimal finalPrice = lockedAuction.getCurrentPrice();
+                            User winner = userDAO.findById(conn, winnerId);
+
                             if (winner != null && winner.hasEnoughBalance(finalPrice)) {
                                 logger.info("Winner has sufficient balance. Processing automated payment: auctionId={}, winnerId={}",
-                                        auction.getId(), winnerId);
-                                markPaid(auction.getId());
+                                        lockedAuction.getId(), winnerId);
+
+                                // Xử lý thanh toán (inline markPaid logic inside this transaction)
+                                lockedAuction.markPaid();
+                                if (!auctionDAO.updateStatus(conn, lockedAuction.getId(), Auction.AuctionStatus.PAID)) {
+                                    throw new BusinessException("Failed to mark auction as paid.");
+                                }
+
+                                // Trừ tiền người thắng
+                                if (!winner.withdraw(finalPrice)) {
+                                    throw new BusinessException("Winner has insufficient balance for auction payment.");
+                                }
+                                if (!userDAO.updateBalance(conn, winnerId, winner.getBalance())) {
+                                    throw new BusinessException("Failed to deduct winner balance.");
+                                }
+
+                                // Cộng tiền người bán
+                                String sellerId = lockedAuction.getSellerId();
+                                User seller = userDAO.findById(conn, sellerId);
+                                if (seller == null) {
+                                    throw new BusinessException("Seller does not exist.");
+                                }
+                                seller.deposit(finalPrice);
+                                if (!userDAO.updateBalance(conn, sellerId, seller.getBalance())) {
+                                    throw new BusinessException("Failed to credit seller balance.");
+                                }
+
+                                // Chuyển quyền sở hữu item
+                                if (!itemDAO.updateOwner(conn, lockedAuction.getItemId(), winnerId)) {
+                                    throw new BusinessException("Failed to transfer item ownership to the winner.");
+                                }
                             } else {
                                 logger.info("Winner has insufficient balance or does not exist. Cancelling auction: auctionId={}, winnerId={}",
-                                        auction.getId(), winnerId);
-                                cancelDueToInsufficientFunds(auction.getId());
+                                        lockedAuction.getId(), winnerId);
+
+                                // Xử lý hủy phiên đấu giá vì không đủ tiền
+                                lockedAuction.cancel();
+                                if (!auctionDAO.updateStatus(conn, lockedAuction.getId(), Auction.AuctionStatus.CANCELLED)) {
+                                    throw new BusinessException("Failed to cancel auction due to insufficient funds.");
+                                }
                             }
                         }
-                    } else {
-                        logger.error("Failed to close expired auction in database: auctionId={}", auction.getId());
+
+                        DatabaseManager.commitTransaction(conn);
+                        closedCount++;
+                        logger.info("Auction closed successfully: auctionId={}, endTime={}, closedAt={}",
+                                lockedAuction.getId(), lockedAuction.getEndTime(), now);
+
+                    } catch (Exception e) {
+                        DatabaseManager.rollbackTransaction(conn);
+                        logger.error("Transaction failed during auction closure: auctionId={}, error={}", auction.getId(), e.getMessage());
                     }
-                } catch (Exception e) {
-                    logger.error("Error processing expired auction closure: auctionId={}, error={}", auction.getId(), e.getMessage());
+                } catch (SQLException e) {
+                    logger.error("Database connection error during auction closure: auctionId={}, error={}", auction.getId(), e.getMessage());
                 }
             }
         }

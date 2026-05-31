@@ -196,23 +196,29 @@ public class AuctionServiceTest {
     class AutoCloseTests {
 
         @Test
-        @DisplayName("Tự động đóng các phiên đã hết thời gian")
+        @DisplayName("Tự động đóng phiên đã hết thời gian (Scheduler)")
         void testCloseExpiredAuctions() {
-            // GIVEN: Một phiên đã hết hạn và một phiên còn hạn
-            Auction expired = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().minusMinutes(1));
-            expired.approve(); // RUNNING
+            try (MockedStatic<DatabaseManager> mockedDb = mockStatic(DatabaseManager.class)) {
+                mockedDb.when(DatabaseManager::getConnection).thenReturn(mockConn);
 
-            Auction active = new Auction("i2", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1));
-            active.approve(); // RUNNING
+                // GIVEN: Một phiên đã hết hạn và một phiên còn hạn
+                Auction expired = new Auction("i1", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().minusMinutes(1));
+                expired.approve(); // RUNNING
 
-            when(auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(List.of(expired, active));
-            when(auctionDAO.updateStatus(any(), eq(Auction.AuctionStatus.FINISHED))).thenReturn(true);
+                Auction active = new Auction("i2", "s1", BigDecimal.TEN, BigDecimal.ONE, LocalDateTime.now().plusHours(1));
+                active.approve(); // RUNNING
 
-            // WHEN: Chạy logic quét phiên hết hạn
-            auctionService.closeExpiredAuctions();
+                when(auctionDAO.findByStatus(Auction.AuctionStatus.RUNNING)).thenReturn(List.of(expired, active));
+                when(auctionDAO.findById(mockConn, expired.getId())).thenReturn(expired);
+                when(auctionDAO.updateStatus(eq(mockConn), eq(expired.getId()), eq(Auction.AuctionStatus.FINISHED))).thenReturn(true);
 
-            // THEN: Chỉ gọi update cho phiên đã hết hạn
-            verify(auctionDAO, times(1)).updateStatus(any(), eq(Auction.AuctionStatus.FINISHED));
+                // WHEN: Chạy logic quét phiên hết hạn
+                auctionService.closeExpiredAuctions();
+
+                // THEN: Chỉ gọi update cho phiên đã hết hạn
+                verify(auctionDAO, times(1)).updateStatus(eq(mockConn), eq(expired.getId()), eq(Auction.AuctionStatus.FINISHED));
+                mockedDb.verify(() -> DatabaseManager.commitTransaction(mockConn));
+            }
         }
     }
 
