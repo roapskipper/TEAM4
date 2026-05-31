@@ -205,6 +205,8 @@ public class MainController implements Initializable {
                 ((BidderAuctionsController) controller).setMainController(this);
             } else if (controller instanceof BiddingRoomController) {
                 ((BiddingRoomController) controller).setMainController(this);
+            } else if (controller instanceof BidderOwnedItemsController) {
+                ((BidderOwnedItemsController) controller).setMainController(this);
             } else if (controller instanceof AdminDashboardController) {
                 ((AdminDashboardController) controller).setMainController(this);
             } else if (controller instanceof ProfileController) {
@@ -213,6 +215,9 @@ public class MainController implements Initializable {
 
             contentArea.getChildren().clear();
             contentArea.getChildren().add(page);
+            if (!isAdminRole()) {
+                refreshUserBalance();
+            }
             return controller;
         } catch (Exception ex) {
             ex.printStackTrace();

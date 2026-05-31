@@ -34,6 +34,11 @@ public class BidderOwnedItemsController implements Initializable {
 
     private static final NumberFormat MONEY_FORMAT = NumberFormat.getNumberInstance(Locale.US);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private MainController mainController;
+
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -59,7 +64,12 @@ public class BidderOwnedItemsController implements Initializable {
             }
         };
 
-        task.setOnSucceeded(e -> renderOwnedItems(task.getValue()));
+        task.setOnSucceeded(e -> {
+            renderOwnedItems(task.getValue());
+            if (mainController != null) {
+                mainController.refreshUserBalance();
+            }
+        });
         task.setOnFailed(e -> {
             ownedCount.setText("0");
             totalValue.setText("0 VND");
